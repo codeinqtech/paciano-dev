@@ -42,6 +42,7 @@ docker-compose.override.yml
 docker-compose.local.yml
 docker-compose.yml
 /docker/
+.dockerignore
 
 
 # =========================
@@ -101,3 +102,11 @@ pnpm-debug.log*
 *.key
 *.p12
 *.pfx
+
+# =========================
+# Miscellaneous
+# =========================
+
+.git
+.sql
+.backup
