@@ -3,7 +3,12 @@
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\SiteFooterController;
+use App\Http\Controllers\Api\SiteNavigationMenuController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
+Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
 Route::prefix('auth')->group(function (): void {
     Route::post('login', [AuthController::class, 'login']);
@@ -26,5 +31,19 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('users', [AdminUserController::class, 'store']);
         Route::put('users/{id}', [AdminUserController::class, 'update']);
         Route::delete('users/{id}', [AdminUserController::class, 'destroy']);
+
+        Route::get('navigation-menus', [SiteNavigationMenuController::class, 'index']);
+        Route::post('navigation-menus', [SiteNavigationMenuController::class, 'store']);
+        Route::put('navigation-menus/{id}', [SiteNavigationMenuController::class, 'update']);
+        Route::delete('navigation-menus/{id}', [SiteNavigationMenuController::class, 'destroy']);
+
+        Route::get('site-footer', [SiteFooterController::class, 'adminIndex']);
+        Route::put('site-footer/settings', [SiteFooterController::class, 'updateSettings']);
+        Route::post('site-footer/social', [SiteFooterController::class, 'storeSocial']);
+        Route::put('site-footer/social/{id}', [SiteFooterController::class, 'updateSocial']);
+        Route::delete('site-footer/social/{id}', [SiteFooterController::class, 'destroySocial']);
+        Route::post('site-footer/location-info', [SiteFooterController::class, 'storeLocationInfo']);
+        Route::put('site-footer/location-info/{id}', [SiteFooterController::class, 'updateLocationInfo']);
+        Route::delete('site-footer/location-info/{id}', [SiteFooterController::class, 'destroyLocationInfo']);
     });
 });

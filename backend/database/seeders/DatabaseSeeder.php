@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        $this->call(SiteNavigationMenuSeeder::class);
+        $this->call(SiteFooterSeeder::class);
+
         User::query()->updateOrCreate(
             ['email' => 'superadmin@paciano.local'],
             [

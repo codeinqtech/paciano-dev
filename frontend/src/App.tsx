@@ -9,6 +9,8 @@ import Dashboard from "@/admin/pages/Dashboard";
 import AdminProfile from "@/admin/pages/AdminProfile";
 import AdminUsers from "@/admin/pages/AdminUsers";
 import AdminContentSection from "@/admin/pages/AdminContentSection";
+import AdminNavbarMenus from "@/admin/pages/AdminNavbarMenus";
+import AdminFooter from "@/admin/pages/AdminFooter";
 
 export default function App() {
   return (
@@ -27,8 +29,8 @@ export default function App() {
         <Route path="homepage" element={<AdminContentSection menuId="homepage" />} />
         <Route path="contact" element={<AdminContentSection menuId="contact" />} />
         <Route path="stay" element={<AdminContentSection menuId="stay" />} />
-        <Route path="navbar" element={<AdminContentSection menuId="navbar" />} />
-        <Route path="footer" element={<AdminContentSection menuId="footer" />} />
+        <Route path="navbar" element={<AdminNavbarMenus />} />
+        <Route path="footer" element={<AdminFooter />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
 

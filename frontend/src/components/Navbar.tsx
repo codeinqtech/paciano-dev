@@ -2,15 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import pacianoLogo from "@/images/paciano-logo.png";
 import bookingImage from "@/images/paciano-booking.png";
-import { homeHref, toAppPath } from "@/lib/appBase";
-
-const NAV_LINKS = [
-  { label: "Stay", href: toAppPath("/stay") },
-  { label: "Experiences", href: homeHref("#experiences") },
-  { label: "Dining", href: homeHref("#dining") },
-  { label: "About Us", href: homeHref("#about") },
-  { label: "Contact", href: toAppPath("/contact") },
-];
+import {
+  useNavigationMenus,
+  type NavLinkItem,
+} from "@/hooks/useNavigationMenus";
+import { toAppPath } from "@/lib/appBase";
 
 interface NavbarProps {
   scrolled?: boolean;
@@ -21,6 +17,7 @@ export default function Navbar({
   scrolled = false,
   activeNav = "home",
 }: NavbarProps) {
+  const navLinks = useNavigationMenus();
   const [menuOpen, setMenuOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
 
@@ -188,23 +185,15 @@ export default function Navbar({
                 active={activeNav === "home"}
               />
 
-              <NavItem
-                label="Stay"
-                href={toAppPath("/stay")}
-                active={activeNav === "stay"}
-              />
-
-              <NavItem label="Experiences" href={homeHref("#experiences")} />
-
-              <NavItem label="Dining" href={homeHref("#dining")} />
-
-              <NavItem label="About Us" href={homeHref("#about")} />
-
-              <NavItem
-                label="Contact"
-                href={toAppPath("/contact")}
-                active={activeNav === "contact"}
-              />
+              {navLinks.map((item) => (
+                <NavItem
+                  key={item.id || item.label}
+                  label={item.label}
+                  href={item.href}
+                  active={isDynamicNavActive(item.label, activeNav)}
+                  openInNewTab={item.openInNewTab}
+                />
+              ))}
             </div>
           </nav>
 
@@ -377,6 +366,7 @@ export default function Navbar({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         activeNav={activeNav}
+        navLinks={navLinks}
         onBooking={() => {
           setMenuOpen(false);
           setBookingOpen(true);
@@ -3027,18 +3017,31 @@ function DateField({
   );
 }
 
+function isDynamicNavActive(
+  label: string,
+  activeNav: "home" | "contact" | "stay",
+): boolean {
+  if (label === "Contact") return activeNav === "contact";
+  if (label === "Stay") return activeNav === "stay";
+  return false;
+}
+
 function NavItem({
   label,
   href,
   active = false,
+  openInNewTab = false,
 }: {
   label: string;
   href: string;
   active?: boolean;
+  openInNewTab?: boolean;
 }) {
   return (
     <a
       href={href}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       className={`
     group
     relative
@@ -3094,11 +3097,13 @@ function MobileMenu({
   onClose,
   onBooking,
   activeNav = "home",
+  navLinks,
 }: {
   open: boolean;
   onClose: () => void;
   onBooking: () => void;
   activeNav?: "home" | "contact" | "stay";
+  navLinks: NavLinkItem[];
 }) {
   return (
     <div
@@ -3171,18 +3176,13 @@ function MobileMenu({
             onClick={onClose}
           />
 
-          {NAV_LINKS.map((item) => (
+          {navLinks.map((item) => (
             <MobileNavItem
-              key={item.label}
+              key={item.id || item.label}
               label={item.label}
               href={item.href}
-              active={
-                item.label === "Contact"
-                  ? activeNav === "contact"
-                  : item.label === "Stay"
-                    ? activeNav === "stay"
-                    : false
-              }
+              active={isDynamicNavActive(item.label, activeNav)}
+              openInNewTab={item.openInNewTab}
               onClick={onClose}
             />
           ))}
@@ -3286,16 +3286,20 @@ function MobileNavItem({
   href,
   onClick,
   active = false,
+  openInNewTab = false,
 }: {
   label: string;
   href: string;
   onClick: () => void;
   active?: boolean;
+  openInNewTab?: boolean;
 }) {
   return (
     <a
       href={href}
       onClick={onClick}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       className={`
         group
         flex

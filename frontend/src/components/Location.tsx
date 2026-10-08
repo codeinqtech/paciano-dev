@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useEffect,
   useRef,
   useState,
@@ -8,9 +8,11 @@ import locationView from "@/images/locationVView.png";
 import leafWhisper from "@/images/button-leaf.png";
 import leftLeaf from"@/images/location-left-leaves.png"
 import bottomLeaf from "@/images/location-bottom-leaf.png";
-import locationMap from "@/images/map.png";
+import PacianoLocationMapCard from "@/components/PacianoLocationMapCard";
+import { useSiteFooter } from "@/hooks/useSiteFooter";
 
 const LocationSection: React.FC = () => {
+  const { settings, location_info } = useSiteFooter();
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -25,7 +27,6 @@ const LocationSection: React.FC = () => {
   const ctaRef = useRef<HTMLDivElement | null>(null);
 
   const mapCardRef = useRef<HTMLDivElement | null>(null);
-  const mapImageRef = useRef<HTMLImageElement | null>(null);
 
   // const scriptRef = useRef<HTMLDivElement | null>(null);
   // const sideRef = useRef<HTMLDivElement | null>(null);
@@ -50,7 +51,7 @@ const LocationSection: React.FC = () => {
   //       const ease = "cubic-bezier(.22,1,.36,1)";
   
   //       /* -----------------------------------------------------
-  //          01 — LANDSCAPE
+  //          01 â€” LANDSCAPE
   //          ----------------------------------------------------- */
   
   //         //  heroImageRef.current?.animate(
@@ -81,7 +82,7 @@ const LocationSection: React.FC = () => {
   //         // );
   
   //       /* -----------------------------------------------------
-  //          02 — SOFT ATMOSPHERIC GLOW
+  //          02 â€” SOFT ATMOSPHERIC GLOW
   //          ----------------------------------------------------- */
   
   //       atmosphereRef.current?.animate(
@@ -104,7 +105,7 @@ const LocationSection: React.FC = () => {
   //       );
   
   //       /* -----------------------------------------------------
-  //          03 — OUR LOCATION
+  //          03 â€” OUR LOCATION
   //          ----------------------------------------------------- */
   
   //       eyebrowRef.current?.animate(
@@ -127,7 +128,7 @@ const LocationSection: React.FC = () => {
   //       );
   
   //       /* -----------------------------------------------------
-  //         04 — HEADING
+  //         04 â€” HEADING
   //         ----------------------------------------------------- */
 
   //         headingRef.current?.animate(
@@ -154,7 +155,7 @@ const LocationSection: React.FC = () => {
   //       );
   
   //       /* -----------------------------------------------------
-  //          05 — DESCRIPTION
+  //          05 â€” DESCRIPTION
   //          ----------------------------------------------------- */
   
   //       descriptionRef.current?.animate(
@@ -177,7 +178,7 @@ const LocationSection: React.FC = () => {
   //       );
   
   //       /* -----------------------------------------------------
-  //          06 — FEATURES
+  //          06 â€” FEATURES
   //          ----------------------------------------------------- */
   
   //          featuresRef.current?.animate(
@@ -204,7 +205,7 @@ const LocationSection: React.FC = () => {
   //         );
   
   //       /* -----------------------------------------------------
-  //          07 — ICONS ONE BY ONE
+  //          07 â€” ICONS ONE BY ONE
   //          ----------------------------------------------------- */
   
   //         //  featureIconRefs.current.forEach((icon, index) => {
@@ -234,7 +235,7 @@ const LocationSection: React.FC = () => {
   //         //   );
   //         // });
   //       /* -----------------------------------------------------
-  //          08 — CTA
+  //          08 â€” CTA
   //          ----------------------------------------------------- */
   
   //         //  ctaRef.current?.animate(
@@ -261,7 +262,7 @@ const LocationSection: React.FC = () => {
   //         // );
   
   //       /* -----------------------------------------------------
-  //          09 — MAP CARD
+  //          09 â€” MAP CARD
   //          ----------------------------------------------------- */
   
   //         //  mapCardRef.current?.animate(
@@ -291,7 +292,7 @@ const LocationSection: React.FC = () => {
   //         // );
   
   //       /* -----------------------------------------------------
-  //          10 — MAP IMAGE
+  //          10 â€” MAP IMAGE
   //          ----------------------------------------------------- */
   
   //         //  mapImageRef.current?.animate(
@@ -312,7 +313,7 @@ const LocationSection: React.FC = () => {
   //         // );
   
   //       /* -----------------------------------------------------
-  //          11 — RIGHT SIDE LABEL
+  //          11 â€” RIGHT SIDE LABEL
   //          ----------------------------------------------------- */
   
   //       // sideRef.current?.animate(
@@ -335,7 +336,7 @@ const LocationSection: React.FC = () => {
   //       // );
   
   //       /* -----------------------------------------------------
-  //          12 — HANDWRITTEN MESSAGE
+  //          12 â€” HANDWRITTEN MESSAGE
   //          ----------------------------------------------------- */
   
   //       // scriptRef.current?.animate(
@@ -520,7 +521,7 @@ const LocationSection: React.FC = () => {
         "
       >         
         {/* =======================================================
-          LANDSCAPE IMAGE — CINEMATIC
+          LANDSCAPE IMAGE â€” CINEMATIC
         ======================================================= */}
 
         {/* <div
@@ -724,7 +725,7 @@ const LocationSection: React.FC = () => {
         />
 
          {/* =======================================================
-              OUR LOCATION — PREMIUM WRITE-UP
+              OUR LOCATION â€” PREMIUM WRITE-UP
           ======================================================= */}
 
           <div
@@ -894,13 +895,13 @@ const LocationSection: React.FC = () => {
   }}
 >
     Nestled in Lataguri, Dooars, Paciano is surrounded by
-    rivers, forests and misty mountains — a place where
+    rivers, forests and misty mountains â€” a place where
     nature slows you down and life feels fuller.
   </p>
 
 
   {/* =======================================================
-    LOCATION FEATURES — PREMIUM EDITORIAL ICONS
+    LOCATION FEATURES â€” PREMIUM EDITORIAL ICONS
 ======================================================= */}
 
 <div
@@ -1490,11 +1491,11 @@ style={{
     </div>
 
     {/* -------------------------------------------------------
-    GET DIRECTIONS — LEAF WHISPER
+    GET DIRECTIONS â€” LEAF WHISPER
 -------------------------------------------------------- */}
 
 {/* -------------------------------------------------------
-    GET DIRECTIONS — LEAF WHISPER / LUXURY FINISH
+    GET DIRECTIONS â€” LEAF WHISPER / LUXURY FINISH
 -------------------------------------------------------- */}
 
 <div
@@ -1839,7 +1840,7 @@ style={{
                 group-hover:translate-x-[2px]
               "
             >
-              →
+              â†’
             </span>
           </span>
 
@@ -1852,735 +1853,32 @@ style={{
     </div>
 
           {/* =======================================================
-              LOCATION DETAILS — FLOATING MAP CARD
-
-              Sits ON TOP of the landscape.
-              Does not create additional vertical space.
+              LOCATION DETAILS â€” FLOATING MAP CARD (dynamic OSM + CMS)
           ======================================================= */}
 
-<div
-  ref={mapCardRef}
-  className={`
-    absolute
-    left-[11.1%]
-    bottom-[-55px]
-    z-[100]
-    w-[79%]
-    h-[230px]
-
-    overflow-hidden
-    rounded-[24px]
-    border
-    border-[#C6B85F]/[0.72]
-    bg-[#1B2515]
-
-    shadow-[0_20px_50px_rgba(5,12,7,0.55),0_4px_18px_rgba(0,0,0,0.28)]
-
-    transform
-    transition-all
-    duration-[1900ms]
-    ease-[cubic-bezier(0.22,1,0.36,1)]
-    will-change-transform
-
-    ${
-      isVisible
-        ? "translate-y-0 scale-100 opacity-100"
-        : "translate-y-20 scale-[0.97] opacity-0"
-    }
-  `}
-  style={{
-    transitionDelay: "2750ms",
-  }}
->
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-[34%]
-              top-[-25%]
-              z-[1]
-              h-[170px]
-              w-[420px]
-              rounded-full
-              bg-[#C8B866]/[0.075]
-
-              blur-[55px]
-            "
+          <PacianoLocationMapCard
+            ref={mapCardRef}
+            settings={
+              settings ?? {
+                intro_paragraph: null,
+                map_address: null,
+                map_latitude: 26.869761,
+                map_longitude: 88.732941,
+                map_title: null,
+                map_subtitle: null,
+                map_description: null,
+                location_eyebrow: null,
+                location_heading: null,
+                location_subtitle: null,
+                location_description: null,
+                maps_link: null,
+              }
+            }
+            locationInfo={location_info}
+            variant="home"
+            isVisible={isVisible}
           />
 
-          <div
-            className="
-              pointer-events-none
-              absolute
-              inset-x-[8%]
-              top-[1px]
-              z-[4]
-
-              h-px
-
-              bg-gradient-to-r
-              from-transparent
-              via-[#E3D89E]/[0.42]
-              to-transparent
-            "
-          />
-          <div
-          className="
-            pointer-events-none
-            absolute
-            left-[10%]
-            top-[10%]
-            z-0
-            h-[90px]
-            w-[38%]
-            rounded-full
-            bg-white/[0.06]
-            blur-[45px]
-          "
-          />
-            {/* =====================================================
-                MAP
-            ====================================================== */}
-
-            <div
-              className="
-                absolute
-                left-[12px]
-                top-[12px]
-                bottom-[12px]
-                w-[39%]
-                overflow-hidden
-                rounded-[15px]
-                border
-                border-[#E7DFC5]/[0.58]
-                bg-[#DDE5D2]
-                shadow-[0_8px_18px_rgba(20,28,18,0.16),inset_0_1px_0_rgba(255,255,255,0.20)]
-              "
-            >
-
-          <img
-          ref={mapImageRef}
-          src={locationMap}
-          alt="Paciano location map"
-          className="
-            h-full
-            w-full
-            object-cover
-            will-change-transform
-          "
-          />
-
-              {/* MAP PIN */}
-
-              <div
-                className="
-                  absolute
-                  left-[48%]
-                  top-[49%]
-                  -translate-x-1/2
-                  -translate-y-1/2
-                "
-              >
-                <div
-                  className="
-                    relative
-                    flex
-                    h-[24px]
-                    w-[24px]
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#4B5234]
-                    shadow-[0_4px_12px_rgba(0,0,0,0.25)]
-                  "
-                >
-                  <span
-                    className="
-                      h-[7px]
-                      w-[7px]
-                      rounded-full
-                      bg-[#F4EFE4]
-                    "
-                  />
-
-                  <span
-                    className="
-                      absolute
-                      -bottom-[5px]
-                      left-1/2
-                      h-[9px]
-                      w-[9px]
-                      -translate-x-1/2
-                      rotate-45
-                      bg-[#4B5234]
-                    "
-                  />
-                </div>
-
-                <span
-                  className="
-                    absolute
-                    left-[30px]
-                    top-[2px]
-                    whitespace-nowrap
-                    font-['Cormorant_Garamond',serif]
-                    text-[15px]
-                    font-medium
-                    text-[#252A20]
-                  "
-                >
-                  Paciano
-                </span>
-              </div>
-
-              {/* NORTH INDICATOR */}
-
-              <div
-                className="
-                  absolute
-                  right-[12px]
-                  top-[12px]
-                  flex
-                  h-[38px]
-                  w-[38px]
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-[#69735D]/50
-                  bg-[#F4EFE4]/65
-                  backdrop-blur-sm
-                "
-              >
-                <span
-                  className="
-                    text-[14px]
-                    font-medium
-                    text-[#252A20]
-                  "
-                >
-                  N
-                </span>
-
-                <span
-                  className="
-                    absolute
-                    bottom-[7px]
-                    left-1/2
-                    h-[1px]
-                    w-[9px]
-                    -translate-x-1/2
-                    rotate-[-45deg]
-                    bg-[#252A20]/60
-                  "
-                />
-              </div>
-
-            </div>
-
-
-            {/* =====================================================
-                DETAILS AREA
-            ====================================================== */}
-
-            <div
-              className="
-                absolute
-                right-[24px]
-                top-[20px]
-                bottom-[18px]
-                left-[41%]
-                flex
-                flex-col
-              "
-            >
-
-              {/* TOP INFORMATION */}
-
-              <div
-                className="
-                  flex
-                  items-start
-                  justify-between
-                "
-              >
-
-                {/* LOCATION */}
-
-                <div
-                  className="
-                    flex
-                    items-start
-                    gap-[13px]
-                  "
-                >
-
-                  {/* PIN ICON */}
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="
-                      mt-[1px]
-                      h-[30px]
-                      w-[30px]
-                      shrink-0
-                      text-[#F4EFE4]
-                    "
-                    fill="none"
-                  >
-                    <path
-                      d="
-                        M12 21
-                        C12 21 19 14.6 19 9
-                        C19 5.1 15.9 2 12 2
-                        C8.1 2 5 5.1 5 9
-                        C5 14.6 12 21 12 21Z
-                      "
-                      fill="currentColor"
-                    />
-
-                    <circle
-                       cx="12"
-                       cy="9"
-                       r="3"
-                       fill="#4B5234"
-                    />
-                  </svg>
-
-
-                  <div>
-                  <div
-                    className="
-                      font-['Cormorant_Garamond',serif]
-                      text-[21px]
-                      font-medium
-                      leading-[1.05]
-                      text-[#F8F1DD]
-                      drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]
-                    "
-                  >
-                    Lataguri, Dooars
-                  </div>
-
-                  <div
-                    className="
-                      mt-[3px]
-                      font-['Cormorant_Garamond',serif]
-                      text-[17px]
-                      italic
-                      leading-[1.05]
-                      text-[#F7F1DE]
-                      opacity-95
-                    "
-                  >
-                    West Bengal, India
-                  </div>
-                </div>
-
-                </div>
-
-
-                {/* COORDINATES */}
-
-                <div
-                  className="
-                    pr-[8px]
-                    font-['Cormorant_Garamond',serif]
-                    text-[17px]
-                    leading-[1.25]
-                    text-[#F7F1DE]
-                    drop-shadow-[0_1px_3px_rgba(0,0,0,0.18)]
-                  "
-                >
-                  <div>26.5520° N,</div>
-                  <div>88.7350° E</div>
-                </div>
-
-              </div>
-
-
-              {/* DESCRIPTION */}
-
-              <p
-              className="
-                mt-[14px]
-                max-w-[561px]
-                font-manrope 
-                text-[13px]
-                leading-[1.35]
-                text-[#F7F1DE]
-                opacity-95
-                drop-shadow-[0_1px_3px_rgba(0,0,0,0.16)]
-              "
-            >
-              A serene location at the edge of the Himalayas, perfectly
-              connected yet wonderfully secluded.
-            </p>
-
-
-              {/* DIVIDER */}
-
-              <div
-                className="
-                  mt-[10px]
-                  h-px
-                  w-full
-                  bg-[#E6DEC8]/30
-                "
-              />
-
-
-              {/* =====================================================
-                  DISTANCE INFORMATION
-              ====================================================== */}
-
-              <div
-                className="
-                  mt-[11px]
-                  flex
-                  items-center
-                "
-              >
-
-                {/* GORUMARA */}
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-[18px]
-                    pr-[22px]
-                  "
-                >
-
-                  <svg
-                    viewBox="0 0 32 32"
-                    className="
-                      h-[30px]
-                      w-[30px]
-                      shrink-0
-                      text-[#F4EFE4]
-                    "
-                    fill="none"
-                  >
-                    <path
-                      d="
-                        M6 20
-                        H26
-                        L24 14
-                        H9
-                        L6 20Z
-                      "
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-
-                    <path
-                      d="
-                        M10 14
-                        L12 9
-                        H21
-                        L24 14
-                      "
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-
-                    <circle
-                      cx="10"
-                      cy="22"
-                      r="2"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                    />
-
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="2"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                    />
-                  </svg>
-
-                  <div>
-                    <div
-                      className="
-                        text-[15px]
-                        font-semibold
-                        leading-none
-                        text-[#F4EFE4]
-                      "
-                    >
-                      12 km
-                    </div>
-
-                    <div
-                      className="
-                        mt-[2px]
-                        text-[13px]
-                        leading-[1.15]
-                        text-[#F4EFE4]/65
-                      "
-                    >
-                      Gorumara National Park
-                    </div>
-                  </div>
-
-                </div>
-
-
-                {/* VERTICAL DIVIDER */}
-
-                <div
-                  className="
-                    h-[42px]
-                    w-px
-                    bg-[#D9D4C3]/25
-                  "
-                />
-
-
-                {/* RAILWAY */}
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-[11px]
-                    px-[28px]
-                  "
-                >
-
-                  <svg
-                    viewBox="0 0 32 32"
-                    className="
-                    h-[30px]
-                    w-[30px]
-                      shrink-0
-                      text-[#F4EFE4]
-                    "
-                    fill="none"
-                  >
-                    <rect
-                      x="8"
-                      y="5"
-                      width="16"
-                      height="18"
-                      rx="4"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-
-                    <path
-                      d="M8 16H24"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-
-                    <circle
-                      cx="12"
-                      cy="20"
-                      r="1.5"
-                      fill="currentColor"
-                    />
-
-                    <circle
-                      cx="20"
-                      cy="20"
-                      r="1.5"
-                      fill="currentColor"
-                    />
-
-                    <path
-                      d="M12 27L15 23"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-
-                    <path
-                      d="M20 27L17 23"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                    />
-                  </svg>
-
-                  <div>
-                    <div
-                      className="
-                      text-[15px]
-                      font-semibold
-                      leading-none
-                      text-[#F4EFE4]
-                      "
-                    >
-                      3 km
-                    </div>
-
-                    <div
-                      className="
-                        mt-[2px]
-                        text-[13px]
-                        leading-[1.15]
-                        text-[#F4EFE4]/65
-                      "
-                    >
-                      Lataguri
-                    
-                      Railway Station
-                    </div>
-                  </div>
-
-                </div>
-
-
-                {/* VERTICAL DIVIDER */}
-
-                <div
-                  className="
-                    h-[42px]
-                    w-px
-                    bg-[#D9D4C3]/25
-                  "
-                />
-
-
-                {/* AIRPORT */}
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-[11px]
-                    px-[28px]
-                  "
-                >
-
-                  <svg
-                    viewBox="0 0 32 32"
-                    className="
-                      h-[30px]
-                      w-[30px]
-                      shrink-0
-                      rotate-[-8deg]
-                      text-[#F4EFE4]
-                    "
-                    fill="none"
-                  >
-                    <path
-                      d="
-                        M5 17
-                        L27 10
-                        L28 12
-                        L18 18
-                        L15 25
-                        L12 24
-                        L14 19
-                        L7 20
-                        Z
-                      "
-                      fill="currentColor"
-                    />
-                  </svg>
-
-                  <div>
-                    <div
-                      className="
-                        text-[15px]
-                        font-semibold
-                        text-[#F4EFE4]
-                      "
-                    >
-                      70 km
-                    </div>
-
-                    <div
-                      className="
-                        mt-[2px]
-                        text-[13px]
-                        leading-[1.15]
-                        text-[#F4EFE4]/65
-                      "
-                    >
-                      Bagdogra Airport
-                    </div>
-                  </div>
-
-                </div>
-
-
-                {/* GOOGLE MAPS CTA */}
-
-                <a
-                  href="https://www.google.com/maps/search/?api=1&query=Paciano+Lataguri+Dooars"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="
-                    group
-                    ml-auto
-                    flex
-                    h-[52px]
-                    min-w-[155px]
-                    items-center
-                    justify-between
-                    gap-[18px]
-                    rounded-full
-                    border
-                    border-[#F4EFE4]/60
-                    px-[18px]
-                    text-[#F4EFE4]
-                    transition-all
-                    duration-500
-                    hover:border-[#F4EFE4]
-                    hover:bg-[#F4EFE4]/10
-                  "
-                >
-
-                  <span
-                    className="
-                      text-[11px]
-                      leading-[1.15]
-                      tracking-[0.02em]
-                    "
-                  >
-                    View on
-                    <br />
-                    Google Maps
-                  </span>
-
-                  <span
-                    className="
-                      flex
-                      h-[32px]
-                      w-[32px]
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-full
-                      border
-                      border-[#F4EFE4]/35
-                      transition-transform
-                      duration-500
-                      group-hover:translate-x-[3px]
-                    "
-                  >
-                    <span
-                      className="
-                        text-[17px]
-                        leading-none
-                      "
-                    >
-                      →
-                    </span>
-                  </span>
-
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
       </div>
     </section>
   );

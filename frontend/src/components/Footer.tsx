@@ -11,8 +11,8 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 
+import footerArchitecture from "@/images/footer-architecture.png";
 import footerLeaf from "@/images/location-left-leaves.png";
-import { toAppPath } from "@/lib/appBase";
 
 const exploreLinks = [
   "Home",
@@ -1822,14 +1822,7 @@ export default function Footer({ contactOverlap = false }: FooterProps) {
                 Designed & Developed by CodeInQ
               </span>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <a
-                  href={toAppPath("/admin/login")}
-                  className="transition-colors duration-500 hover:text-[#C8BC82] text-[13px]"
-                >
-                  Admin
-                </a>
-                <span className="hidden sm:inline h-3 w-px bg-[#F4EFE4]/15" />
+              <div className="flex items-center gap-4">
                 <a
                   href="#"
                   className="transition-colors duration-500 hover:text-[#F4EFE4]  text-[13px]"

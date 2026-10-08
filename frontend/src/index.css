@@ -35,7 +35,7 @@
 
 @font-face {
   font-family: "Brittany Signature";
-  src: url("./assets/fonts/BrittanySignatureRegular.woff2") format("woff2");
+  src: url("./assets/fonts/BrittanySignature.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -248,15 +248,13 @@ textarea.luxury-input {
 }
 
 .stay-page .hero-shade {
-  background: linear-gradient(
-    90deg,
-    #f8f5ee 0%,
-    rgba(248, 245, 238, 0.98) 15%,
-    rgba(248, 245, 238, 0.88) 32%,
-    rgba(248, 245, 238, 0.36) 53%,
-    rgba(12, 26, 17, 0.08) 75%,
-    rgba(12, 26, 17, 0.42) 100%
-  );
+  background: linear-gradient(90deg,
+      #f8f5ee 0%,
+      rgba(248, 245, 238, 0.98) 15%,
+      rgba(248, 245, 238, 0.88) 32%,
+      rgba(248, 245, 238, 0.36) 53%,
+      rgba(12, 26, 17, 0.08) 75%,
+      rgba(12, 26, 17, 0.42) 100%);
 }
 
 .stay-page .section-wave {
@@ -378,13 +376,11 @@ textarea.luxury-input {
   }
 
   .stay-page .hero-shade {
-    background: linear-gradient(
-      90deg,
-      #f8f5ee 0%,
-      rgba(248, 245, 238, 0.96) 27%,
-      rgba(248, 245, 238, 0.54) 67%,
-      rgba(12, 26, 17, 0.12) 100%
-    );
+    background: linear-gradient(90deg,
+        #f8f5ee 0%,
+        rgba(248, 245, 238, 0.96) 27%,
+        rgba(248, 245, 238, 0.54) 67%,
+        rgba(12, 26, 17, 0.12) 100%);
   }
 }
 
@@ -404,13 +400,11 @@ textarea.luxury-input {
   }
 
   .stay-page .hero-shade {
-    background: linear-gradient(
-      0deg,
-      #f8f5ee 0%,
-      rgba(248, 245, 238, 0.97) 23%,
-      rgba(248, 245, 238, 0.72) 50%,
-      rgba(0, 0, 0, 0.05) 100%
-    );
+    background: linear-gradient(0deg,
+        #f8f5ee 0%,
+        rgba(248, 245, 238, 0.97) 23%,
+        rgba(248, 245, 238, 0.72) 50%,
+        rgba(0, 0, 0, 0.05) 100%);
   }
 
   .stay-page .hero-copy h1 {
@@ -446,54 +440,85 @@ textarea.luxury-input {
   background: linear-gradient(165deg, #f8f5ee 0%, #eee9dc 45%, #e8e2d4 100%);
   color: #102619;
 }
+
 .admin-sidebar {
   background: linear-gradient(180deg, #0e2d20 0%, #09160f 100%);
   color: #f4efe4;
 }
+
 .admin-nav-active {
   background: rgba(200, 188, 130, 0.16);
   color: #fffdf5;
   border: 1px solid rgba(200, 188, 130, 0.22);
 }
+
 .admin-login-shell {
   background: linear-gradient(160deg, #0e2d20 0%, #102619 40%, #09160f 100%);
 }
+
 .admin-login-card {
   background: rgba(248, 245, 238, 0.97);
   border: 1px solid rgba(200, 188, 130, 0.35);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
 }
+
 .admin-card {
   background: #fffdf8;
   border: 1px solid #ede4d8;
 }
+
 .admin-input {
   background: #fff;
   border: 1px solid #e0d5c8;
   color: #102619;
   outline: none;
 }
+
 .admin-input:focus {
   border-color: rgba(143, 170, 66, 0.65);
   box-shadow: 0 0 0 3px rgba(143, 170, 66, 0.15);
 }
+
 .admin-btn-gold {
   background: linear-gradient(135deg, #8faa42 0%, #6b7f38 100%);
   color: #fffdf5;
 }
+
 .admin-page-title {
   color: #102619;
   font-family: var(--font-cormorant), serif;
 }
+
 .admin-card-muted {
   color: #6e655c;
 }
+
 .admin-badge-super {
   background: rgba(143, 170, 66, 0.15);
   color: #3d4a22;
 }
+
 .admin-badge-admin {
   background: #faf7f2;
   color: #6e655c;
   border: 1px solid #e8dfd2;
+}
+
+/* Free OSM map — vintage map-card look  */
+.paciano-leaflet-map .leaflet-tile-pane {
+  filter: sepia(0.32) saturate(0.78) contrast(1.06) brightness(1.04);
+}
+
+.paciano-map-pin-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.paciano-leaflet-map .leaflet-control-attribution {
+  font-size: 8px;
+  line-height: 1.2;
+  margin: 0 !important;
+  padding: 2px 4px !important;
+  background: rgba(244, 239, 228, 0.75) !important;
+  color: #4b5234 !important;
 }
