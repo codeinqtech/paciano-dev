@@ -9,33 +9,24 @@ use Illuminate\Http\Request;
 
 class SiteFooterController extends Controller
 {
-    /**
-     * GET /api/site-footer — public footer content (active only).
-     */
     public function publicIndex()
     {
         return response()->json([
             'success' => true,
-            'data' => $this->buildPublicPayload(),
+            'data' => $this->buildPayload(),
         ]);
     }
 
-    /**
-     * GET /api/admin/site-footer
-     */
     public function adminIndex(Request $request)
     {
         $this->ensureFooterPermission($request);
 
         return response()->json([
             'success' => true,
-            'data' => $this->buildAdminPayload(),
+            'data' => $this->buildPayload(),
         ]);
     }
 
-    /**
-     * PUT /api/admin/site-footer/settings
-     */
     public function updateSettings(Request $request)
     {
         $this->ensureFooterPermission($request);
@@ -55,11 +46,7 @@ class SiteFooterController extends Controller
             'maps_link' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $row = SiteFooter::query()->firstOrCreate(
-            ['kind' => SiteFooter::KIND_SETTINGS],
-            ['is_active' => true],
-        );
-
+        $row = SiteFooter::singleton();
         $row->update($data);
 
         return response()->json([
@@ -68,9 +55,6 @@ class SiteFooterController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/admin/site-footer/social
-     */
     public function storeSocial(Request $request)
     {
         $this->ensureFooterPermission($request);
@@ -81,28 +65,27 @@ class SiteFooterController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
 
-        $item = SiteFooter::query()->create([
-            'kind' => SiteFooter::KIND_SOCIAL,
+        $row = SiteFooter::singleton();
+        $links = $row->social_links ?? [];
+        $item = [
+            'id' => $row->nextJsonItemId($links),
             'platform' => strtolower(trim($data['platform'])),
             'url' => trim($data['url']),
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => true,
-        ]);
+        ];
+        $links[] = $item;
+        $row->update(['social_links' => $links]);
 
         return response()->json([
             'success' => true,
-            'data' => $this->socialToArray($item),
+            'data' => $item,
         ], 201);
     }
 
-    /**
-     * PUT /api/admin/site-footer/social/{id}
-     */
     public function updateSocial(Request $request, int $id)
     {
         $this->ensureFooterPermission($request);
-
-        $item = $this->findActiveSocial($id);
 
         $data = $request->validate([
             'platform' => ['sometimes', 'string', 'max:50'],
@@ -117,23 +100,25 @@ class SiteFooterController extends Controller
             $data['url'] = trim($data['url']);
         }
 
-        $item->update($data);
+        $row = SiteFooter::singleton();
+        $links = $row->social_links ?? [];
+        $updated = $this->patchJsonItem($links, $id, $data);
+        $row->update(['social_links' => $links]);
 
         return response()->json([
             'success' => true,
-            'data' => $this->socialToArray($item->fresh()),
+            'data' => $updated,
         ]);
     }
 
-    /**
-     * DELETE /api/admin/site-footer/social/{id}
-     */
     public function destroySocial(Request $request, int $id)
     {
         $this->ensureFooterPermission($request);
 
-        $item = $this->findActiveSocial($id);
-        $item->update(['is_active' => false]);
+        $row = SiteFooter::singleton();
+        $links = $row->social_links ?? [];
+        $this->softDeleteJsonItem($links, $id);
+        $row->update(['social_links' => $links]);
 
         return response()->json([
             'success' => true,
@@ -141,9 +126,6 @@ class SiteFooterController extends Controller
         ]);
     }
 
-    /**
-     * POST /api/admin/site-footer/location-info
-     */
     public function storeLocationInfo(Request $request)
     {
         $this->ensureFooterPermission($request);
@@ -155,29 +137,28 @@ class SiteFooterController extends Controller
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
 
-        $item = SiteFooter::query()->create([
-            'kind' => SiteFooter::KIND_LOCATION_INFO,
+        $row = SiteFooter::singleton();
+        $items = $row->location_info ?? [];
+        $item = [
+            'id' => $row->nextJsonItemId($items),
             'info_label' => trim($data['info_label']),
             'info_value' => trim($data['info_value']),
-            'info_icon' => $data['info_icon'] ?? 'map_pin',
+            'info_icon' => $data['info_icon'] ?? 'car',
             'sort_order' => $data['sort_order'] ?? 0,
             'is_active' => true,
-        ]);
+        ];
+        $items[] = $item;
+        $row->update(['location_info' => $items]);
 
         return response()->json([
             'success' => true,
-            'data' => $this->locationInfoToArray($item),
+            'data' => $item,
         ], 201);
     }
 
-    /**
-     * PUT /api/admin/site-footer/location-info/{id}
-     */
     public function updateLocationInfo(Request $request, int $id)
     {
         $this->ensureFooterPermission($request);
-
-        $item = $this->findActiveLocationInfo($id);
 
         $data = $request->validate([
             'info_label' => ['sometimes', 'string', 'max:120'],
@@ -193,23 +174,25 @@ class SiteFooterController extends Controller
             $data['info_value'] = trim($data['info_value']);
         }
 
-        $item->update($data);
+        $row = SiteFooter::singleton();
+        $items = $row->location_info ?? [];
+        $updated = $this->patchJsonItem($items, $id, $data);
+        $row->update(['location_info' => $items]);
 
         return response()->json([
             'success' => true,
-            'data' => $this->locationInfoToArray($item->fresh()),
+            'data' => $updated,
         ]);
     }
 
-    /**
-     * DELETE /api/admin/site-footer/location-info/{id}
-     */
     public function destroyLocationInfo(Request $request, int $id)
     {
         $this->ensureFooterPermission($request);
 
-        $item = $this->findActiveLocationInfo($id);
-        $item->update(['is_active' => false]);
+        $row = SiteFooter::singleton();
+        $items = $row->location_info ?? [];
+        $this->softDeleteJsonItem($items, $id);
+        $row->update(['location_info' => $items]);
 
         return response()->json([
             'success' => true,
@@ -217,20 +200,39 @@ class SiteFooterController extends Controller
         ]);
     }
 
-    private function findActiveSocial(int $id): SiteFooter
+    /**
+     * @param  list<array<string, mixed>>  $items
+     * @param  array<string, mixed>  $patch
+     * @return array<string, mixed>
+     */
+    private function patchJsonItem(array &$items, int $id, array $patch): array
     {
-        return SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_SOCIAL)
-            ->where('is_active', true)
-            ->findOrFail($id);
+        foreach ($items as $index => $item) {
+            if ((int) ($item['id'] ?? 0) !== $id || ($item['is_active'] ?? true) === false) {
+                continue;
+            }
+            $items[$index] = array_merge($item, $patch);
+
+            return $items[$index];
+        }
+
+        abort(404);
     }
 
-    private function findActiveLocationInfo(int $id): SiteFooter
+    /**
+     * @param  list<array<string, mixed>>  $items
+     */
+    private function softDeleteJsonItem(array &$items, int $id): void
     {
-        return SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_LOCATION_INFO)
-            ->where('is_active', true)
-            ->findOrFail($id);
+        foreach ($items as $index => $item) {
+            if ((int) ($item['id'] ?? 0) === $id && ($item['is_active'] ?? true) !== false) {
+                $items[$index]['is_active'] = false;
+
+                return;
+            }
+        }
+
+        abort(404);
     }
 
     private function ensureFooterPermission(Request $request): void
@@ -248,68 +250,23 @@ class SiteFooterController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function buildPublicPayload(): array
+    private function buildPayload(): array
     {
-        $settings = SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_SETTINGS)
-            ->where('is_active', true)
-            ->first();
+        $row = SiteFooter::singleton();
 
-        $social = SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_SOCIAL)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (SiteFooter $r) => $this->socialToArray($r))
-            ->values()
-            ->all();
-
-        $locationInfo = SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_LOCATION_INFO)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (SiteFooter $r) => $this->locationInfoToArray($r))
-            ->values()
-            ->all();
+        if (! $row->is_active) {
+            return [
+                'settings' => null,
+                'social' => [],
+                'location_info' => [],
+            ];
+        }
 
         return [
-            'settings' => $settings ? $this->settingsToArray($settings) : null,
-            'social' => $social,
-            'location_info' => $locationInfo,
+            'settings' => $this->settingsToArray($row),
+            'social' => $row->activeSocialLinks(),
+            'location_info' => $row->activeLocationInfo(),
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function buildAdminPayload(): array
-    {
-        $payload = $this->buildPublicPayload();
-
-        $payload['social_all'] = SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_SOCIAL)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (SiteFooter $r) => $this->socialToArray($r))
-            ->values()
-            ->all();
-
-        $payload['location_info_all'] = SiteFooter::query()
-            ->where('kind', SiteFooter::KIND_LOCATION_INFO)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (SiteFooter $r) => $this->locationInfoToArray($r))
-            ->values()
-            ->all();
-
-        return $payload;
     }
 
     /**
@@ -331,35 +288,6 @@ class SiteFooterController extends Controller
             'location_subtitle' => $row->location_subtitle,
             'location_description' => $row->location_description,
             'maps_link' => $row->maps_link,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function socialToArray(SiteFooter $row): array
-    {
-        return [
-            'id' => $row->id,
-            'platform' => $row->platform,
-            'url' => $row->url,
-            'sort_order' => $row->sort_order,
-            'is_active' => (bool) $row->is_active,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function locationInfoToArray(SiteFooter $row): array
-    {
-        return [
-            'id' => $row->id,
-            'info_label' => $row->info_label,
-            'info_value' => $row->info_value,
-            'info_icon' => $row->info_icon,
-            'sort_order' => $row->sort_order,
-            'is_active' => (bool) $row->is_active,
         ];
     }
 }
