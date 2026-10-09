@@ -7,6 +7,10 @@ import {
   } from "react";
   import testimonialLeaf from "@/images/testimonial-leaf.png";
   import guestStoriesLandscape from "@/images/paciano-guest-stories-landscape.webp";
+  import {
+    useHomeContent,
+    type HomeReviewVideo,
+  } from "@/hooks/useHomeContent";
   type CarouselHandle = {
     next: () => void;
     previous: () => void;
@@ -480,36 +484,71 @@ import {
     );
   };
   
-  const stories = [
+  const STATIC_MEMORY_STORIES: {
+    id: string;
+    title: string;
+    name: string;
+    location: string;
+    image: string;
+    videoUrl: string | null;
+  }[] = [
     {
+      id: "static-1",
       title: "A Family’s Escape",
-      duration: "03:12",
+      name: "A Family’s Escape",
+      location: "03:12",
       image:
         "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-2",
       title: "Finding Stillness",
-      duration: "02:48",
+      name: "Finding Stillness",
+      location: "02:48",
       image:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-3",
       title: "A Second Home",
-      duration: "02:05",
+      name: "A Second Home",
+      location: "02:05",
       image:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-4",
       title: "More Than a Stay",
-      duration: "01:56",
+      name: "More Than a Stay",
+      location: "01:56",
       image:
         "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
   ];
-  
+
   const GuestStories = () => {
     const testimonialCarouselRef = useRef<CarouselHandle>(null);
-  
+    const { ready, reviewVideos: apiVideos } = useHomeContent();
+    const [activeVideo, setActiveVideo] = useState<HomeReviewVideo | null>(
+      null,
+    );
+
+    const memoryStories =
+      ready && apiVideos.length > 0
+        ? apiVideos.map((v) => ({
+            id: String(v.id),
+            title: v.display_title || v.reviewer_name,
+            name: v.reviewer_name,
+            location: v.location,
+            image: v.thumbnail_url ?? "",
+            videoUrl: v.video_url,
+          }))
+        : STATIC_MEMORY_STORIES;
+
     return (
       <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]">
         {/* =========================================================
@@ -959,10 +998,8 @@ import {
               tabletCards={2}
               showControls={false}
             >
-              {stories.map((story) => (
-                <article key={story.title} className="group">
-                  {/* IMAGE */}
-  
+              {memoryStories.map((story) => (
+                <article key={story.id} className="group">
                   <div
                     className="
               relative
@@ -972,10 +1009,11 @@ import {
               bg-[#d6d0bf]
             "
                   >
-                    <img
-                      src={story.image}
-                      alt={story.title}
-                      className="
+                    {story.image ? (
+                      <img
+                        src={story.image}
+                        alt={story.title}
+                        className="
                 h-full
                 w-full
                 object-cover
@@ -984,9 +1022,8 @@ import {
                 ease-out
                 group-hover:scale-105
               "
-                    />
-  
-                    {/* OVERLAY */}
+                      />
+                    ) : null}
   
                     <div
                       className="
@@ -999,11 +1036,17 @@ import {
               "
                     />
   
-                    {/* PLAY */}
-  
                     <button
                       type="button"
                       aria-label={`Play ${story.title}`}
+                      disabled={!story.videoUrl}
+                      onClick={() => {
+                        if (!story.videoUrl) return;
+                        const match = apiVideos.find(
+                          (v) => String(v.id) === story.id,
+                        );
+                        if (match) setActiveVideo(match);
+                      }}
                       className="
                 absolute
                 left-1/2
@@ -1025,13 +1068,12 @@ import {
                 duration-500
                 group-hover:scale-110
                 group-hover:bg-white/15
+                disabled:opacity-40
               "
                     >
                       <span className="ml-1 text-[22px]">▶</span>
                     </button>
                   </div>
-  
-                  {/* TITLE */}
   
                   <h3
                     className="
@@ -1045,10 +1087,8 @@ import {
               sm:text-[23px]
             "
                   >
-                    {story.title}
+                    {story.name}
                   </h3>
-  
-                  {/* DURATION */}
   
                   <div
                     className="
@@ -1060,13 +1100,46 @@ import {
               text-[#696b67]
             "
                   >
-                    {story.duration}
+                    {story.location}
                   </div>
                 </article>
               ))}
             </Carousel>
           </RevealItem>
         </div>
+
+        {activeVideo?.video_url ? (
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Guest review video"
+            onClick={() => setActiveVideo(null)}
+          >
+            <div
+              className="relative w-full max-w-4xl rounded-2xl bg-[#0a0a0a] p-2 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="absolute -top-10 right-0 text-sm text-white/90 hover:text-white"
+                onClick={() => setActiveVideo(null)}
+              >
+                Close
+              </button>
+              <video
+                src={activeVideo.video_url}
+                className="max-h-[80vh] w-full rounded-xl"
+                controls
+                autoPlay
+                playsInline
+              />
+              <p className="mt-3 px-2 text-center font-[Mona_Sans,sans-serif] text-xs tracking-[0.2em] text-white/80">
+                {activeVideo.reviewer_name} · {activeVideo.location}
+              </p>
+            </div>
+          </div>
+        ) : null}
   
         {/* =========================================================
             REFERENCE LANDSCAPE BELOW GUEST STORIES

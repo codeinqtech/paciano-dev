@@ -10,9 +10,47 @@ import leftLeaf from"@/images/location-left-leaves.png"
 import bottomLeaf from "@/images/location-bottom-leaf.png";
 import PacianoLocationMapCard from "@/components/PacianoLocationMapCard";
 import { useSiteFooter } from "@/hooks/useSiteFooter";
+import { useHomeContent } from "@/hooks/useHomeContent";
+
+const STATIC_LOCATION = {
+  eyebrow: "OUR LOCATION",
+  heading_primary: "Paciano Means",
+  heading_accent: "Peace.",
+  description:
+    "Nestled in Lataguri, Dooars, Paciano is surrounded by rivers, forests and misty mountains — a place where nature slows you down and life feels fuller.",
+  featureLabels: [
+    { line1: "Scenic", line2: "Surroundings" },
+    { line1: "Easy", line2: "Access" },
+    { line1: "By the River,", line2: "Amidst Nature" },
+    { line1: "A Peaceful", line2: "Getaway" },
+  ],
+};
 
 const LocationSection: React.FC = () => {
   const { settings, location_info } = useSiteFooter();
+  const { ready, location: cmsLocation } = useHomeContent();
+
+  const copy =
+    ready && cmsLocation
+      ? {
+          eyebrow: cmsLocation.eyebrow ?? STATIC_LOCATION.eyebrow,
+          heading_primary:
+            cmsLocation.heading_primary ?? STATIC_LOCATION.heading_primary,
+          heading_accent:
+            cmsLocation.heading_accent ?? STATIC_LOCATION.heading_accent,
+          description:
+            cmsLocation.description ?? STATIC_LOCATION.description,
+          featureLabels:
+            cmsLocation.feature_labels?.length === 4
+              ? cmsLocation.feature_labels
+              : STATIC_LOCATION.featureLabels,
+        }
+      : STATIC_LOCATION;
+
+  const locationHeroSrc =
+    ready && cmsLocation?.landscape_image_url
+      ? cmsLocation.landscape_image_url
+      : locationView;
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -534,7 +572,7 @@ const LocationSection: React.FC = () => {
         >
           <img
             ref={heroImageRef}
-            src={locationView}
+            src={locationHeroSrc}
             alt="Paciano surrounded by mountains, river and the Paciano property"
             className="
               absolute
@@ -596,7 +634,7 @@ const LocationSection: React.FC = () => {
       "
     >
     <img
-    src={locationView}
+    src={locationHeroSrc}
     alt="Paciano surrounded by mountains, river and the Paciano property"
     className="
       absolute
@@ -811,7 +849,7 @@ const LocationSection: React.FC = () => {
             text-[#555544]
           "
         >
-          OUR LOCATION
+          {copy.eyebrow}
         </span>
       </div>
 
@@ -847,7 +885,7 @@ const LocationSection: React.FC = () => {
   }}
 >
     <span className="block whitespace-nowrap">
-      Paciano Means
+      {copy.heading_primary}
     </span>
 
     <span
@@ -859,7 +897,7 @@ const LocationSection: React.FC = () => {
         text-[#68704D]
       "
     >
-      Peace.
+      {copy.heading_accent}
     </span>
   </h2>
 
@@ -894,9 +932,7 @@ const LocationSection: React.FC = () => {
     transitionDelay: "820ms",
   }}
 >
-    Nestled in Lataguri, Dooars, Paciano is surrounded by
-    rivers, forests and misty mountains â€” a place where
-    nature slows you down and life feels fuller.
+    {copy.description}
   </p>
 
 
@@ -1044,9 +1080,9 @@ style={{
             group-hover:text-[#20251C]
           "
         >
-          Scenic
+          {copy.featureLabels[0]?.line1}
           <br />
-          Surroundings
+          {copy.featureLabels[0]?.line2}
         </span>
 
       </div>
@@ -1196,9 +1232,9 @@ style={{
             group-hover:text-[#20251C]
           "
         >
-          Easy
+          {copy.featureLabels[1]?.line1}
           <br />
-          Access
+          {copy.featureLabels[1]?.line2}
         </span>
 
       </div>
@@ -1335,9 +1371,9 @@ style={{
             group-hover:text-[#20251C]
           "
         >
-          By the River,
+          {copy.featureLabels[2]?.line1}
           <br />
-          Amidst Nature
+          {copy.featureLabels[2]?.line2}
         </span>
 
       </div>
@@ -1481,9 +1517,9 @@ style={{
             group-hover:text-[#20251C]
           "
         >
-          A Peaceful
+          {copy.featureLabels[3]?.line1}
           <br />
-          Getaway
+          {copy.featureLabels[3]?.line2}
         </span>
 
       </div>

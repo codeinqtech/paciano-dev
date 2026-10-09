@@ -51,3 +51,40 @@ export async function apiRequest<T>(
 
   return data as T;
 }
+
+/** Multipart upload (do not set Content-Type — browser sets boundary). */
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  method: "POST" | "PUT" = "POST",
+): Promise<T> {
+  const headers = new Headers();
+  headers.set("Accept", "application/json");
+
+  const token = getAuthToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const res = await fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
+    method,
+    headers,
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const message =
+      (data as { message?: string }).message ||
+      Object.values(
+        (data as { errors?: Record<string, string[]> }).errors ?? {},
+      )
+        .flat()
+        .find(Boolean) ||
+      "Upload failed";
+    throw { message, status: res.status } satisfies ApiError;
+  }
+
+  return data as T;
+}

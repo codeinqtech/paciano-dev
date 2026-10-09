@@ -1,13 +1,89 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import heroImage from "@/images/hero6.png";
+import { useHomeContent } from "@/hooks/useHomeContent";
 import leafImage from "@/images/hh.png";
 import logoImage from "@/images/paciano-logo.png";
 
+const HERO_VIDEO_SRC = `${
+  import.meta.env.BASE_URL
+}videos/contact-video.MOV`.replace(/\/{2,}/g, "/");
+
+type HeroImageSlide = {
+  id: string;
+  kind: "image";
+  src: string;
+  alt: string;
+  objectPosition?: string;
+};
+
+type HeroVideoSlide = {
+  id: string;
+  kind: "video";
+  src: string;
+  alt: string;
+};
+
+const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
+  {
+    id: "hero",
+    kind: "image",
+    src: heroImage,
+    alt: "Paciano river valley at sunset",
+  },
+  {
+    id: "story",
+    kind: "video",
+    src: HERO_VIDEO_SRC,
+    alt: "Paciano — our story",
+  },
+];
+
+const SLIDE_MS = 9000;
+
 export default function HeroSection() {
+  const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
+  const heroSlides = useMemo((): (HeroImageSlide | HeroVideoSlide)[] => {
+    if (!ready || apiBannerSlides.length === 0) {
+      return FALLBACK_HERO_SLIDES;
+    }
+    return apiBannerSlides.map((s) =>
+      s.media_type === "video"
+        ? {
+            id: `banner-${s.id}`,
+            kind: "video" as const,
+            src: s.url,
+            alt: "Paciano banner video",
+          }
+        : {
+            id: `banner-${s.id}`,
+            kind: "image" as const,
+            src: s.url,
+            alt: "Paciano banner",
+          },
+    );
+  }, [ready, apiBannerSlides]);
+
   const [intro, setIntro] = useState(false);
   const [camera, setCamera] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      setSlideIndex(
+        (index + heroSlides.length) % Math.max(heroSlides.length, 1),
+      );
+    },
+    [heroSlides.length],
+  );
 
   useEffect(() => {
     /*
@@ -45,6 +121,30 @@ export default function HeroSection() {
     };
   }, []);
 
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+
+    if (heroSlides.length < 2) return;
+
+    const timer = window.setInterval(() => {
+      setSlideIndex((i) => (i + 1) % heroSlides.length);
+    }, SLIDE_MS);
+    return () => window.clearInterval(timer);
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      if (i === slideIndex && heroSlides[i]?.kind === "video") {
+        video.currentTime = 0;
+        void video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, [slideIndex, heroSlides]);
+
   return (
     <section className="relative isolate h-screen min-h-[680px] w-full overflow-hidden bg-[#050a06] text-[#f5f0e7]">
       <style>{`
@@ -54,7 +154,7 @@ export default function HeroSection() {
   }
 
   to {
-    transform: translate3d(3.8%, 1.2%, 0) scale(1.06);
+    transform: translate3d(2.2%, 0.8%, 0) scale(1.03);
   }
 }
 
@@ -259,67 +359,68 @@ export default function HeroSection() {
       ========================================================== */}
 
       <div className="absolute inset-0 overflow-hidden">
-        {/* <img
-          src={heroImage}
-          alt="Paciano river valley at sunset"
-          className={[
-            "absolute inset-0",
-            "h-full w-full max-w-none",
-            "object-cover",
-            "object-center",
-            "brightness-[0.94] saturate-[0.86] contrast-[0.98]",
-            "transition-transform duration-[16000ms]",
-            "ease-[cubic-bezier(0.22,1,0.36,1)]",
-            camera
-              ? "translate-x-0 translate-y-[-0.2%] scale-[1.005]"
-              : "translate-x-0 translate-y-0 scale-100",
-          ].join(" ")}
-        /> */}
-        <img
-          src={heroImage}
-          alt="Paciano river valley at sunset"
-          //   className="
-          //     absolute
-          //     inset-0
-          //     h-full
-          //     w-full
-          //     max-w-none
-          //     object-cover
-          //     object-center
-          //     brightness-[0.94]
-          //     saturate-[0.86]
-          //     contrast-[0.98]
-          // "
-          className="
-  absolute
-  inset-0
-  h-full
-  w-full
-  max-w-none
-  object-cover
-  object-center
-"
-          style={{
-            animation: "pacianoHeroDrift 42s linear forwards",
-            transformOrigin: "center center",
-          }}
-        />
-        <div
-          className="
-    pointer-events-none
-    absolute
-    inset-0
-    z-[1]
-  "
-        >
+        {heroSlides.map((slide, i) => {
+          const active = i === slideIndex;
+          const mediaClass = `
+            absolute inset-0 h-full w-full max-w-none object-cover object-center
+            transition-opacity duration-[2200ms] ease-[cubic-bezier(0.22,1,0.36,1)]
+            ${active ? "opacity-100 z-[0]" : "opacity-0 z-[-1]"}
+          `;
+
+          if (slide.kind === "video") {
+            return (
+              <video
+                key={slide.id}
+                ref={(el) => {
+                  videoRefs.current[i] = el;
+                }}
+                src={slide.src}
+                className={mediaClass}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-label={slide.alt}
+                style={
+                  active
+                    ? {
+                        animation: "pacianoHeroDrift 42s linear infinite",
+                        transformOrigin: "center center",
+                      }
+                    : undefined
+                }
+              />
+            );
+          }
+
+          const pos = slide.objectPosition ?? "center center";
+
+          return (
+            <img
+              key={slide.id}
+              src={slide.src}
+              alt={slide.alt}
+              decoding="async"
+              fetchPriority={slide.id === "hero" ? "high" : "auto"}
+              className={mediaClass}
+              style={{
+                objectPosition: pos,
+                ...(active
+                  ? {
+                      animation: "pacianoHeroDrift 42s linear infinite",
+                      transformOrigin: "center center",
+                    }
+                  : {}),
+              }}
+            />
+          );
+        })}
+
+        <div className="pointer-events-none absolute inset-0 z-[1]">
           <div
-            className="
-      absolute
-      inset-0
-      opacity-0
-    "
+            className="absolute inset-0 opacity-0"
             style={{
-              animation: "pacianoSunsetVeil 42s linear forwards",
+              animation: "pacianoSunsetVeil 42s linear infinite",
             }}
           />
         </div>
@@ -373,6 +474,37 @@ via-[#020603]/10
       to-transparent
     "
         />
+      </div>
+
+      {/* Slide dots — leaf frame stays above on every slide (z-20) */}
+      <div
+        className="
+          absolute
+          bottom-[118px]
+          left-[4.5vw]
+          z-[35]
+          flex
+          items-center
+          gap-2.5
+        "
+      >
+        {heroSlides.map((slide, i) => (
+          <button
+            key={slide.id}
+            type="button"
+            aria-label={`Show banner ${i + 1}`}
+            aria-current={i === slideIndex ? "true" : undefined}
+            onClick={() => goToSlide(i)}
+            className={`
+              h-2 rounded-full transition-all duration-500
+              ${
+                i === slideIndex
+                  ? "w-7 bg-[#a5d56d]/90"
+                  : "w-2 bg-white/35 hover:bg-white/55"
+              }
+            `}
+          />
+        ))}
       </div>
 
       {/* =========================================================
@@ -1023,6 +1155,10 @@ lg:mt-[75px]
       >
         <button
           type="button"
+          onClick={() => {
+            const videoIdx = heroSlides.findIndex((s) => s.kind === "video");
+            if (videoIdx >= 0) goToSlide(videoIdx);
+          }}
           className="
             group
 

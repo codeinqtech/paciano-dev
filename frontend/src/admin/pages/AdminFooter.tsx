@@ -8,7 +8,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
 
-type TabId = "brand" | "map" | "contact" | "social" | "mapRows";
+type TabId = "brand" | "map" | "social" | "mapRows";
 
 type Settings = {
   id?: number;
@@ -44,7 +44,6 @@ type LocationInfoRow = {
 const TABS: { id: TabId; label: string }[] = [
   { id: "brand", label: "Brand text" },
   { id: "map", label: "Map card" },
-  { id: "contact", label: "Contact hero" },
   { id: "social", label: "Social media" },
   { id: "mapRows", label: "Map info rows" },
 ];
@@ -142,11 +141,6 @@ export default function AdminFooter() {
             map_title: settings.map_title?.trim() || null,
             map_subtitle: settings.map_subtitle?.trim() || null,
             map_description: settings.map_description?.trim() || null,
-            location_eyebrow: settings.location_eyebrow?.trim() || null,
-            location_heading: settings.location_heading?.trim() || null,
-            location_subtitle: settings.location_subtitle?.trim() || null,
-            location_description:
-              settings.location_description?.trim() || null,
             maps_link: settings.maps_link?.trim() || null,
           }),
         },
@@ -398,65 +392,6 @@ export default function AdminFooter() {
                 value={settings.maps_link ?? ""}
                 onChange={(e) =>
                   setSettings((s) => ({ ...s, maps_link: e.target.value }))
-                }
-              />
-            </Field>
-          </div>
-          <SaveButton onClick={saveSettings} saving={savingSettings} />
-        </section>
-      ) : null}
-
-      {tab === "contact" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-[#332C26]">
-            Contact page hero (above map card)
-          </h2>
-          <div className="grid gap-4">
-            <Field label="Eyebrow">
-              <input
-                className="admin-input w-full rounded-xl px-4 py-2.5"
-                value={settings.location_eyebrow ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    location_eyebrow: e.target.value,
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Heading">
-              <input
-                className="admin-input w-full rounded-xl px-4 py-2.5"
-                value={settings.location_heading ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    location_heading: e.target.value,
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Subtitle">
-              <input
-                className="admin-input w-full rounded-xl px-4 py-2.5"
-                value={settings.location_subtitle ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    location_subtitle: e.target.value,
-                  }))
-                }
-              />
-            </Field>
-            <Field label="Description">
-              <textarea
-                className="admin-input w-full min-h-[100px] rounded-xl px-4 py-3 text-sm"
-                value={settings.location_description ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    location_description: e.target.value,
-                  }))
                 }
               />
             </Field>

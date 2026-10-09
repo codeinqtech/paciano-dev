@@ -3,12 +3,20 @@
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\HomeAdminController;
+use App\Http\Controllers\Api\HomePublicController;
 use App\Http\Controllers\Api\SiteFooterController;
 use App\Http\Controllers\Api\SiteNavigationMenuController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
 Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
+
+Route::prefix('home')->group(function (): void {
+    Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
+    Route::get('location', [HomePublicController::class, 'location']);
+    Route::get('review-videos', [HomePublicController::class, 'reviewVideos']);
+});
 
 Route::prefix('auth')->group(function (): void {
     Route::post('login', [AuthController::class, 'login']);
@@ -45,5 +53,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('site-footer/location-info', [SiteFooterController::class, 'storeLocationInfo']);
         Route::put('site-footer/location-info/{id}', [SiteFooterController::class, 'updateLocationInfo']);
         Route::delete('site-footer/location-info/{id}', [SiteFooterController::class, 'destroyLocationInfo']);
+
+        Route::get('home/banner-slides', [HomeAdminController::class, 'bannerIndex']);
+        Route::post('home/banner-slides', [HomeAdminController::class, 'bannerStore']);
+        Route::put('home/banner-slides/{id}', [HomeAdminController::class, 'bannerUpdate']);
+        Route::delete('home/banner-slides/{id}', [HomeAdminController::class, 'bannerDestroy']);
+
+        Route::get('home/location', [HomeAdminController::class, 'locationShow']);
+        Route::post('home/location', [HomeAdminController::class, 'locationUpdate']);
+
+        Route::get('home/review-videos', [HomeAdminController::class, 'reviewIndex']);
+        Route::post('home/review-videos', [HomeAdminController::class, 'reviewStore']);
+        Route::post('home/review-videos/{id}', [HomeAdminController::class, 'reviewUpdate']);
+        Route::delete('home/review-videos/{id}', [HomeAdminController::class, 'reviewDestroy']);
     });
 });

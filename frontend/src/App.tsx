@@ -9,6 +9,7 @@ import Dashboard from "@/admin/pages/Dashboard";
 import AdminProfile from "@/admin/pages/AdminProfile";
 import AdminUsers from "@/admin/pages/AdminUsers";
 import AdminContentSection from "@/admin/pages/AdminContentSection";
+import AdminHomepage from "@/admin/pages/AdminHomepage";
 import AdminNavbarMenus from "@/admin/pages/AdminNavbarMenus";
 import AdminFooter from "@/admin/pages/AdminFooter";
 
@@ -26,7 +27,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="profile" element={<AdminProfile />} />
         <Route path="users" element={<AdminUsers />} />
-        <Route path="homepage" element={<AdminContentSection menuId="homepage" />} />
+        <Route path="homepage" element={<AdminHomepage />} />
         <Route path="contact" element={<AdminContentSection menuId="contact" />} />
         <Route path="stay" element={<AdminContentSection menuId="stay" />} />
         <Route path="navbar" element={<AdminNavbarMenus />} />
