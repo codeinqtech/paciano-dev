@@ -31,7 +31,7 @@
 /frontend/.env
 /frontend/.env.*
 !/frontend/.env.example
-
+/frontend/public/videos/contact-video.MOV
 
 # =========================
 # Docker
