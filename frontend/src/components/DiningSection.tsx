@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useHomeContent } from "@/hooks/useHomeContent";
 
 import diningstory from "@/images/dining-story.png";
 import diningOne from "@/images/dining-1.png";
@@ -14,7 +15,7 @@ type Slide = {
   quote: string;
 };
 
-const slides: Slide[] = [
+const defaultSlides: Slide[] = [
   {
     image: diningstory,
     quote: "“Good food brings people closer to what matters.”",
@@ -38,6 +39,35 @@ export default function DiningSection() {
 
   const [isVisible, setIsVisible] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  const { ready, dining: diningCms } = useHomeContent();
+
+  const slides = useMemo(() => {
+    if (!ready || !diningCms?.slides?.length) {
+      return defaultSlides;
+    }
+    return diningCms.slides.map((s, index) => ({
+      image: s.image_url || defaultSlides[index]?.image || diningstory,
+      quote: s.quote ?? defaultSlides[index]?.quote ?? "",
+    }));
+  }, [ready, diningCms]);
+
+  const diningHeading1 =
+    ready && diningCms?.section?.heading_line_1
+      ? diningCms.section.heading_line_1
+      : "Dining, Inspired By";
+  const diningHeading2 =
+    ready && diningCms?.section?.heading_line_2
+      ? diningCms.section.heading_line_2
+      : "Nature.";
+  const diningHeadingAccent =
+    ready && diningCms?.section?.heading_accent
+      ? diningCms.section.heading_accent
+      : "Flavours, Slowly Savoured.";
+  const diningDescription =
+    ready && diningCms?.section?.description
+      ? diningCms.section.description
+      : "Seasonal ingredients, locally sourced. Thoughtfully prepared. At Paciano, dining is a celebration of the land — where the valley's harvest, rivers and forests inspire meaningful flavours and unhurried moments.";
 
   /* =========================================================
      REPEATING SCROLL REVEAL
@@ -78,7 +108,7 @@ export default function DiningSection() {
     }, 5200);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const nextSlide = () => {
     setActiveSlide((current) => (current + 1) % slides.length);
@@ -242,9 +272,9 @@ export default function DiningSection() {
                 ).style
               }
             >
-              <span className="block">Dining, Inspired By</span>
+              <span className="block">{diningHeading1}</span>
 
-              <span className="block">Nature.</span>
+              <span className="block">{diningHeading2}</span>
 
               <span
                 className="
@@ -258,7 +288,7 @@ export default function DiningSection() {
               text-[#78943F]
             "
               >
-                Flavours, Slowly Savoured.
+                {diningHeadingAccent}
               </span>
             </h2>
 
@@ -295,10 +325,7 @@ export default function DiningSection() {
                 ).style
               }
             >
-              Seasonal ingredients, locally sourced. Thoughtfully prepared. At
-              Paciano, dining is a celebration of the land — where the valley’s
-              harvest, rivers and forests inspire meaningful flavours and
-              unhurried moments.
+              {diningDescription}
             </p>
 
             {/* =================================================

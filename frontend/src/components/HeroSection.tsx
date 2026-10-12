@@ -8,6 +8,7 @@ import React, {
 
 import heroImage from "@/images/hero6.png";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 import leafImage from "@/images/hh.png";
 import logoImage from "@/images/paciano-logo.png";
 
@@ -53,22 +54,29 @@ export default function HeroSection() {
     if (!ready || apiBannerSlides.length === 0) {
       return FALLBACK_HERO_SLIDES;
     }
-    return apiBannerSlides.map((s) =>
-      s.media_type === "video"
+    return apiBannerSlides.map((s) => {
+      const src = resolveMediaUrl(s.url) ?? s.url;
+      return s.media_type === "video"
         ? {
             id: `banner-${s.id}`,
             kind: "video" as const,
-            src: s.url,
+            src,
             alt: "Paciano banner video",
           }
         : {
             id: `banner-${s.id}`,
             kind: "image" as const,
-            src: s.url,
+            src,
             alt: "Paciano banner",
-          },
-    );
+          };
+    });
   }, [ready, apiBannerSlides]);
+
+  const heroSlidesKey = heroSlides.map((s) => `${s.id}:${s.src}`).join("|");
+
+  useEffect(() => {
+    setSlideIndex(0);
+  }, [heroSlidesKey]);
 
   const [intro, setIntro] = useState(false);
   const [camera, setCamera] = useState(false);

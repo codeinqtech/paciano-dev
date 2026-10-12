@@ -9,6 +9,10 @@ import {
 import { Film, ImageIcon, Plus, Trash2, Pencil, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest, apiUpload } from "../../api/client";
+import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
+
+const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
+const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
@@ -147,13 +151,25 @@ export default function AdminHomepage() {
       toast.error("Choose an image or video file");
       return;
     }
+    const maxBytes =
+      bannerType === "video" ? BANNER_VIDEO_MAX_BYTES : BANNER_IMAGE_MAX_BYTES;
+    if (bannerFile.size > maxBytes) {
+      toast.error(
+        bannerType === "video"
+          ? `Video must be under ${BANNER_VIDEO_MAX_BYTES / (1024 * 1024)} MB. Compress the file and try again.`
+          : `Image must be under ${BANNER_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`,
+      );
+      return;
+    }
     setBannerSaving(true);
     try {
       const fd = new FormData();
       fd.append("media_type", bannerType);
       fd.append("file", bannerFile);
       fd.append("sort_order", String(bannerSort));
-      await apiUpload("/admin/home/banner-slides", fd);
+      await apiUpload("/admin/home/banner-slides", fd, "POST", {
+        timeoutMs: bannerType === "video" ? 600_000 : 120_000,
+      });
       toast.success("Banner slide added");
       setBannerModal(false);
       setBannerFile(null);
@@ -362,13 +378,13 @@ export default function AdminHomepage() {
                         <td className="px-4 py-3">
                           {row.media_type === "image" ? (
                             <img
-                              src={row.url}
+                              src={resolveMediaUrl(row.url) ?? row.url}
                               alt=""
                               className="h-14 w-28 rounded-lg object-cover"
                             />
                           ) : (
                             <video
-                              src={row.url}
+                              src={resolveMediaUrl(row.url) ?? row.url}
                               className="h-14 w-28 rounded-lg object-cover"
                               muted
                               playsInline
@@ -662,7 +678,7 @@ export default function AdminHomepage() {
             hint={
               bannerType === "image"
                 ? "PNG/JPG — saved as WebP"
-                : "MP4/MOV — compressed when ffmpeg is available"
+                : "MP4/MOV up to 500 MB. Files over ~80 MB are stored as-is (ffmpeg compresses smaller videos). Very large uploads may need PHP upload_max_filesize increased on the server."
             }
             file={bannerFile}
             onFileChange={setBannerFile}

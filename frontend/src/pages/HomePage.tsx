@@ -24,6 +24,8 @@ export default function HomePage() {
 function HomePageInner() {
   const [scrolled, setScrolled] = useState(false);
   const { loading } = useHomeContent();
+  const [loaderVisible, setLoaderVisible] = useState(true);
+  const [loaderExiting, setLoaderExiting] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -35,23 +37,44 @@ function HomePageInner() {
   }, []);
 
   useEffect(() => {
-    if (!loading) return;
+    if (loading) {
+      setLoaderVisible(true);
+      setLoaderExiting(false);
+      return;
+    }
+    if (loaderVisible && !loaderExiting) {
+      setLoaderExiting(true);
+    }
+  }, [loading, loaderVisible, loaderExiting]);
+
+  useEffect(() => {
+    if (!loaderVisible) {
+      return;
+    }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [loading]);
+  }, [loaderVisible]);
 
   return (
     <>
-      {loading ? <PacianoHomeLoader /> : null}
+      {loaderVisible ? (
+        <PacianoHomeLoader
+          exiting={loaderExiting}
+          onExitComplete={() => {
+            setLoaderVisible(false);
+            setLoaderExiting(false);
+          }}
+        />
+      ) : null}
       <Navbar scrolled={scrolled} activeNav="home" />
       <main className="overflow-hidden bg-[#ece6d8]">
         <HeroSection />
         <AboutUs />
         <Accommodation />
-        <DiningSection />
+        {/* <DiningSection /> */}
         <GuestStories />
         <Location />
         <Footer />

@@ -16,6 +16,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,7 +29,7 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
-      
+
       - name: Create frontend environment file
         working-directory: frontend
         run: |
@@ -39,24 +41,57 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
-      
-      - name: Check for old production URL
+
+      - name: Verify frontend build (assets must include images)
         working-directory: frontend
         run: |
-          echo "===== CHECKING FOR frontend ====="
+          test -f dist/index.html
+          test -d dist/assets
+          js_count=$(find dist/assets -maxdepth 1 -type f -name '*.js' | wc -l)
+          css_count=$(find dist/assets -maxdepth 1 -type f -name '*.css' | wc -l)
+          img_count=$(find dist/assets -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) | wc -l)
+          echo "Built assets: js=${js_count} css=${css_count} images=${img_count}"
+          if [ "$js_count" -lt 1 ] || [ "$css_count" -lt 1 ]; then
+            echo "Missing JS/CSS in dist/assets"
+            exit 1
+          fi
+          if [ "$img_count" -lt 20 ]; then
+            echo "Too few image files in dist/assets — build or checkout may be incomplete"
+            exit 1
+          fi
 
+      - name: Archive frontend dist (full tree)
+        run: tar -czf frontend-dist.tar.gz -C frontend/dist .
 
-      - name: Deploy frontend
+      - name: Upload frontend archive
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
-          source: "frontend/dist/*"
-          target: "/home/u688571317/domains/codeinq.com/public_html/paciano/"
-          strip_components: 2
+          source: frontend-dist.tar.gz
+          target: /home/u688571317/domains/codeinq.com/public_html/paciano/
           overwrite: true
+
+      - name: Extract frontend on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            set -e
+            cd /home/u688571317/domains/codeinq.com/public_html/paciano
+            tar -xzf frontend-dist.tar.gz
+            rm -f frontend-dist.tar.gz
+            img_count=$(find assets -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | wc -l)
+            echo "On server: image files in assets/: ${img_count}"
+            if [ "${img_count}" -lt 20 ]; then
+              echo "ERROR: image assets missing after extract"
+              exit 1
+            fi
 
       - name: Deploy backend
         uses: appleboy/scp-action@v0.1.7
@@ -82,9 +117,13 @@ jobs:
 
             composer install --no-dev --optimize-autoloader
 
-            php artisan migrate --force 
+            php artisan migrate --force
 
             php artisan config:clear
             php artisan cache:clear
             php artisan route:clear
             php artisan view:clear
+
+            mkdir -p public/uploads/banner/images public/uploads/banner/videos
+            mkdir -p public/uploads/home public/uploads/reviews
+            chmod -R 775 public/uploads 2>/dev/null || true

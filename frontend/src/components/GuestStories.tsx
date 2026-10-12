@@ -550,7 +550,9 @@ import {
         : STATIC_MEMORY_STORIES;
 
     return (
-      <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]">
+      <section className="relative isolate overflow-hidden bg-[#F4F0E7] text-[#1d2828]">
+        {/* <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]"></section> */}
+        
         {/* =========================================================
             SOFT ATMOSPHERIC BACKGROUND
         ========================================================= */}
@@ -598,12 +600,13 @@ import {
             MAIN CONTENT
         ========================================================= */}
   
-        <div className="relative z-10 mx-auto max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-24 xl:px-16">
+        <div className="relative z-10 mx-auto max-w-[1440px] px-5  sm:px-8 lg:px-12 lg:py-24 xl:px-16">
+          {/* <div className="relative z-10 mx-auto max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-24 xl:px-16"></div> */}
           {/* =======================================================
                 CENTERED TESTIMONIAL EYEBROW
             ======================================================= */}
   
-          <RevealItem delay={0}>
+          {/* <RevealItem delay={0}>
             <div className="flex flex-col items-center justify-center">
               <svg
                 viewBox="0 0 40 40"
@@ -653,34 +656,34 @@ import {
                 <span className="hidden h-px w-16 bg-[#aaa17f] sm:block" />
               </div>
             </div>
-          </RevealItem>
+          </RevealItem> */}
   
           {/* =======================================================
                 HEADER
             ======================================================= */}
   
-          <div className="mt-8 grid items-end gap-10 lg:grid-cols-[1.1fr_0.85fr_auto] lg:gap-8">
+          {/* <div className="mt-8 grid items-end gap-10 lg:grid-cols-[1.1fr_0.85fr_auto] lg:gap-8"> */}
             {/* HEADING */}
-            <RevealItem delay={120}>
+            {/* <RevealItem delay={120}>
               <h2 className="max-w-[650px] font-['Cormorant_Garamond',serif] text-[48px] font-medium leading-[0.88] tracking-[-0.045em] text-[#172224] sm:text-[58px] md:text-[68px] lg:text-[72px]">
                 What Our Guests Say
                 <span className="block font-['Cormorant_Garamond',serif] text-[#817b5d] italic">
                   About Paciano.
                 </span>
               </h2>
-            </RevealItem>
+            </RevealItem> */}
             {/* DESCRIPTION */}
-            <RevealItem delay={180}>
+            {/* <RevealItem delay={180}>
               <div className="border-l border-[#bdb59a] pl-7 lg:mb-2">
                 <p className="max-w-[430px]  font-manrope text-[15px] font-light leading-[1.85] text-[#565b59] sm:text-[15px]">
                   From meaningful experiences to unforgettable moments, our guests
                   share what makes Paciano truly special.
                 </p>
               </div>
-            </RevealItem>
+            </RevealItem> */}
   
             {/* ARROWS */}
-            <RevealItem delay={300}>
+            {/* <RevealItem delay={300}>
               <div className="flex items-center gap-3 border-l border-[#bdb59a] pl-7 lg:mb-2">
                 <button
                   type="button"
@@ -800,13 +803,13 @@ import {
                   </svg>
                 </button>
               </div>
-            </RevealItem>
-          </div>
+            </RevealItem> */}
+          {/* </div> */}
           {/* =======================================================
               TESTIMONIAL CAROUSEL
           ======================================================= */}
   
-          <RevealItem delay={420}>
+          {/* <RevealItem delay={420}>
             <Carousel
               ref={testimonialCarouselRef}
               gap={20}
@@ -838,7 +841,7 @@ import {
             sm:p-9
           "
                 >
-                  {/* QUOTATION MARK */}
+                 
   
                   <div
                     className="
@@ -854,7 +857,7 @@ import {
                     “
                   </div>
   
-                  {/* QUOTE */}
+                  
   
                   <p
                     className="
@@ -876,11 +879,11 @@ import {
                     “{item.quote}”
                   </p>
   
-                  {/* DIVIDER */}
+                  
   
                   <div className="my-6 ml-10 h-px w-[55px] bg-[#8d8569]" />
   
-                  {/* GUEST */}
+                  
   
                   <div className="ml-10 flex items-center gap-5">
                     <div
@@ -938,7 +941,7 @@ import {
                 </article>
               ))}
             </Carousel>
-          </RevealItem>
+          </RevealItem> */}
   
           {/* =======================================================
               STORIES DIVIDER
@@ -972,11 +975,12 @@ import {
               </svg>
   
               {/* ELEGANT CENTERED RULE + LABEL */}
-              <div className="flex w-full items-center justify-center gap-5 sm:gap-7">
+              <div className="flex w-full items-center justify-center gap-5 sm:gap-7 mb-7">
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
   
                 <span className="whitespace-nowrap font-[Mona_Sans,sans-serif] text-[12px] font-medium tracking-[0.38em] text-[#77715c] sm:text-[10px] sm:tracking-[0.4em]">
-                  MEMORIES MADE AT PACIANO
+                  {/* MEMORIES MADE AT PACIANO */}
+                  POSTCARDS FROM PACIANO
                 </span>
   
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
