@@ -42,43 +42,54 @@ class HomeAdminController extends Controller
         $mediaType = $request->input('media_type');
         $maxKb = $mediaType === 'video' ? 512000 : 51200;
 
-        $data = $request->validate([
-            'media_type' => ['required', 'in:image,video'],
-            'file' => ['required', 'file', 'max:'.$maxKb],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ]);
-
-        $type = $data['media_type'];
-        /** @var \Illuminate\Http\UploadedFile $file */
-        $file = $data['file'];
-
-        if ($type === 'video') {
-            @set_time_limit(600);
+        if ($mediaType === 'video' && ! $request->hasFile('file')) {
+            return response()->json([
+                'message' => 'The video did not reach the server. Increase PHP upload_max_filesize and post_max_size on Hostinger (512M or higher), then try again.',
+            ], 422);
         }
 
-        if ($type === 'image') {
-            $stored = $this->media->storeBannerImage($file);
-        } else {
-            $stored = $this->media->storeBannerVideo($file);
+        try {
+            $data = $request->validate([
+                'media_type' => ['required', 'in:image,video'],
+                'file' => ['required', 'file', 'max:'.$maxKb],
+                'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            ]);
+
+            $type = $data['media_type'];
+            /** @var \Illuminate\Http\UploadedFile $file */
+            $file = $data['file'];
+
+            if ($type === 'video') {
+                @set_time_limit(600);
+                @ini_set('memory_limit', '512M');
+            }
+
+            if ($type === 'image') {
+                $stored = $this->media->storeBannerImage($file);
+            } else {
+                $stored = $this->media->storeBannerVideo($file);
+            }
+
+            $slide = HomeBannerSlide::query()->create([
+                'media_type' => $type,
+                'file_name' => $stored['file_name'],
+                'file_path' => $stored['file_path'],
+                'sort_order' => $data['sort_order'] ?? 0,
+                'is_active' => true,
+            ]);
+
+            $payload = [
+                'success' => true,
+                'data' => $slide->toPublicArray(),
+            ];
+            if ($type === 'video' && isset($stored['compression'])) {
+                $payload['video_compression'] = $stored['compression'];
+            }
+
+            return response()->json($payload, 201);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $slide = HomeBannerSlide::query()->create([
-            'media_type' => $type,
-            'file_name' => $stored['file_name'],
-            'file_path' => $stored['file_path'],
-            'sort_order' => $data['sort_order'] ?? 0,
-            'is_active' => true,
-        ]);
-
-        $payload = [
-            'success' => true,
-            'data' => $slide->toPublicArray(),
-        ];
-        if ($type === 'video' && isset($stored['compression'])) {
-            $payload['video_compression'] = $stored['compression'];
-        }
-
-        return response()->json($payload, 201);
     }
 
     public function bannerUpdate(Request $request, int $id)

@@ -79,6 +79,9 @@ export default function AdminHomepage() {
   const [bannerSaving, setBannerSaving] = useState(false);
   const [bannerVideoCompression, setBannerVideoCompression] =
     useState<VideoCompressionInfo | null>(null);
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(
+    null,
+  );
   const [reviewVideoCompression, setReviewVideoCompression] =
     useState<VideoCompressionInfo | null>(null);
 
@@ -175,6 +178,7 @@ export default function AdminHomepage() {
       return;
     }
     setBannerSaving(true);
+    setBannerUploadError(null);
     try {
       const fd = new FormData();
       fd.append("media_type", bannerType);
@@ -199,7 +203,9 @@ export default function AdminHomepage() {
       }
     } catch (e) {
       const err = e as { message?: string };
-      toast.error(err.message || "Upload failed");
+      const msg = err.message || "Upload failed";
+      setBannerUploadError(msg);
+      toast.error(msg);
     } finally {
       setBannerSaving(false);
     }
@@ -394,6 +400,7 @@ export default function AdminHomepage() {
                 setBannerSort(banners.length * 10);
                 setBannerFile(null);
                 setBannerVideoCompression(null);
+                setBannerUploadError(null);
                 setBannerModal(true);
               }}
               className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
@@ -685,6 +692,7 @@ export default function AdminHomepage() {
             setBannerModal(false);
             setBannerFile(null);
             setBannerVideoCompression(null);
+            setBannerUploadError(null);
           }}
           onSave={
             bannerVideoCompression
@@ -752,6 +760,11 @@ export default function AdminHomepage() {
           />
           {bannerType === "video" && bannerVideoCompression ? (
             <VideoCompressionPanel info={bannerVideoCompression} />
+          ) : null}
+          {bannerUploadError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+              {bannerUploadError}
+            </div>
           ) : null}
           <Field label="Sort order (lower shows first)">
             <input

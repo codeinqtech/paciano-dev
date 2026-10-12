@@ -4,13 +4,18 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class HomeMediaService
 {
-    /** Videos at or above this size must be compressed with ffmpeg on upload. */
+    /** Videos at or above this size are compressed with ffmpeg when available. */
     public const VIDEO_LARGE_BYTES = 100 * 1024 * 1024;
+
+    private ?string $resolvedFfmpegBinary = null;
+
+    private bool $ffmpegLookupDone = false;
 
     public function storeBannerImage(UploadedFile $file): array
     {
@@ -79,12 +84,13 @@ class HomeMediaService
         $path = $dir.DIRECTORY_SEPARATOR.$name;
         $tmpJpg = sys_get_temp_dir().DIRECTORY_SEPARATOR.$this->uniqueName('frame', 'jpg');
 
-        if (! $this->ffmpegAvailable()) {
+        $ffmpegBin = $this->resolveFfmpegBinary();
+        if ($ffmpegBin === null) {
             throw new RuntimeException('Upload a thumbnail or install ffmpeg to capture one from the video.');
         }
 
         $this->runFfmpeg([
-            'ffmpeg', '-y', '-i', $videoFull,
+            $ffmpegBin, '-y', '-i', $videoFull,
             '-ss', '0.25', '-frames:v', '1', '-q:v', '2',
             $tmpJpg,
         ]);
@@ -133,33 +139,59 @@ class HomeMediaService
      */
     private function transcodeVideoToMp4(UploadedFile $file, string $dest, string $scaleFilter): array
     {
-        $originalBytes = max(0, (int) $file->getSize());
-        $mustCompress = $originalBytes >= self::VIDEO_LARGE_BYTES;
-        $ffmpeg = $this->ffmpegAvailable();
-
-        if ($mustCompress && ! $ffmpeg) {
+        if (! $file->isValid()) {
             throw new RuntimeException(
-                'Videos of 100 MB or larger must be compressed on the server. Install ffmpeg on the host or upload a smaller file.',
+                'Upload failed before the file reached the server. Ask your host to raise PHP upload_max_filesize and post_max_size (512M or higher for large videos).',
             );
         }
 
-        if ($ffmpeg) {
-            $this->runFfmpeg([
-                'ffmpeg', '-y', '-i', $file->getPathname(),
-                '-vf', $scaleFilter,
-                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
-                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
-                $dest,
-            ]);
-            $storedBytes = is_file($dest) ? (int) filesize($dest) : 0;
+        $originalBytes = max(0, (int) $file->getSize());
+        $shouldCompress = $originalBytes >= self::VIDEO_LARGE_BYTES;
+        $ffmpegBin = $this->resolveFfmpegBinary();
 
-            return $this->compressionStats(true, $originalBytes, $storedBytes);
+        if ($shouldCompress && $ffmpegBin !== null) {
+            try {
+                $this->runFfmpeg([
+                    $ffmpegBin, '-y', '-i', $file->getPathname(),
+                    '-vf', $scaleFilter,
+                    '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
+                    '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
+                    $dest,
+                ]);
+                $storedBytes = is_file($dest) ? (int) filesize($dest) : 0;
+                if ($storedBytes > 0) {
+                    return $this->compressionStats(true, $originalBytes, $storedBytes);
+                }
+            } catch (RuntimeException $e) {
+                Log::warning('Video ffmpeg transcode failed; storing original upload.', [
+                    'error' => $e->getMessage(),
+                    'bytes' => $originalBytes,
+                ]);
+                if (is_file($dest)) {
+                    @unlink($dest);
+                }
+            }
+        } elseif ($shouldCompress) {
+            Log::warning('Large video upload without ffmpeg; storing original file.', [
+                'bytes' => $originalBytes,
+            ]);
         }
 
-        $file->move(dirname($dest), basename($dest));
+        $this->storeUploadedVideoAsIs($file, $dest);
         $storedBytes = is_file($dest) ? (int) filesize($dest) : $originalBytes;
 
         return $this->compressionStats(false, $originalBytes, $storedBytes);
+    }
+
+    private function storeUploadedVideoAsIs(UploadedFile $file, string $dest): void
+    {
+        $dir = dirname($dest);
+        $targetName = basename($dest);
+        $file->move($dir, $targetName);
+
+        if (! is_file($dest)) {
+            throw new RuntimeException('Could not save the uploaded video. Check folder permissions on public/uploads.');
+        }
     }
 
     /**
@@ -328,11 +360,46 @@ class HomeMediaService
         imagedestroy($src);
     }
 
-    private function ffmpegAvailable(): bool
+    private function resolveFfmpegBinary(): ?string
     {
+        if ($this->ffmpegLookupDone) {
+            return $this->resolvedFfmpegBinary;
+        }
+
+        $this->ffmpegLookupDone = true;
+
+        $candidates = array_values(array_filter([
+            env('FFMPEG_PATH'),
+            env('FFMPEG_BINARY'),
+            'ffmpeg',
+            '/usr/bin/ffmpeg',
+            '/usr/local/bin/ffmpeg',
+        ]));
+
+        foreach ($candidates as $binary) {
+            if ($this->ffmpegBinaryWorks((string) $binary)) {
+                $this->resolvedFfmpegBinary = (string) $binary;
+
+                return $this->resolvedFfmpegBinary;
+            }
+        }
+
+        return null;
+    }
+
+    private function ffmpegBinaryWorks(string $binary): bool
+    {
+        if ($binary === '') {
+            return false;
+        }
+
+        if (str_contains($binary, '/') && ! is_executable($binary)) {
+            return false;
+        }
+
         $out = [];
         $code = 1;
-        @exec('ffmpeg -version 2>&1', $out, $code);
+        @exec(escapeshellarg($binary).' -version 2>&1', $out, $code);
 
         return $code === 0;
     }
@@ -353,7 +420,11 @@ class HomeMediaService
 
         @exec($line.' 2>&1', $out, $code);
         if ($code !== 0) {
-            throw new RuntimeException('Video processing failed. Install ffmpeg or upload a smaller MP4.');
+            $detail = trim(implode("\n", array_slice($out, -3)));
+            $suffix = $detail !== '' ? ' '.$detail : '';
+            throw new RuntimeException(
+                'Video compression failed on the server.'.$suffix.' Set FFMPEG_PATH in backend .env or upload a smaller MP4.',
+            );
         }
     }
 }
