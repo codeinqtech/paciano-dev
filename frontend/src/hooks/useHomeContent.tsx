@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 export type HomeBannerSlide = {
   id: number;
@@ -111,9 +112,7 @@ type HomeContentValue = {
   dining: HomeDiningContent | null;
 };
 
-const apiBase = (
-  import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000/api"
-).replace(/\/$/, "");
+const apiBase = getApiBaseUrl();
 
 const FETCH_TIMEOUT_MS = 12_000;
 
