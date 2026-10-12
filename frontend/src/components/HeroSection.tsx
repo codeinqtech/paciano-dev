@@ -73,18 +73,19 @@ export default function HeroSection() {
   }, [ready, apiBannerSlides]);
 
   const heroSlidesKey = heroSlides.map((s) => `${s.id}:${s.src}`).join("|");
-  const activeSlide = heroSlides[slideIndex];
-  const showImageBannerChrome = activeSlide?.kind === "image";
-
-  useEffect(() => {
-    setSlideIndex(0);
-  }, [heroSlidesKey]);
 
   const [intro, setIntro] = useState(false);
   const [camera, setCamera] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const activeSlide = heroSlides[slideIndex];
+  const showImageBannerChrome = activeSlide?.kind === "image";
+
+  useEffect(() => {
+    setSlideIndex(0);
+  }, [heroSlidesKey]);
 
   const goToSlide = useCallback(
     (index: number) => {
