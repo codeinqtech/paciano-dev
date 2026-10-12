@@ -399,7 +399,7 @@ class HomeMediaService
 
         $out = [];
         $code = 1;
-        @exec(escapeshellarg($binary).' -version 2>&1', $out, $code);
+        @\exec(\escapeshellarg($binary).' -version 2>&1', $out, $code);
 
         return $code === 0;
     }
@@ -409,7 +409,7 @@ class HomeMediaService
      */
     private function runFfmpeg(array $command): void
     {
-        $escaped = array_map(static fn (string $part) => escapeshellarg($part), $command);
+        $escaped = array_map(static fn (string $part) => \escapeshellarg($part), $command);
         $line = implode(' ', $escaped);
         $out = [];
         $code = 1;
@@ -418,7 +418,7 @@ class HomeMediaService
             $this->ensureDir(dirname($dest));
         }
 
-        @exec($line.' 2>&1', $out, $code);
+        @\exec($line.' 2>&1', $out, $code);
         if ($code !== 0) {
             $detail = trim(implode("\n", array_slice($out, -3)));
             $suffix = $detail !== '' ? ' '.$detail : '';
