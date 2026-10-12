@@ -1,13 +1,11 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { Film, ImageIcon, Plus, Trash2, Pencil, Upload, X } from "lucide-react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Film, ImageIcon, Plus, Trash2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  MediaFileUploadZone,
+  VideoCompressionPanel,
+  type VideoCompressionInfo,
+} from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
 
@@ -16,13 +14,6 @@ const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
-
-type VideoCompressionInfo = {
-  applied: boolean;
-  original_bytes: number;
-  stored_bytes: number;
-  saved_percent: number;
-};
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
 
@@ -576,7 +567,7 @@ export default function AdminHomepage() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6E655C]">
               Landscape photo
             </p>
-            <FileUploadZone
+            <MediaFileUploadZone
               variant="image"
               title="Location section image"
               hint="Wide landscape — converted to WebP on upload"
@@ -742,7 +733,7 @@ export default function AdminHomepage() {
               </button>
             </div>
           </Field>
-          <FileUploadZone
+          <MediaFileUploadZone
             variant={bannerType === "image" ? "image" : "video"}
             title={
               bannerType === "image" ? "Hero banner image" : "Hero banner video"
@@ -864,7 +855,7 @@ export default function AdminHomepage() {
 
           <FormSection title="Upload files">
             <div className="grid gap-4 sm:grid-cols-2">
-              <FileUploadZone
+              <MediaFileUploadZone
                 variant="image"
                 title="Thumbnail"
                 hint="Optional — first video frame is used if empty"
@@ -878,7 +869,7 @@ export default function AdminHomepage() {
                 }
                 onFileChange={setThumbFile}
               />
-              <FileUploadZone
+              <MediaFileUploadZone
                 variant="video"
                 title="Video file"
                 hint="Up to 500 MB. Files 100 MB+ are compressed on upload when ffmpeg is available."
@@ -996,187 +987,6 @@ function FormModal({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function VideoCompressionPanel({ info }: { info: VideoCompressionInfo }) {
-  if (!info.applied) {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950">
-        <p className="font-medium">Uploaded without server compression</p>
-        <p className="mt-1 text-xs text-amber-900/90">
-          Final size: {formatFileSize(info.stored_bytes)}. Install ffmpeg on
-          the server to compress large videos automatically.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-[#68704D]/30 bg-[#68704D]/[0.08] px-4 py-3 text-sm text-[#2d3a1f]">
-      <p className="font-semibold text-[#3d4a22]">Video compressed on upload</p>
-      <ul className="mt-2 space-y-1 text-xs text-[#4a5644]">
-        <li>
-          Original:{" "}
-          <span className="font-medium">{formatFileSize(info.original_bytes)}</span>
-        </li>
-        <li>
-          Stored on site:{" "}
-          <span className="font-medium">{formatFileSize(info.stored_bytes)}</span>
-        </li>
-        <li>
-          Size reduced by:{" "}
-          <span className="font-semibold text-[#3d4a22]">
-            {info.saved_percent}%
-          </span>
-        </li>
-      </ul>
-    </div>
-  );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function FileUploadZone({
-  variant,
-  title,
-  hint,
-  file,
-  onFileChange,
-  required,
-  optional,
-  existingPreviewUrl,
-}: {
-  variant: "image" | "video";
-  title: string;
-  hint: string;
-  file: File | null;
-  onFileChange: (file: File | null) => void;
-  required?: boolean;
-  optional?: boolean;
-  existingPreviewUrl?: string | null;
-}) {
-  const inputId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file || variant !== "image") {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file, variant]);
-
-  const isImage = variant === "image";
-  const borderAccent = isImage
-    ? "border-[#68704D]/40 hover:border-[#68704D] focus-within:border-[#68704D] focus-within:ring-[#68704D]/20"
-    : "border-[#4a5568]/40 hover:border-[#4a5568] focus-within:border-[#4a5568] focus-within:ring-[#4a5568]/20";
-  const bgAccent = isImage ? "bg-[#68704D]/[0.06]" : "bg-[#4a5568]/[0.06]";
-  const iconBg = isImage ? "bg-[#68704D]/15 text-[#3d4a22]" : "bg-[#4a5568]/15 text-[#2d3748]";
-
-  const displayPreview =
-    preview ?? (existingPreviewUrl && !file ? existingPreviewUrl : null);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="mb-2 flex items-center gap-2">
-        <span
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg}`}
-        >
-          {isImage ? (
-            <ImageIcon className="h-4 w-4" aria-hidden />
-          ) : (
-            <Film className="h-4 w-4" aria-hidden />
-          )}
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-[#332C26]">
-            {title}
-            {required ? (
-              <span className="ml-1 text-[#68704D]">*</span>
-            ) : null}
-            {optional ? (
-              <span className="ml-2 text-xs font-normal text-[#6E655C]">
-                (optional — keep current if empty)
-              </span>
-            ) : null}
-          </p>
-          <p className="text-[11px] text-[#6E655C]">{hint}</p>
-        </div>
-      </div>
-
-      <div
-        className={`relative flex min-h-[148px] flex-1 flex-col overflow-hidden rounded-xl border-2 border-dashed transition-all focus-within:ring-2 ${borderAccent} ${bgAccent}`}
-      >
-        {displayPreview && isImage ? (
-          <div className="relative h-28 w-full shrink-0 border-b border-[#EDE4D8]/80">
-            <img
-              src={displayPreview}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : null}
-
-        <label
-          htmlFor={inputId}
-          className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 px-4 py-5 text-center"
-        >
-          <Upload className="h-6 w-6 text-[#8A8177]" aria-hidden />
-          <span className="text-sm font-medium text-[#332C26]">
-            {file ? "Change file" : "Click to choose file"}
-          </span>
-          <span className="text-[11px] text-[#6E655C]">
-            {isImage ? "JPEG, PNG, WebP" : "MP4, MOV, WebM"}
-          </span>
-        </label>
-
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept={isImage ? "image/*" : "video/*"}
-          className="sr-only"
-          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
-        />
-      </div>
-
-      {file ? (
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white/80 px-3 py-2 text-xs ring-1 ring-[#EDE4D8]">
-          <span className="truncate font-medium text-[#332C26]">
-            {file.name}
-          </span>
-          <span className="shrink-0 text-[#6E655C]">
-            {formatFileSize(file.size)}
-          </span>
-          <button
-            type="button"
-            className="shrink-0 rounded p-0.5 text-[#6E655C] hover:bg-[#EDE4D8]/60 hover:text-red-700"
-            aria-label="Remove selected file"
-            onClick={() => {
-              onFileChange(null);
-              if (inputRef.current) inputRef.current.value = "";
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : null}
-
-      {!file && variant === "video" && existingPreviewUrl ? (
-        <p className="mt-2 text-[11px] text-[#6E655C]">
-          Current video is saved on the server. Upload a new file only if you
-          want to replace it.
-        </p>
-      ) : null}
     </div>
   );
 }
