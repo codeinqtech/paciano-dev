@@ -1,101 +1,121 @@
-import emblem from "@/images/paciano-loading-emblem.png";
+import { useEffect, useRef } from "react";
+import loaderArt from "@/images/paciano-loader.png";
+import RingGlowSvg from "@/components/paciano-loader/RingGlowSvg";
+import "./paciano-loader/paciano-loader.css";
 
-/** Ring radius in viewBox units (matches artwork ~84% diameter). */
-const RING_CX = 50;
-const RING_CY = 50;
-const RING_R = 41.2;
-const RING_C = 2 * Math.PI * RING_R;
-/** Visible glow arc length along the stroke. */
-const GLOW_ARC = RING_C * 0.09;
+const EXIT_MS = 1200;
 
-export default function PacianoHomeLoader() {
+type Props = {
+  exiting?: boolean;
+  onExitComplete?: () => void;
+};
+
+const LOADING_LETTERS = [
+  { letter: "L", className: "paciano-loader__letter--l" },
+  { letter: "O", className: "paciano-loader__letter--o" },
+  { letter: "A", className: "paciano-loader__letter--a" },
+  { letter: "D", className: "paciano-loader__letter--d" },
+  { letter: "I", className: "paciano-loader__letter--i" },
+  { letter: "N", className: "paciano-loader__letter--n" },
+  { letter: "G", className: "paciano-loader__letter--g" },
+] as const;
+
+const BOTANICAL_LAYERS = [
+  { name: "large-left", className: "paciano-loader__botanical-leaf--large-left" },
+  { name: "lower-left", className: "paciano-loader__botanical-leaf--lower-left" },
+  { name: "bottom", className: "paciano-loader__botanical-leaf--bottom" },
+  { name: "branch-top", className: "paciano-loader__botanical-leaf--branch-top" },
+  { name: "branch-left", className: "paciano-loader__botanical-leaf--branch-left" },
+  { name: "branch-right", className: "paciano-loader__botanical-leaf--branch-right" },
+  { name: "sprout-left", className: "paciano-loader__botanical-leaf--sprout-left" },
+  { name: "sprout-right", className: "paciano-loader__botanical-leaf--sprout-right" },
+] as const;
+
+export default function PacianoHomeLoader({
+  exiting = false,
+  onExitComplete,
+}: Props) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    if (!exiting || !onExitComplete) {
+      return;
+    }
+    completedRef.current = false;
+
+    const finish = () => {
+      if (completedRef.current) {
+        return;
+      }
+      completedRef.current = true;
+      onExitComplete();
+    };
+
+    const node = overlayRef.current;
+    const onTransitionEnd = (e: TransitionEvent) => {
+      if (e.target === node && e.propertyName === "opacity") {
+        finish();
+      }
+    };
+    node?.addEventListener("transitionend", onTransitionEnd);
+    const fallback = window.setTimeout(finish, EXIT_MS + 80);
+
+    return () => {
+      node?.removeEventListener("transitionend", onTransitionEnd);
+      window.clearTimeout(fallback);
+    };
+  }, [exiting, onExitComplete]);
+
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#030303]"
+      ref={overlayRef}
+      className={`paciano-loader-overlay fixed inset-0 z-[9999] flex items-center justify-center${
+        exiting ? " paciano-loader-overlay--exit" : ""
+      }`}
       role="status"
       aria-live="polite"
-      aria-label="Loading Paciano"
+      aria-label={exiting ? "Loading complete" : "Loading Paciano"}
+      aria-hidden={exiting}
     >
-      <div className="relative w-[min(320px,82vw)] max-w-[320px]">
-        <style>{`
-          @keyframes pacianoRingTravel {
-            to {
-              stroke-dashoffset: ${-RING_C};
-            }
-          }
-          @keyframes pacianoLoadingLineMove {
-            0%,
-            100% {
-              transform: translateX(-50%) translateX(-34px);
-            }
-            50% {
-              transform: translateX(-50%) translateX(34px);
-            }
-          }
-        `}</style>
+      <div
+        className="paciano-loader"
+        role="img"
+        aria-label="Paciano loading"
+      >
+        <img
+          className="paciano-loader__artwork"
+          src={loaderArt}
+          alt=""
+          draggable={false}
+        />
 
-        <div className="relative aspect-square w-full">
-          <img
-            src={emblem}
-            alt=""
-            className="relative z-[1] h-full w-full object-contain"
-            draggable={false}
-          />
+        <RingGlowSvg />
 
-          {/* Glow travels along the ring stroke only (SVG path), never outside the circle */}
-          <svg
-            className="pointer-events-none absolute inset-0 z-[2] h-full w-full"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="xMidYMid meet"
-            aria-hidden
-          >
-            <defs>
-              <filter id="pacianoGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="0.35" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              <linearGradient id="pacianoGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="rgba(255,248,220,0)" />
-                <stop offset="35%" stopColor="rgba(255,236,190,0.85)" />
-                <stop offset="50%" stopColor="rgba(255,255,255,1)" />
-                <stop offset="65%" stopColor="rgba(255,236,190,0.85)" />
-                <stop offset="100%" stopColor="rgba(255,248,220,0)" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx={RING_CX}
-              cy={RING_CY}
-              r={RING_R}
-              fill="none"
-              stroke="url(#pacianoGlowGrad)"
-              strokeWidth="0.55"
-              strokeLinecap="round"
-              strokeDasharray={`${GLOW_ARC} ${RING_C - GLOW_ARC}`}
-              strokeDashoffset="0"
-              filter="url(#pacianoGlow)"
-              style={{
-                animation: "pacianoRingTravel 2.8s linear infinite",
-              }}
+        <div className="paciano-loader__botanical" aria-hidden>
+          {BOTANICAL_LAYERS.map((leaf) => (
+            <img
+              key={leaf.name}
+              className={`paciano-loader__botanical-leaf ${leaf.className}`}
+              src={loaderArt}
+              alt=""
+              draggable={false}
+              data-leaf={leaf.name}
             />
-          </svg>
+          ))}
+        </div>
 
-          {/* Hide baked-in underline from PNG so only the animated line is visible */}
-          <div
-            className="pointer-events-none absolute left-1/2 top-[57.65%] z-[2] h-[3px] w-[74px] -translate-x-1/2 rounded-sm bg-[#030303]"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute left-1/2 top-[57.8%] z-[3] h-[1.5px] w-[68px] rounded-full bg-[#c4a862]"
-            style={{
-              boxShadow:
-                "0 0 6px rgba(212,188,122,0.55), 0 0 2px rgba(255,248,220,0.4)",
-              animation: "pacianoLoadingLineMove 2.2s ease-in-out infinite",
-            }}
-            aria-hidden
-          />
+        <div className="paciano-loader__letters" aria-hidden>
+          {LOADING_LETTERS.map((item) => (
+            <img
+              key={item.letter}
+              className={`paciano-loader__letter ${item.className}`}
+              src={loaderArt}
+              alt=""
+              draggable={false}
+              data-letter={item.letter}
+            />
+          ))}
         </div>
       </div>
     </div>

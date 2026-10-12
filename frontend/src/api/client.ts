@@ -57,6 +57,7 @@ export async function apiUpload<T>(
   path: string,
   formData: FormData,
   method: "POST" | "PUT" = "POST",
+  options?: { timeoutMs?: number },
 ): Promise<T> {
   const headers = new Headers();
   headers.set("Accept", "application/json");
@@ -66,11 +67,30 @@ export async function apiUpload<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
-    method,
-    headers,
-    body: formData,
-  });
+  const timeoutMs = options?.timeoutMs ?? 120_000;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path.startsWith("/") ? path : `/${path}`}`, {
+      method,
+      headers,
+      body: formData,
+      signal: controller.signal,
+    });
+  } catch (e) {
+    window.clearTimeout(timeout);
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw {
+        message: "Upload timed out. Try a smaller file or check your connection.",
+        status: 408,
+      } satisfies ApiError;
+    }
+    throw e;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 
   const data = await res.json().catch(() => ({}));
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -10,8 +11,7 @@ class HomeMediaService
 {
     public function storeBannerImage(UploadedFile $file): array
     {
-        $dir = public_path('uploads/banner/images');
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('banner', 'images');
 
         $name = $this->uniqueName('banner', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
@@ -26,14 +26,18 @@ class HomeMediaService
 
     public function storeBannerVideo(UploadedFile $file): array
     {
-        $dir = public_path('uploads/banner/videos');
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('banner', 'videos');
 
         $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
-        $name = $this->uniqueName('banner_vid', $ext === 'mov' ? 'mp4' : ($ext ?: 'mp4'));
-        $dest = $dir.DIRECTORY_SEPARATOR.$name;
+        $sizeBytes = (int) $file->getSize();
+        $compressWithFfmpeg =
+            $this->ffmpegAvailable()
+            && $sizeBytes > 0
+            && $sizeBytes <= 80 * 1024 * 1024;
 
-        if ($this->ffmpegAvailable()) {
+        if ($compressWithFfmpeg) {
+            $name = $this->uniqueName('banner_vid', 'mp4');
+            $dest = $dir.DIRECTORY_SEPARATOR.$name;
             $tmp = $file->getPathname();
             $this->runFfmpeg([
                 'ffmpeg', '-y', '-i', $tmp,
@@ -43,6 +47,8 @@ class HomeMediaService
                 $dest,
             ]);
         } else {
+            $safeExt = in_array($ext, ['mp4', 'mov', 'webm'], true) ? $ext : 'mp4';
+            $name = $this->uniqueName('banner_vid', $safeExt);
             $file->move($dir, $name);
         }
 
@@ -54,8 +60,7 @@ class HomeMediaService
 
     public function storeReviewThumbnail(UploadedFile $file, int $year): array
     {
-        $dir = public_path('uploads/reviews/'.$year);
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('reviews', (string) $year);
 
         $name = $this->uniqueName('review_thumb', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
@@ -80,8 +85,7 @@ class HomeMediaService
             throw new RuntimeException('Video file not found for thumbnail capture.');
         }
 
-        $dir = public_path('uploads/reviews/'.$year);
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('reviews', (string) $year);
 
         $name = $this->uniqueName('review_thumb', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
@@ -113,8 +117,7 @@ class HomeMediaService
 
     public function storeReviewVideo(UploadedFile $file, int $year): array
     {
-        $dir = public_path('uploads/reviews/'.$year);
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('reviews', (string) $year);
 
         $name = $this->uniqueName('review_vid', 'mp4');
         $dest = $dir.DIRECTORY_SEPARATOR.$name;
@@ -139,8 +142,7 @@ class HomeMediaService
 
     public function storeLocationLandscape(UploadedFile $file): array
     {
-        $dir = public_path('uploads/banner/images');
-        $this->ensureDir($dir);
+        $dir = $this->uploadDirectory('banner', 'images');
 
         $name = $this->uniqueName('location', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
@@ -150,6 +152,26 @@ class HomeMediaService
         return [
             'file_name' => $name,
             'file_path' => 'uploads/banner/images/'.$name,
+        ];
+    }
+
+    /**
+     * @param  string  $folder  e.g. about, experiences, stays, dining
+     * @return array{file_name: string, file_path: string}
+     */
+    public function storeHomeSectionImage(UploadedFile $file, string $folder): array
+    {
+        $safe = preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?: 'misc';
+        $dir = $this->uploadDirectory('home', $safe);
+
+        $name = $this->uniqueName('home_'.$safe, 'webp');
+        $path = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $this->convertImageToWebp($file->getPathname(), $path, 2400, 82);
+
+        return [
+            'file_name' => $name,
+            'file_path' => 'uploads/home/'.$safe.'/'.$name,
         ];
     }
 
@@ -170,7 +192,10 @@ class HomeMediaService
             return null;
         }
 
-        return url('/'.ltrim(str_replace('\\', '/', $relativePath), '/'));
+        $path = ltrim(str_replace('\\', '/', $relativePath), '/');
+        $base = rtrim((string) config('app.media_url', config('app.url')), '/');
+
+        return $base.'/'.$path;
     }
 
     private function uniqueName(string $prefix, string $extension): string
@@ -178,10 +203,42 @@ class HomeMediaService
         return $prefix.'_'.now()->format('YmdHis').'_'.Str::lower(Str::random(10)).'.'.ltrim($extension, '.');
     }
 
+    /**
+     * Resolve public/uploads/... and create the full path if missing.
+     *
+     * @param  string  ...$segments  Path under public/uploads (e.g. "banner", "images")
+     */
+    private function uploadDirectory(string ...$segments): string
+    {
+        $relative = 'uploads/'.implode('/', array_map(
+            static fn (string $part) => trim(str_replace(['\\', '..'], '', $part), '/'),
+            $segments,
+        ));
+
+        $dir = public_path(str_replace('/', DIRECTORY_SEPARATOR, $relative));
+        $this->ensureDir($dir);
+
+        return $dir;
+    }
+
     private function ensureDir(string $dir): void
     {
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        if (is_dir($dir)) {
+            return;
+        }
+
+        try {
+            File::ensureDirectoryExists($dir, 0755, true);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                'Could not create upload folder: '.$dir,
+                0,
+                $e,
+            );
+        }
+
+        if (! is_dir($dir) || ! is_writable($dir)) {
+            throw new RuntimeException('Upload folder is not writable: '.$dir);
         }
     }
 
@@ -244,6 +301,11 @@ class HomeMediaService
         $line = implode(' ', $escaped);
         $out = [];
         $code = 1;
+        $dest = $command[array_key_last($command)] ?? null;
+        if (is_string($dest) && $dest !== '') {
+            $this->ensureDir(dirname($dest));
+        }
+
         @exec($line.' 2>&1', $out, $code);
         if ($code !== 0) {
             throw new RuntimeException('Video processing failed. Install ffmpeg or upload a smaller MP4.');

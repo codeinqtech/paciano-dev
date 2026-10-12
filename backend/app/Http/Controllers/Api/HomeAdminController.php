@@ -39,15 +39,22 @@ class HomeAdminController extends Controller
     {
         $this->ensureHomePermission($request);
 
+        $mediaType = $request->input('media_type');
+        $maxKb = $mediaType === 'video' ? 512000 : 51200;
+
         $data = $request->validate([
             'media_type' => ['required', 'in:image,video'],
-            'file' => ['required', 'file', 'max:102400'],
+            'file' => ['required', 'file', 'max:'.$maxKb],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
 
         $type = $data['media_type'];
         /** @var \Illuminate\Http\UploadedFile $file */
         $file = $data['file'];
+
+        if ($type === 'video') {
+            @set_time_limit(600);
+        }
 
         if ($type === 'image') {
             $stored = $this->media->storeBannerImage($file);

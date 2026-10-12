@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HomeAdminController;
 use App\Http\Controllers\Api\HomePublicController;
+use App\Http\Controllers\Api\HomeSectionsAdminController;
+use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
 use App\Http\Controllers\Api\SiteNavigationMenuController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +18,11 @@ Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
     Route::get('location', [HomePublicController::class, 'location']);
     Route::get('review-videos', [HomePublicController::class, 'reviewVideos']);
+
+    Route::get('sections/about', [HomeSectionsPublicController::class, 'about']);
+    Route::get('sections/experiences', [HomeSectionsPublicController::class, 'experiences']);
+    Route::get('sections/stays', [HomeSectionsPublicController::class, 'stays']);
+    Route::get('sections/dining', [HomeSectionsPublicController::class, 'dining']);
 });
 
 Route::prefix('auth')->group(function (): void {
@@ -66,5 +73,20 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('home/review-videos', [HomeAdminController::class, 'reviewStore']);
         Route::post('home/review-videos/{id}', [HomeAdminController::class, 'reviewUpdate']);
         Route::delete('home/review-videos/{id}', [HomeAdminController::class, 'reviewDestroy']);
+
+        Route::get('home/sections/about', [HomeSectionsAdminController::class, 'aboutShow']);
+        Route::post('home/sections/about', [HomeSectionsAdminController::class, 'aboutUpdate']);
+
+        Route::get('home/sections/experiences', [HomeSectionsAdminController::class, 'experiencesShow']);
+        Route::post('home/sections/experiences/intro', [HomeSectionsAdminController::class, 'experiencesSectionUpdate']);
+        Route::post('home/sections/experiences/items/{id}', [HomeSectionsAdminController::class, 'experienceItemUpdate']);
+
+        Route::get('home/sections/stays', [HomeSectionsAdminController::class, 'staysShow']);
+        Route::post('home/sections/stays/intro', [HomeSectionsAdminController::class, 'staysSectionUpdate']);
+        Route::post('home/sections/stays/items/{id}', [HomeSectionsAdminController::class, 'stayItemUpdate']);
+
+        Route::get('home/sections/dining', [HomeSectionsAdminController::class, 'diningShow']);
+        Route::post('home/sections/dining/intro', [HomeSectionsAdminController::class, 'diningSectionUpdate']);
+        Route::post('home/sections/dining/slides/{id}', [HomeSectionsAdminController::class, 'diningSlideUpdate']);
     });
 });
