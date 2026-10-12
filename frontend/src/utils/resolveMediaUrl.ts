@@ -8,7 +8,10 @@ export function resolveMediaUrl(
     return undefined;
   }
   if (/^https?:\/\//i.test(url)) {
-    return url;
+    return url.replace(
+      /^(https?:\/\/[^/]+)\/api\/uploads\//i,
+      "$1/backend/public/uploads/",
+    );
   }
 
   const base = getBackendPublicUrl();

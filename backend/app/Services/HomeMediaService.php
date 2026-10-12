@@ -270,9 +270,33 @@ class HomeMediaService
         }
 
         $path = ltrim(str_replace('\\', '/', $relativePath), '/');
-        $base = rtrim((string) config('app.media_url', config('app.url')), '/');
+        $base = $this->resolveMediaBaseUrl();
 
         return $base.'/'.$path;
+    }
+
+    private function resolveMediaBaseUrl(): string
+    {
+        $base = rtrim((string) config('app.media_url', config('app.url')), '/');
+
+        // Common misconfig: API prefix used as media base → /api/uploads/... (404)
+        if (preg_match('#/api/?$#', $base)) {
+            return (string) preg_replace('#/api/?$#', '/backend/public', $base);
+        }
+
+        $host = parse_url($base, PHP_URL_HOST) ?? '';
+        $path = parse_url($base, PHP_URL_PATH) ?? '';
+        $isLocal = $host === '' || preg_match('#^(localhost|127\.0\.0\.1)$#i', $host);
+
+        if (! $isLocal && ($path === '' || $path === '/')) {
+            return $base.'/backend/public';
+        }
+
+        if (str_ends_with($base, '/backend')) {
+            return $base.'/public';
+        }
+
+        return $base;
     }
 
     private function uniqueName(string $prefix, string $extension): string
@@ -368,6 +392,10 @@ class HomeMediaService
 
         $this->ffmpegLookupDone = true;
 
+        if (! $this->execIsAllowed()) {
+            return null;
+        }
+
         $candidates = array_values(array_filter([
             env('FFMPEG_PATH'),
             env('FFMPEG_BINARY'),
@@ -389,7 +417,7 @@ class HomeMediaService
 
     private function ffmpegBinaryWorks(string $binary): bool
     {
-        if ($binary === '') {
+        if ($binary === '' || ! $this->execIsAllowed()) {
             return false;
         }
 
@@ -404,11 +432,31 @@ class HomeMediaService
         return $code === 0;
     }
 
+    private function execIsAllowed(): bool
+    {
+        if (! \function_exists('exec')) {
+            return false;
+        }
+
+        $disabled = \ini_get('disable_functions');
+        if (! is_string($disabled) || $disabled === '') {
+            return true;
+        }
+
+        $list = array_map('strtolower', array_map('trim', explode(',', $disabled)));
+
+        return ! in_array('exec', $list, true);
+    }
+
     /**
      * @param  list<string>  $command
      */
     private function runFfmpeg(array $command): void
     {
+        if (! $this->execIsAllowed()) {
+            throw new RuntimeException('Video compression is not available (PHP exec is disabled on this server).');
+        }
+
         $escaped = array_map(static fn (string $part) => \escapeshellarg($part), $command);
         $line = implode(' ', $escaped);
         $out = [];
