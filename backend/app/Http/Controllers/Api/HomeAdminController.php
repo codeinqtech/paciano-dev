@@ -70,10 +70,15 @@ class HomeAdminController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json([
+        $payload = [
             'success' => true,
             'data' => $slide->toPublicArray(),
-        ], 201);
+        ];
+        if ($type === 'video' && isset($stored['compression'])) {
+            $payload['video_compression'] = $stored['compression'];
+        }
+
+        return response()->json($payload, 201);
     }
 
     public function bannerUpdate(Request $request, int $id)
@@ -188,8 +193,10 @@ class HomeAdminController extends Controller
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['required', 'file', 'max:102400'],
+            'video' => ['required', 'file', 'max:512000'],
         ]);
+
+        @set_time_limit(600);
 
         $year = (int) now()->format('Y');
         $video = $this->media->storeReviewVideo($data['video'], $year);
@@ -213,7 +220,11 @@ class HomeAdminController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json(['success' => true, 'data' => $item->toPublicArray()], 201);
+        return response()->json([
+            'success' => true,
+            'data' => $item->toPublicArray(),
+            'video_compression' => $video['compression'] ?? null,
+        ], 201);
     }
 
     public function reviewUpdate(Request $request, int $id)
@@ -227,8 +238,14 @@ class HomeAdminController extends Controller
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['nullable', 'file', 'max:102400'],
+            'video' => ['nullable', 'file', 'max:512000'],
         ]);
+
+        if ($request->hasFile('video')) {
+            @set_time_limit(600);
+        }
+
+        $videoCompression = null;
 
         if ($request->hasFile('thumbnail')) {
             $this->media->deletePublicFile($item->thumbnail_path);
@@ -242,6 +259,7 @@ class HomeAdminController extends Controller
             $video = $this->media->storeReviewVideo($request->file('video'), $item->upload_year);
             $item->video_name = $video['file_name'];
             $item->video_path = $video['file_path'];
+            $videoCompression = $video['compression'] ?? null;
 
             if (! $request->hasFile('thumbnail')) {
                 $this->media->deletePublicFile($item->thumbnail_path);
@@ -263,7 +281,12 @@ class HomeAdminController extends Controller
 
         $item->update($data);
 
-        return response()->json(['success' => true, 'data' => $item->fresh()->toPublicArray()]);
+        $payload = ['success' => true, 'data' => $item->fresh()->toPublicArray()];
+        if ($videoCompression !== null) {
+            $payload['video_compression'] = $videoCompression;
+        }
+
+        return response()->json($payload);
     }
 
     public function reviewDestroy(Request $request, int $id)

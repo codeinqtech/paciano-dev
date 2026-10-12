@@ -73,6 +73,8 @@ export default function HeroSection() {
   }, [ready, apiBannerSlides]);
 
   const heroSlidesKey = heroSlides.map((s) => `${s.id}:${s.src}`).join("|");
+  const activeSlide = heroSlides[slideIndex];
+  const showImageBannerChrome = activeSlide?.kind === "image";
 
   useEffect(() => {
     setSlideIndex(0);
@@ -484,9 +486,9 @@ via-[#020603]/10
         />
       </div>
 
-      {/* Slide dots — leaf frame stays above on every slide (z-20) */}
-      <div
-        className="
+      {showImageBannerChrome && heroSlides.length > 1 ? (
+        <div
+          className="
           absolute
           bottom-[118px]
           left-[4.5vw]
@@ -495,15 +497,15 @@ via-[#020603]/10
           items-center
           gap-2.5
         "
-      >
-        {heroSlides.map((slide, i) => (
-          <button
-            key={slide.id}
-            type="button"
-            aria-label={`Show banner ${i + 1}`}
-            aria-current={i === slideIndex ? "true" : undefined}
-            onClick={() => goToSlide(i)}
-            className={`
+        >
+          {heroSlides.map((slide, i) => (
+            <button
+              key={slide.id}
+              type="button"
+              aria-label={`Show banner ${i + 1}`}
+              aria-current={i === slideIndex ? "true" : undefined}
+              onClick={() => goToSlide(i)}
+              className={`
               h-2 rounded-full transition-all duration-500
               ${
                 i === slideIndex
@@ -511,9 +513,10 @@ via-[#020603]/10
                   : "w-2 bg-white/35 hover:bg-white/55"
               }
             `}
-          />
-        ))}
-      </div>
+            />
+          ))}
+        </div>
+      ) : null}
 
       {/* =========================================================
     SOFT CENTER ATMOSPHERE
@@ -545,12 +548,9 @@ via-[#020603]/10
   "
       />
 
-      {/* =========================================================
-    RIGHT LEAF — MAIN FOREGROUND FRAME
-========================================================== */}
-
-      <div
-        className={`
+      {showImageBannerChrome ? (
+        <div
+          className={`
     pointer-events-none
     absolute
     inset-y-0
@@ -569,12 +569,12 @@ via-[#020603]/10
 
     ${intro ? "translate-x-0 opacity-100" : "translate-x-[8%] opacity-0"}
   `}
-      >
-        <img
-          src={leafImage}
-          alt=""
-          aria-hidden="true"
-          className={`
+        >
+          <img
+            src={leafImage}
+            alt=""
+            aria-hidden="true"
+            className={`
       absolute
       right-[0%]
       top-[-8%]
@@ -586,13 +586,11 @@ via-[#020603]/10
       object-contain
       object-right-top
 
-      /* KEEP THE ORIGINAL LEAF COLOUR VISIBLE */
       brightness-[0.78]
       saturate-[0.95]
       contrast-[1.04]
       opacity-100
 
-      /* soft separation from the hero */
       drop-shadow-[-18px_0_45px_rgba(0,0,0,0.28)]
 
       transition-transform
@@ -605,12 +603,10 @@ via-[#020603]/10
           : "translate-x-0 translate-y-0 scale-100"
       }
     `}
-        />
+          />
 
-        {/* VERY LIGHT lower integration.
-      Do NOT make this dark — the leaf itself must remain visible. */}
-        <div
-          className="
+          <div
+            className="
       pointer-events-none
       absolute
       inset-x-0
@@ -622,8 +618,9 @@ via-[#020603]/10
       via-[#020603]/8
       to-transparent
     "
-        />
-      </div>
+          />
+        </div>
+      ) : null}
       {/* =========================================================
           LOGO
       ========================================================== */}
@@ -673,28 +670,29 @@ via-[#020603]/10
     PACIANO CENTER BRAND MARK
 ========================================================== */}
 
-      <div
-        className={[
-          "absolute",
-          "left-1/2",
-          "top-[13.5%]",
-          "z-40",
-          "-translate-x-1/2",
-          "flex",
-          "flex-col",
-          "items-center",
-          "justify-center",
-          "pointer-events-none",
-          "transition-all",
-          "duration-[1800ms]",
-          "ease-[cubic-bezier(0.22,1,0.36,1)]",
-          logoOpen ? "opacity-100" : "translate-y-6 opacity-0",
-        ].join(" ")}
-      >
-        <img
-          src={logoImage}
-          alt="Paciano"
-          className="
+      {showImageBannerChrome ? (
+        <div
+          className={[
+            "absolute",
+            "left-1/2",
+            "top-[13.5%]",
+            "z-40",
+            "-translate-x-1/2",
+            "flex",
+            "flex-col",
+            "items-center",
+            "justify-center",
+            "pointer-events-none",
+            "transition-all",
+            "duration-[1800ms]",
+            "ease-[cubic-bezier(0.22,1,0.36,1)]",
+            logoOpen ? "opacity-100" : "translate-y-6 opacity-0",
+          ].join(" ")}
+        >
+          <img
+            src={logoImage}
+            alt="Paciano"
+            className="
       h-auto
       w-[145px]
       object-contain
@@ -706,16 +704,15 @@ via-[#020603]/10
       brightness-[0.98]
       saturate-[1.02]
     "
-          style={{
-            animation: logoOpen
-              ? "pacianoLogoReveal 1800ms cubic-bezier(0.22,1,0.36,1) both, pacianoLogoGlow 7s ease-in-out 2s infinite"
-              : "none",
-          }}
-        />
+            style={{
+              animation: logoOpen
+                ? "pacianoLogoReveal 1800ms cubic-bezier(0.22,1,0.36,1) both, pacianoLogoGlow 7s ease-in-out 2s infinite"
+                : "none",
+            }}
+          />
 
-        {/* very subtle luxury halo */}
-        <div
-          className="
+          <div
+            className="
       pointer-events-none
       absolute
       -inset-8
@@ -724,15 +721,13 @@ via-[#020603]/10
       bg-[#a5d56d]/[0.035]
       blur-3xl
     "
-        />
-      </div>
+          />
+        </div>
+      ) : null}
 
-      {/* =========================================================
-          HERO CONTENT
-      ========================================================== */}
-
-      <div
-        className={`
+      {showImageBannerChrome ? (
+        <div
+          className={`
           relative
           z-30
 
@@ -755,7 +750,7 @@ via-[#020603]/10
 
           ${intro ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}
         `}
-      >
+        >
         <div
           className="
             flex
@@ -1141,12 +1136,10 @@ lg:mt-[75px]
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      ) : null}
 
-      {/* =========================================================
-          RIGHT STORY
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1228,11 +1221,9 @@ lg:mt-[75px]
           OUR STORY
         </p>
       </div>
+      ) : null}
 
-      {/* =========================================================
-          CENTER SCROLL
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1275,11 +1266,9 @@ lg:mt-[75px]
           TO EXPLORE
         </p>
       </div>
+      ) : null}
 
-      {/* =========================================================
-          MOBILE SCROLL
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1309,6 +1298,7 @@ lg:mt-[75px]
           Scroll to explore
         </span>
       </div>
+      ) : null}
     </section>
   );
 }

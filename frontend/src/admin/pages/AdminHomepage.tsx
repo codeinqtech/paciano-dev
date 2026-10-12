@@ -13,7 +13,16 @@ import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
 
 const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
+
+type VideoCompressionInfo = {
+  applied: boolean;
+  original_bytes: number;
+  stored_bytes: number;
+  saved_percent: number;
+};
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
 
@@ -68,6 +77,10 @@ export default function AdminHomepage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerSort, setBannerSort] = useState(0);
   const [bannerSaving, setBannerSaving] = useState(false);
+  const [bannerVideoCompression, setBannerVideoCompression] =
+    useState<VideoCompressionInfo | null>(null);
+  const [reviewVideoCompression, setReviewVideoCompression] =
+    useState<VideoCompressionInfo | null>(null);
 
   const [locationForm, setLocationForm] = useState<LocationForm>({
     eyebrow: "",
@@ -167,13 +180,23 @@ export default function AdminHomepage() {
       fd.append("media_type", bannerType);
       fd.append("file", bannerFile);
       fd.append("sort_order", String(bannerSort));
-      await apiUpload("/admin/home/banner-slides", fd, "POST", {
+      const res = await apiUpload<{
+        video_compression?: VideoCompressionInfo;
+      }>("/admin/home/banner-slides", fd, "POST", {
         timeoutMs: bannerType === "video" ? 600_000 : 120_000,
       });
-      toast.success("Banner slide added");
-      setBannerModal(false);
-      setBannerFile(null);
       await loadBanners();
+      if (bannerType === "video") {
+        if (res.video_compression) {
+          setBannerVideoCompression(res.video_compression);
+        }
+        toast.success("Banner video uploaded");
+      } else {
+        toast.success("Banner slide added");
+        setBannerModal(false);
+        setBannerFile(null);
+        setBannerVideoCompression(null);
+      }
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Upload failed");
@@ -229,6 +252,7 @@ export default function AdminHomepage() {
     });
     setThumbFile(null);
     setVideoFile(null);
+    setReviewVideoCompression(null);
     setReviewModal(true);
   };
 
@@ -242,6 +266,7 @@ export default function AdminHomepage() {
     });
     setThumbFile(null);
     setVideoFile(null);
+    setReviewVideoCompression(null);
     setReviewModal(true);
   };
 
@@ -252,6 +277,12 @@ export default function AdminHomepage() {
     }
     if (!reviewForm.id && !videoFile) {
       toast.error("Video file is required");
+      return;
+    }
+    if (videoFile && videoFile.size > REVIEW_VIDEO_MAX_BYTES) {
+      toast.error(
+        `Video must be under ${REVIEW_VIDEO_MAX_BYTES / (1024 * 1024)} MB.`,
+      );
       return;
     }
     setReviewSaving(true);
@@ -266,19 +297,37 @@ export default function AdminHomepage() {
       if (thumbFile) fd.append("thumbnail", thumbFile);
       if (videoFile) fd.append("video", videoFile);
 
+      const uploadOpts = videoFile
+        ? { timeoutMs: 600_000 as const }
+        : undefined;
+
+      let compression: VideoCompressionInfo | undefined;
       if (reviewForm.id) {
-        await apiUpload(
+        const res = await apiUpload<{ video_compression?: VideoCompressionInfo }>(
           `/admin/home/review-videos/${reviewForm.id}`,
           fd,
           "POST",
+          uploadOpts,
         );
+        compression = res.video_compression;
         toast.success("Review video updated");
       } else {
-        await apiUpload("/admin/home/review-videos", fd);
+        const res = await apiUpload<{ video_compression?: VideoCompressionInfo }>(
+          "/admin/home/review-videos",
+          fd,
+          "POST",
+          uploadOpts,
+        );
+        compression = res.video_compression;
         toast.success("Review video added");
       }
-      setReviewModal(false);
       await loadReviews();
+      if (videoFile && compression) {
+        setReviewVideoCompression(compression);
+      } else {
+        setReviewModal(false);
+        setReviewVideoCompression(null);
+      }
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Save failed");
@@ -344,6 +393,7 @@ export default function AdminHomepage() {
                 setBannerType("image");
                 setBannerSort(banners.length * 10);
                 setBannerFile(null);
+                setBannerVideoCompression(null);
                 setBannerModal(true);
               }}
               className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
@@ -631,10 +681,22 @@ export default function AdminHomepage() {
       {bannerModal ? (
         <FormModal
           title="Add banner slide"
-          onClose={() => setBannerModal(false)}
-          onSave={saveBanner}
+          onClose={() => {
+            setBannerModal(false);
+            setBannerFile(null);
+            setBannerVideoCompression(null);
+          }}
+          onSave={
+            bannerVideoCompression
+              ? () => {
+                  setBannerModal(false);
+                  setBannerFile(null);
+                  setBannerVideoCompression(null);
+                }
+              : saveBanner
+          }
           saving={bannerSaving}
-          saveLabel="Upload slide"
+          saveLabel={bannerVideoCompression ? "Done" : "Upload slide"}
         >
           <Field label="Slide type">
             <div className="flex gap-2">
@@ -643,6 +705,7 @@ export default function AdminHomepage() {
                 onClick={() => {
                   setBannerType("image");
                   setBannerFile(null);
+                  setBannerVideoCompression(null);
                 }}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
                   bannerType === "image"
@@ -658,6 +721,7 @@ export default function AdminHomepage() {
                 onClick={() => {
                   setBannerType("video");
                   setBannerFile(null);
+                  setBannerVideoCompression(null);
                 }}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
                   bannerType === "video"
@@ -678,11 +742,17 @@ export default function AdminHomepage() {
             hint={
               bannerType === "image"
                 ? "PNG/JPG — saved as WebP"
-                : "MP4/MOV up to 500 MB. Files over ~80 MB are stored as-is (ffmpeg compresses smaller videos). Very large uploads may need PHP upload_max_filesize increased on the server."
+                : "MP4/MOV up to 500 MB. Videos 100 MB+ are compressed on the server (requires ffmpeg). Large uploads may take several minutes."
             }
             file={bannerFile}
-            onFileChange={setBannerFile}
+            onFileChange={(f) => {
+              setBannerFile(f);
+              setBannerVideoCompression(null);
+            }}
           />
+          {bannerType === "video" && bannerVideoCompression ? (
+            <VideoCompressionPanel info={bannerVideoCompression} />
+          ) : null}
           <Field label="Sort order (lower shows first)">
             <input
               type="number"
@@ -700,9 +770,20 @@ export default function AdminHomepage() {
       {reviewModal ? (
         <FormModal
           title={reviewForm.id ? "Edit review video" : "Add review video"}
-          onClose={() => setReviewModal(false)}
-          onSave={saveReview}
+          onClose={() => {
+            setReviewModal(false);
+            setReviewVideoCompression(null);
+          }}
+          onSave={
+            reviewVideoCompression
+              ? () => {
+                  setReviewModal(false);
+                  setReviewVideoCompression(null);
+                }
+              : saveReview
+          }
           saving={reviewSaving}
+          saveLabel={reviewVideoCompression ? "Done" : "Save"}
           wide
         >
           <p className="text-xs text-[#6E655C] -mt-2 mb-1">
@@ -787,13 +868,19 @@ export default function AdminHomepage() {
               <FileUploadZone
                 variant="video"
                 title="Video file"
-                hint="Plays in popup when visitors click play"
+                hint="Up to 500 MB. Files 100 MB+ are compressed on upload when ffmpeg is available."
                 required={!reviewForm.id}
                 optional={!!reviewForm.id}
                 file={videoFile}
-                onFileChange={setVideoFile}
+                onFileChange={(f) => {
+                  setVideoFile(f);
+                  setReviewVideoCompression(null);
+                }}
               />
             </div>
+            {reviewVideoCompression ? (
+              <VideoCompressionPanel info={reviewVideoCompression} />
+            ) : null}
           </FormSection>
         </FormModal>
       ) : null}
@@ -896,6 +983,42 @@ function FormModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function VideoCompressionPanel({ info }: { info: VideoCompressionInfo }) {
+  if (!info.applied) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950">
+        <p className="font-medium">Uploaded without server compression</p>
+        <p className="mt-1 text-xs text-amber-900/90">
+          Final size: {formatFileSize(info.stored_bytes)}. Install ffmpeg on
+          the server to compress large videos automatically.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-[#68704D]/30 bg-[#68704D]/[0.08] px-4 py-3 text-sm text-[#2d3a1f]">
+      <p className="font-semibold text-[#3d4a22]">Video compressed on upload</p>
+      <ul className="mt-2 space-y-1 text-xs text-[#4a5644]">
+        <li>
+          Original:{" "}
+          <span className="font-medium">{formatFileSize(info.original_bytes)}</span>
+        </li>
+        <li>
+          Stored on site:{" "}
+          <span className="font-medium">{formatFileSize(info.stored_bytes)}</span>
+        </li>
+        <li>
+          Size reduced by:{" "}
+          <span className="font-semibold text-[#3d4a22]">
+            {info.saved_percent}%
+          </span>
+        </li>
+      </ul>
     </div>
   );
 }

@@ -9,6 +9,9 @@ use RuntimeException;
 
 class HomeMediaService
 {
+    /** Videos at or above this size must be compressed with ffmpeg on upload. */
+    public const VIDEO_LARGE_BYTES = 100 * 1024 * 1024;
+
     public function storeBannerImage(UploadedFile $file): array
     {
         $dir = $this->uploadDirectory('banner', 'images');
@@ -27,34 +30,19 @@ class HomeMediaService
     public function storeBannerVideo(UploadedFile $file): array
     {
         $dir = $this->uploadDirectory('banner', 'videos');
+        $name = $this->uniqueName('banner_vid', 'mp4');
+        $dest = $dir.DIRECTORY_SEPARATOR.$name;
 
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
-        $sizeBytes = (int) $file->getSize();
-        $compressWithFfmpeg =
-            $this->ffmpegAvailable()
-            && $sizeBytes > 0
-            && $sizeBytes <= 80 * 1024 * 1024;
-
-        if ($compressWithFfmpeg) {
-            $name = $this->uniqueName('banner_vid', 'mp4');
-            $dest = $dir.DIRECTORY_SEPARATOR.$name;
-            $tmp = $file->getPathname();
-            $this->runFfmpeg([
-                'ffmpeg', '-y', '-i', $tmp,
-                '-vf', 'scale=min(1920\\,iw):-2',
-                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
-                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
-                $dest,
-            ]);
-        } else {
-            $safeExt = in_array($ext, ['mp4', 'mov', 'webm'], true) ? $ext : 'mp4';
-            $name = $this->uniqueName('banner_vid', $safeExt);
-            $file->move($dir, $name);
-        }
+        $compression = $this->transcodeVideoToMp4(
+            $file,
+            $dest,
+            'scale=min(1920\\,iw):-2',
+        );
 
         return [
             'file_name' => $name,
             'file_path' => 'uploads/banner/videos/'.$name,
+            'compression' => $compression,
         ];
     }
 
@@ -122,21 +110,78 @@ class HomeMediaService
         $name = $this->uniqueName('review_vid', 'mp4');
         $dest = $dir.DIRECTORY_SEPARATOR.$name;
 
-        if ($this->ffmpegAvailable()) {
-            $this->runFfmpeg([
-                'ffmpeg', '-y', '-i', $file->getPathname(),
-                '-vf', 'scale=min(1280\\,iw):-2',
-                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
-                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
-                $dest,
-            ]);
-        } else {
-            $file->move($dir, $name);
-        }
+        $compression = $this->transcodeVideoToMp4(
+            $file,
+            $dest,
+            'scale=min(1280\\,iw):-2',
+        );
 
         return [
             'file_name' => $name,
             'file_path' => 'uploads/reviews/'.$year.'/'.$name,
+            'compression' => $compression,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   applied: bool,
+     *   original_bytes: int,
+     *   stored_bytes: int,
+     *   saved_percent: float
+     * }
+     */
+    private function transcodeVideoToMp4(UploadedFile $file, string $dest, string $scaleFilter): array
+    {
+        $originalBytes = max(0, (int) $file->getSize());
+        $mustCompress = $originalBytes >= self::VIDEO_LARGE_BYTES;
+        $ffmpeg = $this->ffmpegAvailable();
+
+        if ($mustCompress && ! $ffmpeg) {
+            throw new RuntimeException(
+                'Videos of 100 MB or larger must be compressed on the server. Install ffmpeg on the host or upload a smaller file.',
+            );
+        }
+
+        if ($ffmpeg) {
+            $this->runFfmpeg([
+                'ffmpeg', '-y', '-i', $file->getPathname(),
+                '-vf', $scaleFilter,
+                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
+                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
+                $dest,
+            ]);
+            $storedBytes = is_file($dest) ? (int) filesize($dest) : 0;
+
+            return $this->compressionStats(true, $originalBytes, $storedBytes);
+        }
+
+        $file->move(dirname($dest), basename($dest));
+        $storedBytes = is_file($dest) ? (int) filesize($dest) : $originalBytes;
+
+        return $this->compressionStats(false, $originalBytes, $storedBytes);
+    }
+
+    /**
+     * @return array{
+     *   applied: bool,
+     *   original_bytes: int,
+     *   stored_bytes: int,
+     *   saved_percent: float
+     * }
+     */
+    private function compressionStats(bool $applied, int $originalBytes, int $storedBytes): array
+    {
+        $savedPercent = 0.0;
+        if ($applied && $originalBytes > 0 && $storedBytes > 0 && $storedBytes < $originalBytes) {
+            $savedPercent = round((1 - ($storedBytes / $originalBytes)) * 100, 1);
+        }
+
+        return [
+            'applied' => $applied,
+            'original_bytes' => $originalBytes,
+            'stored_bytes' => $storedBytes,
+            'saved_percent' => $savedPercent,
         ];
     }
 
