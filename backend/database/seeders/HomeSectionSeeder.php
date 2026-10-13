@@ -65,24 +65,28 @@ class HomeSectionSeeder extends Seeder
         $stays = [
             [
                 'slug' => 'riverside',
+                'menu_label' => 'Riverside',
                 'title' => 'Wake to Tranquility',
                 'description' => 'Wake to the gentle rhythm of the river, framed by mountains and softened by the quiet of nature.',
                 'sort_order' => 10,
             ],
             [
                 'slug' => 'garden',
+                'menu_label' => 'Garden',
                 'title' => 'Wake Among Greenery',
                 'description' => 'A peaceful retreat overlooking Paciano\'s gardens, where quiet mornings unfold beneath open skies and surrounding greenery.',
                 'sort_order' => 20,
             ],
             [
                 'slug' => 'valley',
+                'menu_label' => 'Valley',
                 'title' => 'Closer to the Wild',
                 'description' => 'A quiet escape where mountain views stretch beyond the room and every morning begins a little slower.',
                 'sort_order' => 30,
             ],
             [
                 'slug' => 'family',
+                'menu_label' => 'Family',
                 'title' => 'Space to Be Together',
                 'description' => 'Thoughtfully arranged for families, with generous space to slow down, reconnect and enjoy the landscape together.',
                 'sort_order' => 40,
@@ -93,6 +97,7 @@ class HomeSectionSeeder extends Seeder
             HomeStayItem::query()->updateOrCreate(
                 ['slug' => $stay['slug']],
                 [
+                    'menu_label' => $stay['menu_label'],
                     'title' => $stay['title'],
                     'description' => $stay['description'],
                     'sort_order' => $stay['sort_order'],

@@ -467,6 +467,7 @@ export function AdminExperiencesPage() {
 type StayItem = {
   id: number;
   slug: string;
+  menu_label: string | null;
   title: string;
   description: string | null;
   photo_1_url: string | null;
@@ -542,6 +543,7 @@ export function AdminStaysPage() {
     setItemSaving(item.id);
     try {
       const fd = new FormData();
+      fd.append("menu_label", item.menu_label ?? "");
       fd.append("title", item.title);
       fd.append("description", item.description ?? "");
       const pf = photoFiles[item.id] ?? {};
@@ -631,9 +633,22 @@ export function AdminStaysPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((item) => (
             <div key={item.id} className="admin-card rounded-2xl p-6 h-full">
-              <h3 className="font-semibold text-[#332C26] mb-3 capitalize">
-                {item.slug.replace(/-/g, " ")}
-              </h3>
+              <Field label="Stay tab name">
+                <input
+                  className={inputClass}
+                  value={item.menu_label ?? ""}
+                  placeholder={item.slug.replace(/-/g, " ")}
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, menu_label: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
               <Field label="Stay title">
                 <input
                   className={inputClass}

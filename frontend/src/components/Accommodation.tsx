@@ -287,6 +287,7 @@ export default function Accommodation() {
       if (row.photo_3_url) images[2] = row.photo_3_url;
       return {
         ...stay,
+        name: row.menu_label?.trim() || stay.name,
         title: row.title || stay.title,
         description: row.description ?? stay.description,
         images,

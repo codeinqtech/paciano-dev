@@ -66,6 +66,7 @@ export type HomeExperiencesContent = {
 export type HomeStayItemContent = {
   id: number;
   slug: string;
+  menu_label: string | null;
   title: string;
   description: string | null;
   photo_1_url: string | null;
