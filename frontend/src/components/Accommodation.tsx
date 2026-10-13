@@ -40,7 +40,7 @@ const stays: Stay[] = [
   {
     id: "riverside",
     // name: "Riverside Suite",
-    name: "Premium Suite",
+    name: "Premium Suites",
     eyebrow: "RIVERSIDE SUITE",
     title: "Wake to Tranquility",
     description:
@@ -75,7 +75,7 @@ const stays: Stay[] = [
   {
     id: "garden",
     // name: "Garden Residence",
-    name: "Standard Suite",
+    name: "Standard Suites",
     eyebrow: "GARDEN RESIDENCE",
     title: "Wake Among Greenery",
     description:
