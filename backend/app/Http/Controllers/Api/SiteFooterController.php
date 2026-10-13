@@ -5,15 +5,26 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\SiteFooter;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class SiteFooterController extends Controller
 {
     public function publicIndex()
     {
+        try {
+            $data = $this->buildPayload();
+        } catch (\Throwable) {
+            $data = [
+                'settings' => null,
+                'social' => [],
+                'location_info' => [],
+            ];
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $this->buildPayload(),
+            'data' => $data,
         ]);
     }
 

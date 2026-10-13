@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Loader2, Save, Upload } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { AdminImageUpload } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 
 function SectionShell({
@@ -94,38 +95,6 @@ function Field({
 
 const inputClass =
   "w-full rounded-xl border border-[#E0D8CC] bg-white px-3 py-2.5 text-sm text-[#332C26] focus:outline-none focus:ring-2 focus:ring-[#71803F]/35";
-
-function PhotoField({
-  label,
-  currentUrl,
-  onFile,
-}: {
-  label: string;
-  currentUrl: string | null;
-  onFile: (f: File | null) => void;
-}) {
-  return (
-    <Field label={label}>
-      {currentUrl ? (
-        <img
-          src={currentUrl}
-          alt=""
-          className="mb-2 h-28 w-full max-w-xs rounded-xl object-cover border border-[#E8E0D4]"
-        />
-      ) : null}
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#C9BCA8] px-4 py-3 text-sm text-[#5F7138] hover:bg-[#F7F3EB]">
-        <Upload className="h-4 w-4" />
-        Choose photo
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-        />
-      </label>
-    </Field>
-  );
-}
 
 export function AdminAboutPage() {
   const [loading, setLoading] = useState(true);
@@ -261,21 +230,29 @@ export function AdminAboutPage() {
             }
           />
         </Field>
-        <PhotoField
-          label="Left photo"
-          currentUrl={form.photo_left_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_left: f }))}
-        />
-        <PhotoField
-          label="Center photo"
-          currentUrl={form.photo_center_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_center: f }))}
-        />
-        <PhotoField
-          label="Right photo"
-          currentUrl={form.photo_right_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_right: f }))}
-        />
+        <div className="grid gap-4 sm:grid-cols-3">
+          <AdminImageUpload
+            title="Left photo"
+            file={files.photo_left}
+            existingUrl={form.photo_left_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_left: f }))}
+          />
+          <AdminImageUpload
+            title="Center photo"
+            file={files.photo_center}
+            existingUrl={form.photo_center_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_center: f }))}
+          />
+          <AdminImageUpload
+            title="Right photo"
+            file={files.photo_right}
+            existingUrl={form.photo_right_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_right: f }))}
+          />
+        </div>
         <button
           type="button"
           disabled={saving}
@@ -458,10 +435,14 @@ export function AdminExperiencesPage() {
                 }
               />
             </Field>
-            <PhotoField
-              label="Photo"
-              currentUrl={item.image_url}
-              onFile={(f) => setPhotoFiles((x) => ({ ...x, [item.id]: f }))}
+            <AdminImageUpload
+              title="Photo"
+              file={photoFiles[item.id] ?? null}
+              existingUrl={item.image_url}
+              optional
+              onFileChange={(f) =>
+                setPhotoFiles((x) => ({ ...x, [item.id]: f }))
+              }
             />
             <button
               type="button"
@@ -681,36 +662,44 @@ export function AdminStaysPage() {
                   }
                 />
               </Field>
-              <PhotoField
-                label="Photo 1"
-                currentUrl={item.photo_1_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p1: f },
-                  }))
-                }
-              />
-              <PhotoField
-                label="Photo 2"
-                currentUrl={item.photo_2_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p2: f },
-                  }))
-                }
-              />
-              <PhotoField
-                label="Photo 3"
-                currentUrl={item.photo_3_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p3: f },
-                  }))
-                }
-              />
+              <div className="grid gap-4 sm:grid-cols-3">
+                <AdminImageUpload
+                  title="Photo 1"
+                  file={photoFiles[item.id]?.p1 ?? null}
+                  existingUrl={item.photo_1_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p1: f },
+                    }))
+                  }
+                />
+                <AdminImageUpload
+                  title="Photo 2"
+                  file={photoFiles[item.id]?.p2 ?? null}
+                  existingUrl={item.photo_2_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p2: f },
+                    }))
+                  }
+                />
+                <AdminImageUpload
+                  title="Photo 3"
+                  file={photoFiles[item.id]?.p3 ?? null}
+                  existingUrl={item.photo_3_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p3: f },
+                    }))
+                  }
+                />
+              </div>
               <button
                 type="button"
                 disabled={itemSaving === item.id}
@@ -921,10 +910,14 @@ export function AdminDiningPage() {
                   }
                 />
               </Field>
-              <PhotoField
-                label="Photo"
-                currentUrl={slide.image_url}
-                onFile={(f) => setPhotoFiles((x) => ({ ...x, [slide.id]: f }))}
+              <AdminImageUpload
+                title="Photo"
+                file={photoFiles[slide.id] ?? null}
+                existingUrl={slide.image_url}
+                optional
+                onFileChange={(f) =>
+                  setPhotoFiles((x) => ({ ...x, [slide.id]: f }))
+                }
               />
               <button
                 type="button"

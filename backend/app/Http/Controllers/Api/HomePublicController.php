@@ -73,8 +73,12 @@ class HomePublicController extends Controller
 
     private function homeTablesReady(): bool
     {
-        return Schema::hasTable('home_banner_slides')
-            && Schema::hasTable('home_location_settings')
-            && Schema::hasTable('home_review_videos');
+        try {
+            return Schema::hasTable('home_banner_slides')
+                && Schema::hasTable('home_location_settings')
+                && Schema::hasTable('home_review_videos');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

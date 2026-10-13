@@ -42,38 +42,54 @@ class HomeAdminController extends Controller
         $mediaType = $request->input('media_type');
         $maxKb = $mediaType === 'video' ? 512000 : 51200;
 
-        $data = $request->validate([
-            'media_type' => ['required', 'in:image,video'],
-            'file' => ['required', 'file', 'max:'.$maxKb],
-            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-        ]);
-
-        $type = $data['media_type'];
-        /** @var \Illuminate\Http\UploadedFile $file */
-        $file = $data['file'];
-
-        if ($type === 'video') {
-            @set_time_limit(600);
+        if ($mediaType === 'video' && ! $request->hasFile('file')) {
+            return response()->json([
+                'message' => 'The video did not reach the server. Increase PHP upload_max_filesize and post_max_size on Hostinger (512M or higher), then try again.',
+            ], 422);
         }
 
-        if ($type === 'image') {
-            $stored = $this->media->storeBannerImage($file);
-        } else {
-            $stored = $this->media->storeBannerVideo($file);
+        try {
+            $data = $request->validate([
+                'media_type' => ['required', 'in:image,video'],
+                'file' => ['required', 'file', 'max:'.$maxKb],
+                'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            ]);
+
+            $type = $data['media_type'];
+            /** @var \Illuminate\Http\UploadedFile $file */
+            $file = $data['file'];
+
+            if ($type === 'video') {
+                @set_time_limit(600);
+                @ini_set('memory_limit', '512M');
+            }
+
+            if ($type === 'image') {
+                $stored = $this->media->storeBannerImage($file);
+            } else {
+                $stored = $this->media->storeBannerVideo($file);
+            }
+
+            $slide = HomeBannerSlide::query()->create([
+                'media_type' => $type,
+                'file_name' => $stored['file_name'],
+                'file_path' => $stored['file_path'],
+                'sort_order' => $data['sort_order'] ?? 0,
+                'is_active' => true,
+            ]);
+
+            $payload = [
+                'success' => true,
+                'data' => $slide->toPublicArray(),
+            ];
+            if ($type === 'video' && isset($stored['compression'])) {
+                $payload['video_compression'] = $stored['compression'];
+            }
+
+            return response()->json($payload, 201);
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $slide = HomeBannerSlide::query()->create([
-            'media_type' => $type,
-            'file_name' => $stored['file_name'],
-            'file_path' => $stored['file_path'],
-            'sort_order' => $data['sort_order'] ?? 0,
-            'is_active' => true,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => $slide->toPublicArray(),
-        ], 201);
     }
 
     public function bannerUpdate(Request $request, int $id)
@@ -188,8 +204,10 @@ class HomeAdminController extends Controller
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['required', 'file', 'max:102400'],
+            'video' => ['required', 'file', 'max:512000'],
         ]);
+
+        @set_time_limit(600);
 
         $year = (int) now()->format('Y');
         $video = $this->media->storeReviewVideo($data['video'], $year);
@@ -213,7 +231,11 @@ class HomeAdminController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json(['success' => true, 'data' => $item->toPublicArray()], 201);
+        return response()->json([
+            'success' => true,
+            'data' => $item->toPublicArray(),
+            'video_compression' => $video['compression'] ?? null,
+        ], 201);
     }
 
     public function reviewUpdate(Request $request, int $id)
@@ -227,8 +249,14 @@ class HomeAdminController extends Controller
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['nullable', 'file', 'max:102400'],
+            'video' => ['nullable', 'file', 'max:512000'],
         ]);
+
+        if ($request->hasFile('video')) {
+            @set_time_limit(600);
+        }
+
+        $videoCompression = null;
 
         if ($request->hasFile('thumbnail')) {
             $this->media->deletePublicFile($item->thumbnail_path);
@@ -242,6 +270,7 @@ class HomeAdminController extends Controller
             $video = $this->media->storeReviewVideo($request->file('video'), $item->upload_year);
             $item->video_name = $video['file_name'];
             $item->video_path = $video['file_path'];
+            $videoCompression = $video['compression'] ?? null;
 
             if (! $request->hasFile('thumbnail')) {
                 $this->media->deletePublicFile($item->thumbnail_path);
@@ -263,7 +292,12 @@ class HomeAdminController extends Controller
 
         $item->update($data);
 
-        return response()->json(['success' => true, 'data' => $item->fresh()->toPublicArray()]);
+        $payload = ['success' => true, 'data' => $item->fresh()->toPublicArray()];
+        if ($videoCompression !== null) {
+            $payload['video_compression'] = $videoCompression;
+        }
+
+        return response()->json($payload);
     }
 
     public function reviewDestroy(Request $request, int $id)
