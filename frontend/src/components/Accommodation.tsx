@@ -39,7 +39,8 @@ type Stay = {
 const stays: Stay[] = [
   {
     id: "riverside",
-    name: "Riverside Suite",
+    // name: "Riverside Suite",
+    name: "Premium Suite",
     eyebrow: "RIVERSIDE SUITE",
     title: "Wake to Tranquility",
     description:
@@ -73,7 +74,8 @@ const stays: Stay[] = [
 
   {
     id: "garden",
-    name: "Garden Residence",
+    // name: "Garden Residence",
+    name: "Standard Suite",
     eyebrow: "GARDEN RESIDENCE",
     title: "Wake Among Greenery",
     description:
@@ -107,7 +109,8 @@ const stays: Stay[] = [
 
   {
     id: "valley",
-    name: "Valley Retreat",
+    // name: "Valley Retreat",
+    name: "Couple Suites",
     eyebrow: "VALLEY RETREAT",
     title: "Closer to the Wild",
     description:
@@ -506,8 +509,7 @@ export default function Accommodation() {
 
   const stay = displayStays[activeStay];
 
-  const incoming =
-    incomingStay !== null ? displayStays[incomingStay] : null;
+  const incoming = incomingStay !== null ? displayStays[incomingStay] : null;
 
   // ============================================================
   // RENDER
