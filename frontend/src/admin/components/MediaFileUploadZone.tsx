@@ -126,7 +126,7 @@ export function MediaFileUploadZone({
   const defaultAccept = isImage ? "image/*" : "video/*";
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="mb-1 flex flex-col">
       <div className="mb-2 flex items-center gap-2">
         <span
           className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg}`}
@@ -154,7 +154,7 @@ export function MediaFileUploadZone({
       </div>
 
       <div
-        className={`relative flex min-h-[148px] flex-1 flex-col overflow-hidden rounded-xl border-2 border-dashed transition-all focus-within:ring-2 ${borderAccent} ${bgAccent}`}
+        className={`relative flex min-h-[148px] flex-col overflow-hidden rounded-xl border-2 border-dashed transition-all focus-within:ring-2 ${borderAccent} ${bgAccent}`}
       >
         {displayImagePreview && isImage ? (
           <div className="relative h-28 w-full shrink-0 border-b border-[#EDE4D8]/80">
@@ -180,7 +180,7 @@ export function MediaFileUploadZone({
 
         <label
           htmlFor={inputId}
-          className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 px-4 py-5 text-center"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 px-4 py-5 text-center"
         >
           <Upload className="h-6 w-6 text-[#8A8177]" aria-hidden />
           <span className="text-sm font-medium text-[#332C26]">
