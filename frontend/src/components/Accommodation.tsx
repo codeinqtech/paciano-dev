@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useHomeContent } from "@/hooks/useHomeContent";
 
 import riversideRoom from "@/images/river-side-room.png";
 import riversideBalcony from "@/images/river-side-room.png";
@@ -38,7 +39,8 @@ type Stay = {
 const stays: Stay[] = [
   {
     id: "riverside",
-    name: "Riverside Suite",
+    // name: "Riverside Suite",
+    name: "Premium Suites",
     eyebrow: "RIVERSIDE SUITE",
     title: "Wake to Tranquility",
     description:
@@ -72,7 +74,8 @@ const stays: Stay[] = [
 
   {
     id: "garden",
-    name: "Garden Residence",
+    // name: "Garden Residence",
+    name: "Standard Suites",
     eyebrow: "GARDEN RESIDENCE",
     title: "Wake Among Greenery",
     description:
@@ -106,7 +109,8 @@ const stays: Stay[] = [
 
   {
     id: "valley",
-    name: "Valley Retreat",
+    // name: "Valley Retreat",
+    name: "Couple Suites",
     eyebrow: "VALLEY RETREAT",
     title: "Closer to the Wild",
     description:
@@ -268,6 +272,44 @@ export default function Accommodation() {
 
   // Prevent multiple clicks during transition
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const { ready, stays: staysCms } = useHomeContent();
+
+  const displayStays = useMemo(() => {
+    if (!ready || !staysCms?.items?.length) {
+      return stays;
+    }
+    return stays.map((stay) => {
+      const row = staysCms.items.find((i) => i.slug === stay.id);
+      if (!row) {
+        return stay;
+      }
+      const images = [...stay.images];
+      if (row.photo_1_url) images[0] = row.photo_1_url;
+      if (row.photo_2_url) images[1] = row.photo_2_url;
+      if (row.photo_3_url) images[2] = row.photo_3_url;
+      return {
+        ...stay,
+        name: row.menu_label?.trim() || stay.name,
+        title: row.title || stay.title,
+        description: row.description ?? stay.description,
+        images,
+      };
+    });
+  }, [ready, staysCms]);
+
+  const staysHeadingMain =
+    ready && staysCms?.section?.heading_main
+      ? staysCms.section.heading_main
+      : "Where Every Stay,";
+  const staysHeadingAccent =
+    ready && staysCms?.section?.heading_accent
+      ? staysCms.section.heading_accent
+      : "Feels Like Home in Nature.";
+  const staysIntro =
+    ready && staysCms?.section?.intro_text
+      ? staysCms.section.intro_text
+      : "Wake to misty mountains, unwind beside the river, and let nature set the pace. Our stays are crafted for quiet comfort, generous space and a deeper sense of belonging.";
 
   useEffect(() => {
     const signature = landscapeSignatureRef.current;
@@ -454,20 +496,21 @@ export default function Accommodation() {
   // ============================================================
 
   const nextStay = () => {
-    const next = (activeStay + 1) % stays.length;
+    const next = (activeStay + 1) % displayStays.length;
 
     changeStay(next);
   };
 
   const previousStay = () => {
-    const previous = (activeStay - 1 + stays.length) % stays.length;
+    const previous =
+      (activeStay - 1 + displayStays.length) % displayStays.length;
 
     changeStay(previous);
   };
 
-  const stay = stays[activeStay];
+  const stay = displayStays[activeStay];
 
-  const incoming = incomingStay !== null ? stays[incomingStay] : null;
+  const incoming = incomingStay !== null ? displayStays[incomingStay] : null;
 
   // ============================================================
   // RENDER
@@ -646,11 +689,9 @@ export default function Accommodation() {
     lg:text-[60px]
   "
           >
-            Where Every Stay,
+            {staysHeadingMain}
             <br />
-            <span className="italic text-[#789541]">
-              Feels Like Home in Nature.
-            </span>
+            <span className="italic text-[#789541]">{staysHeadingAccent}</span>
           </h2>
 
           {/* DESCRIPTION */}
@@ -672,9 +713,7 @@ export default function Accommodation() {
     lg:text-[14px]
   "
           >
-            Wake to misty mountains, unwind beside the river, and let nature set
-            the pace. Our stays are crafted for quiet comfort, generous space
-            and a deeper sense of belonging.
+            {staysIntro}
           </p>
         </div>
 
@@ -756,7 +795,7 @@ export default function Accommodation() {
             >
               {/* Four stay navigation items */}
               <div className="grid min-w-0 flex-1 grid-cols-[1fr_1fr_1fr_1.08fr]">
-                {stays.map((item, index) => {
+                {displayStays.map((item, index) => {
                   const active = index === activeStay;
 
                   const descriptors = [

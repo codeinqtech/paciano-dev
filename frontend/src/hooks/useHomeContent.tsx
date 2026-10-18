@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 export type HomeBannerSlide = {
   id: number;
@@ -35,17 +36,84 @@ export type HomeReviewVideo = {
   sort_order: number;
 };
 
+export type HomeAboutContent = {
+  heading_line_1: string | null;
+  heading_line_2: string | null;
+  heading_accent: string | null;
+  paragraph_1: string | null;
+  paragraph_2: string | null;
+  photo_left_url: string | null;
+  photo_center_url: string | null;
+  photo_right_url: string | null;
+};
+
+export type HomeExperienceItemContent = {
+  id: number;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+};
+
+export type HomeExperiencesContent = {
+  section: {
+    heading_main: string | null;
+    heading_accent: string | null;
+  } | null;
+  items: HomeExperienceItemContent[];
+};
+
+export type HomeStayItemContent = {
+  id: number;
+  slug: string;
+  menu_label: string | null;
+  title: string;
+  description: string | null;
+  photo_1_url: string | null;
+  photo_2_url: string | null;
+  photo_3_url: string | null;
+  sort_order: number;
+};
+
+export type HomeStaysContent = {
+  section: {
+    heading_main: string | null;
+    heading_accent: string | null;
+    intro_text: string | null;
+  } | null;
+  items: HomeStayItemContent[];
+};
+
+export type HomeDiningSlideContent = {
+  id: number;
+  quote: string | null;
+  image_url: string | null;
+  sort_order: number;
+};
+
+export type HomeDiningContent = {
+  section: {
+    heading_line_1: string | null;
+    heading_line_2: string | null;
+    heading_accent: string | null;
+    description: string | null;
+  } | null;
+  slides: HomeDiningSlideContent[];
+};
+
 type HomeContentValue = {
   loading: boolean;
   ready: boolean;
   bannerSlides: HomeBannerSlide[];
   location: HomeLocationContent | null;
   reviewVideos: HomeReviewVideo[];
+  about: HomeAboutContent | null;
+  experiences: HomeExperiencesContent | null;
+  stays: HomeStaysContent | null;
+  dining: HomeDiningContent | null;
 };
 
-const apiBase = (
-  import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000/api"
-).replace(/\/$/, "");
+const apiBase = getApiBaseUrl();
 
 const FETCH_TIMEOUT_MS = 12_000;
 
@@ -54,6 +122,10 @@ const emptyLoaded: Omit<HomeContentValue, "loading"> = {
   bannerSlides: [],
   location: null,
   reviewVideos: [],
+  about: null,
+  experiences: null,
+  stays: null,
+  dining: null,
 };
 
 const defaultValue: HomeContentValue = {
@@ -95,9 +167,13 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
       let bannerSlides: HomeBannerSlide[] = [];
       let location: HomeLocationContent | null = null;
       let reviewVideos: HomeReviewVideo[] = [];
+      let about: HomeAboutContent | null = null;
+      let experiences: HomeExperiencesContent | null = null;
+      let stays: HomeStaysContent | null = null;
+      let dining: HomeDiningContent | null = null;
 
       try {
-        const [b, l, r] = await Promise.all([
+        const [b, l, r, a, e, s, d] = await Promise.all([
           fetchJson<HomeBannerSlide[]>(
             "/home/banner-slides",
             controller.signal,
@@ -107,10 +183,30 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
             "/home/review-videos",
             controller.signal,
           ),
+          fetchJson<HomeAboutContent>(
+            "/home/sections/about",
+            controller.signal,
+          ),
+          fetchJson<HomeExperiencesContent>(
+            "/home/sections/experiences",
+            controller.signal,
+          ),
+          fetchJson<HomeStaysContent>(
+            "/home/sections/stays",
+            controller.signal,
+          ),
+          fetchJson<HomeDiningContent>(
+            "/home/sections/dining",
+            controller.signal,
+          ),
         ]);
         bannerSlides = b ?? [];
         location = l;
         reviewVideos = r ?? [];
+        about = a;
+        experiences = e;
+        stays = s;
+        dining = d;
       } finally {
         window.clearTimeout(timeout);
         if (ignore) {
@@ -122,6 +218,10 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
           bannerSlides,
           location,
           reviewVideos,
+          about,
+          experiences,
+          stays,
+          dining,
         });
       }
     })();

@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public media URL (uploads under public/)
+    |--------------------------------------------------------------------------
+    |
+    | Use when the site is served from a different origin than APP_URL (e.g.
+    | SPA on paciano-dev.codeinq.com and API on the same host). Defaults to APP_URL.
+    |
+    */
+
+    'media_url' => env('MEDIA_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

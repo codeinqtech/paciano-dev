@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useHomeContent } from "@/hooks/useHomeContent";
 import storyImage from "@/images/story.png";
 import aboutNature from "@/images/about-nature-first.jpg";
 import aboutHospitality from "@/images/about-genuine-hospitality.jpg";
@@ -850,6 +851,40 @@ export default function AboutUs() {
   const [visible, setVisible] = useState(false);
   const [experienceVisible, setExperienceVisible] = useState(false);
 
+  const { ready, about: aboutCms, experiences: experiencesCms } =
+    useHomeContent();
+
+  const aboutPhotos = useMemo(
+    () => ({
+      left: (ready && aboutCms?.photo_left_url) || aboutNature,
+      center: (ready && aboutCms?.photo_center_url) || aboutHospitality,
+      right: (ready && aboutCms?.photo_right_url) || aboutConscious,
+    }),
+    [ready, aboutCms],
+  );
+
+  const displayExperiences = useMemo(() => {
+    const fallback = experiences;
+    if (!ready || !experiencesCms?.items?.length) {
+      return fallback;
+    }
+    return experiencesCms.items.map((item, index) => ({
+      title: item.title || fallback[index]?.title || "",
+      description:
+        item.description ?? fallback[index]?.description ?? "",
+      image: item.image_url || fallback[index]?.image || riverside,
+    }));
+  }, [ready, experiencesCms]);
+
+  const experienceHeadingMain =
+    ready && experiencesCms?.section?.heading_main
+      ? experiencesCms.section.heading_main
+      : "Moments Crafted by Nature,";
+  const experienceHeadingAccent =
+    ready && experiencesCms?.section?.heading_accent
+      ? experiencesCms.section.heading_accent
+      : "Curated for You.";
+
   useEffect(() => {
     const element = sectionRef.current;
 
@@ -1257,9 +1292,13 @@ export default function AboutUs() {
             xl:text-[67px]
           "
             >
-              <span className="block">Inspired By</span>
+              <span className="block">
+                {(ready && aboutCms?.heading_line_1) || "Inspired By"}
+              </span>
 
-              <span className="block">Nature.</span>
+              <span className="block">
+                {(ready && aboutCms?.heading_line_2) || "Nature."}
+              </span>
 
               <span
                 className="
@@ -1272,7 +1311,7 @@ export default function AboutUs() {
               text-[#78943F]
             "
               >
-                Created For You.
+                {(ready && aboutCms?.heading_accent) || "Created For You."}
               </span>
             </h2>
 
@@ -1298,9 +1337,8 @@ export default function AboutUs() {
             sm:text-[15px]
           "
             >
-              Paciano is more than a resort — it&apos;s a sanctuary where
-              nature, comfort and genuine hospitality come together to create
-              unforgettable moments.{" "}
+              {(ready && aboutCms?.paragraph_1) ||
+                "Paciano is more than a resort — it's a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments."}{" "}
             </p>
             <p
               className="
@@ -1320,8 +1358,8 @@ export default function AboutUs() {
             sm:text-[14px]
           "
             >
-              A place to retreat. A place to reconnect. A place that stays with
-              you long after you leave.
+              {(ready && aboutCms?.paragraph_2) ||
+                "A place to retreat. A place to reconnect. A place that stays with you long after you leave."}
             </p>
 
             {/* ============================================================
@@ -1735,7 +1773,7 @@ export default function AboutUs() {
               />
 
               <img
-                src={aboutNature}
+                src={aboutPhotos.left}
                 alt="Nature surrounding Paciano"
                 className="
         h-full
@@ -1846,7 +1884,7 @@ export default function AboutUs() {
               />
 
               <img
-                src={aboutHospitality}
+                src={aboutPhotos.center}
                 alt="Genuine hospitality at Paciano"
                 className="
         h-full
@@ -1971,7 +2009,7 @@ export default function AboutUs() {
               />
 
               <img
-                src={aboutConscious}
+                src={aboutPhotos.right}
                 alt="Conscious living and dining"
                 className="
         h-full
@@ -2593,9 +2631,11 @@ export default function AboutUs() {
           lg:text-[60px]
         "
           >
-            Moments Crafted by Nature,
+            {experienceHeadingMain}
             <br />
-            <span className="italic text-[#789541]">Curated for You.</span>
+            <span className="italic text-[#789541]">
+              {experienceHeadingAccent}
+            </span>
           </h3>
         </div>
 
@@ -2625,7 +2665,7 @@ export default function AboutUs() {
     xl:px-[10px]
   "
         >
-          {experiences.map((experience, index) => (
+          {displayExperiences.map((experience, index) => (
             <article
               key={experience.title}
               className={`

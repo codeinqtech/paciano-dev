@@ -2,6 +2,9 @@ import {
   Home,
   Mail,
   BedDouble,
+  Sparkles,
+  Leaf,
+  UtensilsCrossed,
   Menu,
   PanelBottom,
   LayoutDashboard,
@@ -18,6 +21,10 @@ export const ROLES = {
 export type MenuId =
   | "dashboard"
   | "homepage"
+  | "about"
+  | "experiences"
+  | "stays"
+  | "dining"
   | "contact"
   | "stay"
   | "navbar"
@@ -38,6 +45,30 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
     label: "Homepage",
     path: "/admin/homepage",
     icon: Home,
+  },
+  {
+    id: "about",
+    label: "About Paciano",
+    path: "/admin/about",
+    icon: Leaf,
+  },
+  {
+    id: "experiences",
+    label: "Experiences",
+    path: "/admin/experiences",
+    icon: Sparkles,
+  },
+  {
+    id: "stays",
+    label: "Our Stays",
+    path: "/admin/stays",
+    icon: BedDouble,
+  },
+  {
+    id: "dining",
+    label: "Dining at Paciano",
+    path: "/admin/dining",
+    icon: UtensilsCrossed,
   },
   {
     id: "contact",
@@ -91,6 +122,10 @@ export const DASHBOARD_MENU: AdminMenu = {
 const PATH_TO_MENU: Record<string, MenuId> = {
   "/admin": "dashboard",
   "/admin/homepage": "homepage",
+  "/admin/about": "about",
+  "/admin/experiences": "experiences",
+  "/admin/stays": "stays",
+  "/admin/dining": "dining",
   "/admin/contact": "contact",
   "/admin/stay": "stay",
   "/admin/navbar": "navbar",
