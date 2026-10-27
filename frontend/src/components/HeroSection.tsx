@@ -48,6 +48,69 @@ const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
 
 const SLIDE_MS = 9000;
 
+type HeroVideoPlayOptions = {
+  /** Hero section is on screen — when false, always mute. */
+  inView: boolean;
+  /** User has interacted with the page; try hard for audible playback. */
+  soundUnlocked: boolean;
+  /** Restart from beginning (slide change). */
+  restart?: boolean;
+};
+
+async function playHeroVideoForView(
+  video: HTMLVideoElement,
+  options: HeroVideoPlayOptions,
+): Promise<boolean> {
+  const { inView, soundUnlocked, restart = false } = options;
+
+  if (!inView) {
+    video.muted = true;
+    return true;
+  }
+
+  if (restart) {
+    try {
+      video.currentTime = 0;
+    } catch {
+      /* ignore seek errors */
+    }
+  }
+
+  const tryAudible = async (): Promise<boolean> => {
+    video.muted = false;
+    video.volume = 1;
+    try {
+      await video.play();
+      return !video.muted;
+    } catch {
+      return false;
+    }
+  };
+
+  if (await tryAudible()) {
+    return true;
+  }
+
+  if (soundUnlocked) {
+    video.muted = false;
+    video.volume = 1;
+    try {
+      await video.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  video.muted = true;
+  try {
+    await video.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function HeroSection() {
   const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
   const heroSlides = useMemo((): (HeroImageSlide | HeroVideoSlide)[] => {
@@ -78,7 +141,33 @@ export default function HeroSection() {
   const [camera, setCamera] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const slideIndexRef = useRef(slideIndex);
+  const heroSlidesRef = useRef(heroSlides);
+  const heroInViewRef = useRef(true);
+  const soundUnlockedRef = useRef(false);
+  slideIndexRef.current = slideIndex;
+  heroSlidesRef.current = heroSlides;
+
+  const syncActiveHeroVideo = useCallback((restart = false) => {
+    const idx = slideIndexRef.current;
+    const slide = heroSlidesRef.current[idx];
+    const video = videoRefs.current[idx];
+    if (slide?.kind !== "video" || !video) {
+      return;
+    }
+
+    void playHeroVideoForView(video, {
+      inView: heroInViewRef.current,
+      soundUnlocked: soundUnlockedRef.current,
+      restart,
+    }).then((played) => {
+      if (played && heroInViewRef.current && !video.muted) {
+        soundUnlockedRef.current = true;
+      }
+    });
+  }, []);
 
   const activeSlide = heroSlides[slideIndex];
   const showImageBannerChrome = activeSlide?.kind === "image";
@@ -132,32 +221,222 @@ export default function HeroSection() {
     };
   }, []);
 
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-
-    if (heroSlides.length < 2) return;
-
-    const timer = window.setInterval(() => {
-      setSlideIndex((i) => (i + 1) % heroSlides.length);
-    }, SLIDE_MS);
-    return () => window.clearInterval(timer);
+  const advanceToNextSlide = useCallback(() => {
+    setSlideIndex((i) => (i + 1) % heroSlides.length);
   }, [heroSlides.length]);
 
   useEffect(() => {
     videoRefs.current.forEach((video, i) => {
       if (!video) return;
-      if (i === slideIndex && heroSlides[i]?.kind === "video") {
-        video.currentTime = 0;
-        void video.play().catch(() => {});
-      } else {
+      if (i !== slideIndex) {
         video.pause();
       }
     });
-  }, [slideIndex, heroSlides]);
+  }, [slideIndex]);
+
+  useEffect(() => {
+    const unlockHeroSound = () => {
+      const wasLocked = !soundUnlockedRef.current;
+      soundUnlockedRef.current = true;
+      if (wasLocked || heroInViewRef.current) {
+        syncActiveHeroVideo(false);
+      }
+    };
+
+    const opts: AddEventListenerOptions = { capture: true, passive: true };
+    window.addEventListener("pointerdown", unlockHeroSound, opts);
+    window.addEventListener("touchstart", unlockHeroSound, opts);
+    window.addEventListener("keydown", unlockHeroSound, opts);
+    window.addEventListener("wheel", unlockHeroSound, opts);
+    window.addEventListener("scroll", unlockHeroSound, opts);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockHeroSound, opts);
+      window.removeEventListener("touchstart", unlockHeroSound, opts);
+      window.removeEventListener("keydown", unlockHeroSound, opts);
+      window.removeEventListener("wheel", unlockHeroSound, opts);
+      window.removeEventListener("scroll", unlockHeroSound, opts);
+    };
+  }, [syncActiveHeroVideo]);
+
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+
+    const syncHeroVideoAudio = (inView: boolean) => {
+      heroInViewRef.current = inView;
+
+      for (const video of videoRefs.current) {
+        if (!video) continue;
+        if (!inView) {
+          video.muted = true;
+        }
+      }
+
+      if (inView) {
+        syncActiveHeroVideo(false);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const inView =
+          entry.isIntersecting && entry.intersectionRatio >= 0.12;
+        syncHeroVideoAudio(inView);
+      },
+      { threshold: [0, 0.12, 0.35, 0.6] },
+    );
+
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [heroSlidesKey, syncActiveHeroVideo]);
+
+  useEffect(() => {
+    const retryTimers = [
+      window.setTimeout(() => syncActiveHeroVideo(false), 400),
+      window.setTimeout(() => syncActiveHeroVideo(false), 1200),
+      window.setTimeout(() => syncActiveHeroVideo(false), 2800),
+    ];
+    return () => retryTimers.forEach((id) => window.clearTimeout(id));
+  }, [heroSlidesKey, slideIndex, syncActiveHeroVideo]);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      return;
+    }
+
+    if (heroSlides.length < 2) {
+      const only = heroSlides[0];
+      if (only?.kind !== "video") {
+        return;
+      }
+
+      let cancelled = false;
+      let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+      const startSingle = (): boolean => {
+        const video = videoRefs.current[0];
+        if (!video || cancelled) {
+          return false;
+        }
+        video.loop = true;
+        void playHeroVideoForView(video, {
+          inView: heroInViewRef.current,
+          soundUnlocked: soundUnlockedRef.current,
+          restart: true,
+        }).then((played) => {
+          if (played && heroInViewRef.current && !video.muted) {
+            soundUnlockedRef.current = true;
+          }
+        });
+        return true;
+      };
+
+      const tryStart = () => {
+        if (cancelled || startSingle()) {
+          return;
+        }
+        retryTimer = window.setTimeout(tryStart, 80);
+      };
+
+      tryStart();
+
+      return () => {
+        cancelled = true;
+        if (retryTimer) window.clearTimeout(retryTimer);
+        videoRefs.current[0]?.pause();
+      };
+    }
+
+    const slide = heroSlides[slideIndex];
+    if (!slide) {
+      return;
+    }
+
+    if (slide.kind === "image") {
+      const timer = window.setTimeout(advanceToNextSlide, SLIDE_MS);
+      return () => window.clearTimeout(timer);
+    }
+
+    let cancelled = false;
+    let cleanupVideo: (() => void) | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const bindActiveVideo = (): boolean => {
+      const video = videoRefs.current[slideIndex];
+      if (!video || cancelled) {
+        return false;
+      }
+
+      video.loop = false;
+
+      const goNext = () => {
+        if (!cancelled) {
+          advanceToNextSlide();
+        }
+      };
+
+      const onEnded = () => goNext();
+
+      const startPlayback = () => {
+        void playHeroVideoForView(video, {
+          inView: heroInViewRef.current,
+          soundUnlocked: soundUnlockedRef.current,
+          restart: true,
+        }).then((played) => {
+          if (played && heroInViewRef.current && !video.muted) {
+            soundUnlockedRef.current = true;
+          }
+          if (played || cancelled) return;
+          const ms =
+            Number.isFinite(video.duration) && video.duration > 0
+              ? video.duration * 1000 + 400
+              : SLIDE_MS;
+          fallbackTimer = window.setTimeout(goNext, ms);
+        });
+      };
+
+      video.addEventListener("ended", onEnded);
+
+      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        startPlayback();
+      } else {
+        video.addEventListener("loadedmetadata", startPlayback, { once: true });
+      }
+
+      cleanupVideo = () => {
+        video.removeEventListener("ended", onEnded);
+        video.pause();
+      };
+
+      return true;
+    };
+
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const tryBind = () => {
+      if (cancelled || bindActiveVideo()) {
+        return;
+      }
+      retryTimer = window.setTimeout(tryBind, 80);
+    };
+
+    tryBind();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) window.clearTimeout(retryTimer);
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      cleanupVideo?.();
+    };
+  }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide]);
 
   return (
-    <section className="relative isolate h-screen min-h-[680px] w-full overflow-hidden bg-[#050a06] text-[#f5f0e7]">
+    <section
+      ref={sectionRef}
+      className="relative isolate h-[100dvh] min-h-[560px] max-h-[100dvh] w-full overflow-hidden bg-[#050a06] text-[#f5f0e7] supports-[min-height:100dvh]:min-h-[100dvh] sm:min-h-[680px]"
+    >
       <style>{`
             @keyframes pacianoHeroDrift {
   from {
@@ -166,6 +445,13 @@ export default function HeroSection() {
 
   to {
     transform: translate3d(2.2%, 0.8%, 0) scale(1.03);
+  }
+}
+
+@media (min-width: 768px) {
+  .paciano-hero-media-drift {
+    animation: pacianoHeroDrift 42s linear infinite;
+    transform-origin: center center;
   }
 }
 
@@ -373,7 +659,9 @@ export default function HeroSection() {
         {heroSlides.map((slide, i) => {
           const active = i === slideIndex;
           const mediaClass = `
-            absolute inset-0 h-full w-full max-w-none object-cover object-center
+            absolute inset-0 h-full w-full min-h-full min-w-full max-w-none
+            object-cover object-center
+            [-webkit-transform:translateZ(0)]
             transition-opacity duration-[2200ms] ease-[cubic-bezier(0.22,1,0.36,1)]
             ${active ? "opacity-100 z-[0]" : "opacity-0 z-[-1]"}
           `;
@@ -386,20 +674,20 @@ export default function HeroSection() {
                   videoRefs.current[i] = el;
                 }}
                 src={slide.src}
-                className={mediaClass}
-                muted
-                loop
+                className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+                loop={heroSlides.length === 1}
+                autoPlay
                 playsInline
-                preload="metadata"
+                preload="auto"
                 aria-label={slide.alt}
-                style={
-                  active
-                    ? {
-                        animation: "pacianoHeroDrift 42s linear infinite",
-                        transformOrigin: "center center",
-                      }
-                    : undefined
-                }
+                onLoadedData={(e) => {
+                  if (!active) return;
+                  syncActiveHeroVideo(false);
+                }}
+                onCanPlay={(e) => {
+                  if (!active) return;
+                  syncActiveHeroVideo(false);
+                }}
               />
             );
           }
@@ -413,16 +701,8 @@ export default function HeroSection() {
               alt={slide.alt}
               decoding="async"
               fetchPriority={slide.id === "hero" ? "high" : "auto"}
-              className={mediaClass}
-              style={{
-                objectPosition: pos,
-                ...(active
-                  ? {
-                      animation: "pacianoHeroDrift 42s linear infinite",
-                      transformOrigin: "center center",
-                    }
-                  : {}),
-              }}
+              className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+              style={{ objectPosition: pos }}
             />
           );
         })}
