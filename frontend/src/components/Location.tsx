@@ -550,10 +550,14 @@ const LocationSection: React.FC = () => {
         className="
           relative
           -mt-px
-          h-[680px]
+          min-h-[680px]
           w-full
           overflow-visible
-          sm:h-[720px]
+          pb-[340px]
+          sm:pb-[360px]
+          md:h-[720px]
+          md:min-h-0
+          md:pb-0
           lg:h-[760px]
           xl:h-[800px]
         "
