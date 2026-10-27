@@ -10,16 +10,24 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(SiteNavigationMenuSeeder::class);
+        $this->call(SiteFooterSeeder::class);
+        $this->call(HomePageSeeder::class);
+        $this->call(HomeSectionSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::query()->updateOrCreate(
+            ['email' => 'superadmin@paciano.local'],
+            [
+                'name' => 'Super Admin',
+                'username' => 'superadmin',
+                'phone' => null,
+                'password' => 'ChangeMe123!',
+                'role' => 'superadmin',
+                'permissions' => ['*'],
+                'active' => true,
+            ],
+        );
     }
 }

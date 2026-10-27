@@ -1,111 +1,524 @@
+/* @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"); */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&family=Lora:wght@400;500;600&family=Lora:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap");
+
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0b120a;
+  --color-foreground: #f5f0e8;
+  --color-card: #131d11;
+  --color-card-foreground: #f5f0e8;
+  --color-primary: #8faa42;
+  --color-primary-foreground: #0b120a;
+  --color-secondary: #1e2d1b;
+  --color-secondary-foreground: #d4c9a8;
+  --color-muted: #1a2517;
+  --color-muted-foreground: #8a9b82;
+  --color-accent: #8faa42;
+  --color-accent-foreground: #0b120a;
+  --color-border: rgba(143, 170, 66, 0.2);
+  --color-ring: #8faa42;
+
+  --font-jost: "Jost", sans-serif;
+  --font-cormorant: "Cormorant Garamond", serif;
+  --font-lora: "Lora", serif;
+  --font-manrope: "Manrope", sans-serif;
+  --font-brittany: "Brittany Signature", cursive;
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --paciano-green: #8faa42;
+  --paciano-deep: #102619;
+  --paciano-cream: #eee9dc;
+  --paciano-text: #f7f4eb;
+}
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+@font-face {
+  font-family: "Brittany Signature";
+  src: url("./assets/fonts/BrittanySignature.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@keyframes paciano-organic-edge {
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  50% {
+    transform: translate3d(-0.35%, -2px, 0) scaleX(1.006);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(1);
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@keyframes pacianoOrganicEdge {
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(1);
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  50% {
+    transform: translate3d(-0.4%, -3px, 0) scaleX(1.008);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(1);
   }
 }
 
-body {
-  margin: 0;
+.paciano-organic-edge {
+  animation: pacianoOrganicEdge 14s ease-in-out infinite;
+  transform-origin: center bottom;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+/* =========================================================
+   PACIANO — ORGANIC HERO → ABOUT TRANSITION
+========================================================= */
+
+/* =========================================================
+   PACIANO — ORGANIC HERO → ABOUT TRANSITION
+========================================================= */
+
+@keyframes paciano-mist {
+  0% {
+    opacity: 0.42;
+    transform: translate3d(0, 4px, 0) scaleX(1);
+  }
+
+  50% {
+    opacity: 0.62;
+    transform: translate3d(-0.6%, -2px, 0) scaleX(1.015);
+  }
+
+  100% {
+    opacity: 0.42;
+    transform: translate3d(0, 4px, 0) scaleX(1);
+  }
+}
+
+.animate-paciano-mist {
+  animation: paciano-mist 12s ease-in-out infinite;
+}
+
+@keyframes paciano-edge {
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+
+  50% {
+    transform: translate3d(-0.35%, -4px, 0) scaleX(1.008);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+}
+
+.animate-paciano-edge {
+  transform-origin: center bottom;
+  animation: paciano-edge 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes paciano-organic-edge {
+  0% {
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+
+  50% {
+    transform: translate3d(-0.35%, -3px, 0) scaleX(1.006);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+}
+
+.animate-paciano-organic-edge {
+  transform-origin: center bottom;
+  animation: paciano-organic-edge 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes paciano-about-image {
+  0% {
+    transform: translate3d(0, 8px, 0) scale(1.015);
+  }
+
+  50% {
+    transform: translate3d(-0.6%, 0, 0) scale(1.025);
+  }
+
+  100% {
+    transform: translate3d(0, 8px, 0) scale(1.015);
+  }
+}
+
+.animate-paciano-about-image {
+  animation: paciano-about-image 18s ease-in-out infinite;
+}
+
+/* Contact page — underline form fields */
+.luxury-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(200, 167, 106, 0.35);
+  outline: none;
+  width: 100%;
+  padding: 10px 0 12px;
+  font-family: var(--font-jost);
+  font-size: 0.95rem;
+  color: #222222;
+  transition: border-color 0.3s ease;
+}
+
+.luxury-input::placeholder {
+  color: #6b6b6b;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.luxury-input:focus {
+  border-bottom-color: #c8a76a;
+}
+
+textarea.luxury-input {
+  resize: vertical;
+  min-height: 100px;
+}
+
+@media (min-width: 1024px) {
+  textarea.luxury-input-inline {
+    resize: none;
+    min-height: 46px;
+    max-height: 46px;
+    padding-top: 10px;
+    padding-bottom: 12px;
+    line-height: 1.35;
+  }
+}
+
+@keyframes contact-mist-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate3d(-1.5%, 0, 0) scale(1.03);
+  }
+}
+
+.animate-contact-mist-drift {
+  animation: contact-mist-drift 32s ease-in-out infinite alternate;
+}
+
+/* Stay page (from stay-page design, scoped) */
+.stay-page .font-display {
+  font-family: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+}
+
+.stay-page .page-container {
+  width: min(100% - 96px, 1320px);
+  margin-inline: auto;
+}
+
+.stay-page .section-title {
+  font-size: clamp(3.5rem, 4.25vw, 5.35rem);
+  line-height: 0.91;
+  letter-spacing: -0.045em;
+  font-weight: 400;
+}
+
+.stay-page .section-title em {
+  color: #55704f;
+  font-weight: 400;
+}
+
+.stay-page .eyebrow {
   display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 11px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.27em;
+  line-height: 1.5;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.stay-page .hero-shade {
+  background: linear-gradient(90deg,
+      #f8f5ee 0%,
+      rgba(248, 245, 238, 0.98) 15%,
+      rgba(248, 245, 238, 0.88) 32%,
+      rgba(248, 245, 238, 0.36) 53%,
+      rgba(12, 26, 17, 0.08) 75%,
+      rgba(12, 26, 17, 0.42) 100%);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.stay-page .section-wave {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 82px;
+  z-index: 2;
+  pointer-events: none;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+.stay-page .pill-link {
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  gap: 20px;
+  border: 1px solid #3f5b3f;
+  border-radius: 999px;
+  padding: 5px 6px 5px 19px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  white-space: nowrap;
+  transition:
+    background-color 0.25s,
+    color 0.25s,
+    transform 0.25s;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.stay-page .pill-link:hover {
+  transform: translateY(-2px);
+}
+
+.stay-page .pill-solid {
+  background: #3f5b3f;
+  color: #fff;
+}
+
+.stay-page .pill-solid:hover {
+  background: #29442f;
+}
+
+.stay-page .pill-outline {
+  color: #314832;
+  background: rgba(248, 245, 238, 0.65);
+  border-color: #abb5a5;
+}
+
+.stay-page .pill-outline:hover {
+  background: #fff;
+}
+
+.stay-page .pill-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.85;
+}
+
+.stay-page .circle-arrow {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c5c9bb;
+  border-radius: 50%;
+  color: #3b543d;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
+}
+
+.stay-page .circle-arrow:hover {
+  transform: translateY(-2px);
+  background: #e8ebdf;
+}
+
+.stay-page .booking-field {
+  min-width: 0;
+  border-right: 1px solid #dadbd0;
+  padding-right: 10px;
+}
+
+.stay-page .booking-field:last-child {
+  border-right: 0;
+}
+
+.stay-page .booking-input {
+  width: 100%;
+  min-width: 0;
+  margin-top: 11px;
+  border: 0;
+  background: transparent;
+  color: #5b655a;
+  font-size: 12px;
+  outline: none;
+  color-scheme: light;
+}
+
+.stay-page .scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.stay-page .scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .stay-page .page-container {
+    width: min(100% - 64px, 1320px);
+  }
+
+  .stay-page .hero-shade {
+    background: linear-gradient(90deg,
+        #f8f5ee 0%,
+        rgba(248, 245, 238, 0.96) 27%,
+        rgba(248, 245, 238, 0.54) 67%,
+        rgba(12, 26, 17, 0.12) 100%);
+  }
+}
+
+@media (max-width: 639px) {
+  .stay-page .page-container {
+    width: min(100% - 40px, 1320px);
+  }
+
+  .stay-page .hero .page-container {
+    min-height: 660px;
+    align-items: flex-end;
+    padding-bottom: 140px;
+  }
+
+  .stay-page .hero img {
+    object-position: 57% center;
+  }
+
+  .stay-page .hero-shade {
+    background: linear-gradient(0deg,
+        #f8f5ee 0%,
+        rgba(248, 245, 238, 0.97) 23%,
+        rgba(248, 245, 238, 0.72) 50%,
+        rgba(0, 0, 0, 0.05) 100%);
+  }
+
+  .stay-page .hero-copy h1 {
+    font-size: clamp(3.7rem, 12vw, 5rem);
+  }
+
+  .stay-page .hero-copy p {
+    font-size: 14px;
+  }
+
+  .stay-page .section-title {
+    font-size: clamp(3.35rem, 12vw, 4.4rem);
+  }
+
+  .stay-page .section-wave {
+    height: 46px;
+  }
+
+  .stay-page .booking-field {
+    border-right: 0;
+    border-bottom: 1px solid #dadbd0;
+    padding: 0 0 13px;
+  }
+
+  .stay-page .booking-field:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* Paciano admin */
+.admin-shell {
+  min-height: 100vh;
+  background: linear-gradient(165deg, #f8f5ee 0%, #eee9dc 45%, #e8e2d4 100%);
+  color: #102619;
+}
+
+.admin-sidebar {
+  background: linear-gradient(180deg, #0e2d20 0%, #09160f 100%);
+  color: #f4efe4;
+}
+
+.admin-nav-active {
+  background: rgba(200, 188, 130, 0.16);
+  color: #fffdf5;
+  border: 1px solid rgba(200, 188, 130, 0.22);
+}
+
+.admin-login-shell {
+  background: linear-gradient(160deg, #0e2d20 0%, #102619 40%, #09160f 100%);
+}
+
+.admin-login-card {
+  background: rgba(248, 245, 238, 0.97);
+  border: 1px solid rgba(200, 188, 130, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.admin-card {
+  background: #fffdf8;
+  border: 1px solid #ede4d8;
+}
+
+.admin-input {
+  background: #fff;
+  border: 1px solid #e0d5c8;
+  color: #102619;
+  outline: none;
+}
+
+.admin-input:focus {
+  border-color: rgba(143, 170, 66, 0.65);
+  box-shadow: 0 0 0 3px rgba(143, 170, 66, 0.15);
+}
+
+.admin-btn-gold {
+  background: linear-gradient(135deg, #8faa42 0%, #6b7f38 100%);
+  color: #fffdf5;
+}
+
+.admin-page-title {
+  color: #102619;
+  font-family: var(--font-cormorant), serif;
+}
+
+.admin-card-muted {
+  color: #6e655c;
+}
+
+.admin-badge-super {
+  background: rgba(143, 170, 66, 0.15);
+  color: #3d4a22;
+}
+
+.admin-badge-admin {
+  background: #faf7f2;
+  color: #6e655c;
+  border: 1px solid #e8dfd2;
+}
+
+/* Free OSM map — vintage map-card look  */
+.paciano-leaflet-map .leaflet-tile-pane {
+  filter: sepia(0.32) saturate(0.78) contrast(1.06) brightness(1.04);
+}
+
+.paciano-map-pin-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.paciano-leaflet-map .leaflet-control-attribution {
+  font-size: 8px;
+  line-height: 1.2;
+  margin: 0 !important;
+  padding: 2px 4px !important;
+  background: rgba(244, 239, 228, 0.75) !important;
+  color: #4b5234 !important;
 }
