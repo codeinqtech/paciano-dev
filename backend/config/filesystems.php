@@ -61,10 +61,10 @@ return [
             'report' => false,
         ],
 
-        // Hero banner video storage
+        // Hero banner video storage (defaults: backend/public/media/hero-videos)
         'hero_videos' => [
             'driver' => 'local',
-            'root' => env('HERO_VIDEO_PATH'),
+            'root' => env('HERO_VIDEO_PATH') ?: public_path('media/hero-videos'),
             'url' => env('HERO_VIDEO_URL'),
             'visibility' => 'public',
             'throw' => true,
