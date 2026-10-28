@@ -111,7 +111,8 @@ class HomeAdminController extends Controller
         $this->ensureHomePermission($request);
 
         $slide = $this->findActiveBanner($id);
-        $slide->update(['is_active' => false]);
+        $this->media->deletePublicFile($slide->file_path);
+        $slide->delete();
 
         return response()->json(['success' => true, 'message' => 'Banner slide removed.']);
     }
