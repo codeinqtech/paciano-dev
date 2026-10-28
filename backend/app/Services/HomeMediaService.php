@@ -34,19 +34,23 @@ class HomeMediaService
 
     public function storeBannerVideo(UploadedFile $file): array
     {
-        $dir = $this->uploadDirectory('banner', 'videos');
+        $dir = $this->ensureHeroVideoDirectory();
+
         $name = $this->uniqueName('banner_vid', 'mp4');
-        $dest = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $dest = rtrim($dir, DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . $name;
 
         $compression = $this->transcodeVideoToMp4(
             $file,
             $dest,
-            'scale=min(1920\\,iw):-2',
+            'scale=min(1920\\,iw):-2'
         );
 
         return [
             'file_name' => $name,
-            'file_path' => 'uploads/banner/videos/'.$name,
+            'file_path' => 'media/hero-videos/' . $name,
             'compression' => $compression,
         ];
     }
@@ -182,6 +186,30 @@ class HomeMediaService
 
         return $this->compressionStats(false, $originalBytes, $storedBytes);
     }
+    private function ensureHeroVideoDirectory(): string
+    {
+        $dir = config('filesystems.disks.hero_videos.root');
+
+        if (! is_string($dir) || trim($dir) === '') {
+            $dir = public_path('media/hero-videos');
+        }
+
+        if (! is_dir($dir)) {
+            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                throw new RuntimeException(
+                    'Unable to create hero video directory.'
+                );
+            }
+        }
+
+        if (! is_writable($dir)) {
+            throw new RuntimeException(
+                'Hero video directory is not writable.'
+            );
+        }
+
+        return $dir;
+    }
 
     private function storeUploadedVideoAsIs(UploadedFile $file, string $dest): void
     {
@@ -257,7 +285,24 @@ class HomeMediaService
         if (! $relativePath) {
             return;
         }
-        $full = public_path(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath));
+
+        $path = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        if (str_starts_with($path, 'media/hero-videos/')) {
+            $root = config('filesystems.disks.hero_videos.root');
+            if (! is_string($root) || trim($root) === '') {
+                $root = public_path('media/hero-videos');
+            }
+            $name = basename($path);
+            $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
+            if (is_file($full)) {
+                @unlink($full);
+            }
+
+            return;
+        }
+
+        $full = public_path(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path));
         if (is_file($full)) {
             @unlink($full);
         }
@@ -269,7 +314,22 @@ class HomeMediaService
             return null;
         }
 
-        $path = ltrim(str_replace('\\', '/', $relativePath), '/');
+        $path = ltrim(
+            str_replace('\\', '/', $relativePath),
+            '/'
+        );
+
+        if (str_starts_with($path, 'media/hero-videos/')) {
+            $configured = config('filesystems.disks.hero_videos.url');
+            $base = is_string($configured) ? trim($configured) : '';
+            if ($base === '') {
+                $base = $this->resolveMediaBaseUrl().'/media/hero-videos';
+            }
+
+            return rtrim($base, '/').'/'.basename($path);
+        }
+
+        // Keep the existing logic below this point unchanged.
         $base = $this->resolveMediaBaseUrl();
 
         return $base.'/'.$path;

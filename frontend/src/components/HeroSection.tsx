@@ -31,13 +31,15 @@ type HeroVideoSlide = {
   alt: string;
 };
 
+const DEFAULT_HERO_IMAGE: HeroImageSlide = {
+  id: "hero-fallback",
+  kind: "image",
+  src: heroImage,
+  alt: "Paciano river valley at sunset",
+};
+
 const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
-  {
-    id: "hero",
-    kind: "image",
-    src: heroImage,
-    alt: "Paciano river valley at sunset",
-  },
+  DEFAULT_HERO_IMAGE,
   {
     id: "story",
     kind: "video",
@@ -47,24 +49,90 @@ const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
 ];
 
 const SLIDE_MS = 9000;
+/** Minimum time on an image before advancing (when the next slide is another image). */
+const MIN_IMAGE_BEFORE_VIDEO_MS = 1500;
+
+function pendingVideoIndicesAfter(
+  slides: (HeroImageSlide | HeroVideoSlide)[],
+  fromIndex: number,
+): number[] {
+  if (slides.length < 2) {
+    return [];
+  }
+
+  const forward: number[] = [];
+  for (let j = fromIndex + 1; j < slides.length; j++) {
+    if (slides[j].kind === "video") {
+      forward.push(j);
+    } else {
+      break;
+    }
+  }
+  if (forward.length > 0) {
+    return forward;
+  }
+
+  const next = (fromIndex + 1) % slides.length;
+  if (slides[next]?.kind !== "video") {
+    return [];
+  }
+
+  const wrapped: number[] = [];
+  let j = next;
+  while (j !== fromIndex && slides[j]?.kind === "video") {
+    wrapped.push(j);
+    j = (j + 1) % slides.length;
+  }
+  return wrapped;
+}
+
+function isHeroVideoReady(
+  slideId: string,
+  index: number,
+  readyById: Record<string, boolean>,
+  videoRefs: React.MutableRefObject<(HTMLVideoElement | null)[]>,
+): boolean {
+  if (readyById[slideId]) {
+    return true;
+  }
+  const el = videoRefs.current[index];
+  if (!el) {
+    return false;
+  }
+  return el.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
+}
+
+function initialHeroSlideIndex(
+  slides: (HeroImageSlide | HeroVideoSlide)[],
+): number {
+  if (slides.length === 0) {
+    return 0;
+  }
+  if (slides[0].kind === "image") {
+    return 0;
+  }
+  const firstImage = slides.findIndex((s) => s.kind === "image");
+  return firstImage >= 0 ? firstImage : 0;
+}
 
 type HeroVideoPlayOptions = {
-  /** Hero section is on screen — when false, always mute. */
   inView: boolean;
-  /** User has interacted with the page; try hard for audible playback. */
-  soundUnlocked: boolean;
-  /** Restart from beginning (slide change). */
   restart?: boolean;
+  soundEnabled?: boolean;
 };
 
 async function playHeroVideoForView(
   video: HTMLVideoElement,
   options: HeroVideoPlayOptions,
 ): Promise<boolean> {
-  const { inView, soundUnlocked, restart = false } = options;
+  const {
+    inView,
+    restart = false,
+    soundEnabled = false,
+  } = options;
 
   if (!inView) {
-    video.muted = true;
+    video.pause();
     return true;
   }
 
@@ -72,44 +140,40 @@ async function playHeroVideoForView(
     try {
       video.currentTime = 0;
     } catch {
-      /* ignore seek errors */
+      // Metadata may not be ready yet.
     }
   }
 
-  const tryAudible = async (): Promise<boolean> => {
-    video.muted = false;
-    video.volume = 1;
-    try {
-      await video.play();
-      return !video.muted;
-    } catch {
-      return false;
-    }
-  };
+  // Restore the user's preferred sound setting.
+  video.volume = soundEnabled ? 1 : 0;
+  video.muted = !soundEnabled;
+  video.defaultMuted = !soundEnabled;
 
-  if (await tryAudible()) {
-    return true;
-  }
-
-  if (soundUnlocked) {
-    video.muted = false;
-    video.volume = 1;
-    try {
-      await video.play();
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  video.muted = true;
   try {
     await video.play();
     return true;
-  } catch {
+  } catch (error) {
+    // If sound autoplay is blocked, fall back to muted playback.
+    if (soundEnabled) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+
+      try {
+        await video.play();
+        return true;
+      } catch (retryError) {
+        console.warn("Hero video playback failed:", retryError);
+        return false;
+      }
+    }
+
+    console.warn("Hero video playback failed:", error);
     return false;
   }
 }
+
+
 
 export default function HeroSection() {
   const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
@@ -117,7 +181,8 @@ export default function HeroSection() {
     if (!ready || apiBannerSlides.length === 0) {
       return FALLBACK_HERO_SLIDES;
     }
-    return apiBannerSlides.map((s) => {
+
+    const cmsSlides = apiBannerSlides.map((s) => {
       const src = resolveMediaUrl(s.url) ?? s.url;
       return s.media_type === "video"
         ? {
@@ -133,6 +198,13 @@ export default function HeroSection() {
             alt: "Paciano banner",
           };
     });
+
+    const hasCmsImage = apiBannerSlides.some((s) => s.media_type === "image");
+    if (!hasCmsImage) {
+      return [DEFAULT_HERO_IMAGE, ...cmsSlides];
+    }
+
+    return cmsSlides;
   }, [ready, apiBannerSlides]);
 
   const heroSlidesKey = heroSlides.map((s) => `${s.id}:${s.src}`).join("|");
@@ -147,34 +219,99 @@ export default function HeroSection() {
   const heroSlidesRef = useRef(heroSlides);
   const heroInViewRef = useRef(true);
   const soundUnlockedRef = useRef(false);
+  const videoReadyByIdRef = useRef<Record<string, boolean>>({});
+  const imageHoldStartedRef = useRef(Date.now());
+  const [videoReadyTick, setVideoReadyTick] = useState(0);
   slideIndexRef.current = slideIndex;
   heroSlidesRef.current = heroSlides;
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+
+  const updateSoundEnabled = (enabled: boolean) => {
+    soundEnabledRef.current = enabled;
+    setSoundEnabled(enabled);
+  };
+
+  const markVideoReady = useCallback((slideId: string) => {
+    if (videoReadyByIdRef.current[slideId]) {
+      return;
+    }
+    videoReadyByIdRef.current[slideId] = true;
+    setVideoReadyTick((n) => n + 1);
+  }, []);
 
   const syncActiveHeroVideo = useCallback((restart = false) => {
     const idx = slideIndexRef.current;
     const slide = heroSlidesRef.current[idx];
     const video = videoRefs.current[idx];
+
     if (slide?.kind !== "video" || !video) {
+      return;
+    }
+
+    if (
+      !isHeroVideoReady(slide.id, idx, videoReadyByIdRef.current, videoRefs)
+    ) {
       return;
     }
 
     void playHeroVideoForView(video, {
       inView: heroInViewRef.current,
-      soundUnlocked: soundUnlockedRef.current,
       restart,
+      soundEnabled: soundEnabledRef.current,
     }).then((played) => {
-      if (played && heroInViewRef.current && !video.muted) {
-        soundUnlockedRef.current = true;
+      if (played && heroInViewRef.current) {
+        updateSoundEnabled(!video.muted);
       }
     });
   }, []);
+
+  const toggleHeroSound = async () => {
+    const video = videoRefs.current[slideIndex];
+
+    if (!video || video.paused) return;
+
+    if (soundEnabledRef.current) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+      return;
+    }
+
+    try {
+      video.volume = 1;
+      video.muted = false;
+      video.defaultMuted = false;
+
+      await video.play();
+      updateSoundEnabled(true);
+    } catch (error) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+
+      console.warn("Could not enable video sound:", error);
+    }
+  };
+
 
   const activeSlide = heroSlides[slideIndex];
   const showImageBannerChrome = activeSlide?.kind === "image";
 
   useEffect(() => {
-    setSlideIndex(0);
+    videoReadyByIdRef.current = {};
+    setVideoReadyTick(0);
+    setSlideIndex(initialHeroSlideIndex(heroSlidesRef.current));
   }, [heroSlidesKey]);
+
+  useEffect(() => {
+    if (heroSlides[slideIndex]?.kind === "image") {
+      imageHoldStartedRef.current = Date.now();
+    }
+  }, [slideIndex, heroSlidesKey, heroSlides]);
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -292,15 +429,6 @@ export default function HeroSection() {
   }, [heroSlidesKey, syncActiveHeroVideo]);
 
   useEffect(() => {
-    const retryTimers = [
-      window.setTimeout(() => syncActiveHeroVideo(false), 400),
-      window.setTimeout(() => syncActiveHeroVideo(false), 1200),
-      window.setTimeout(() => syncActiveHeroVideo(false), 2800),
-    ];
-    return () => retryTimers.forEach((id) => window.clearTimeout(id));
-  }, [heroSlidesKey, slideIndex, syncActiveHeroVideo]);
-
-  useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       return;
@@ -320,11 +448,15 @@ export default function HeroSection() {
         if (!video || cancelled) {
           return false;
         }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return false;
+        }
         video.loop = true;
         void playHeroVideoForView(video, {
           inView: heroInViewRef.current,
-          soundUnlocked: soundUnlockedRef.current,
+          // soundUnlocked: soundUnlockedRef.current,
           restart: true,
+          soundEnabled: soundEnabledRef.current,
         }).then((played) => {
           if (played && heroInViewRef.current && !video.muted) {
             soundUnlockedRef.current = true;
@@ -333,11 +465,25 @@ export default function HeroSection() {
         return true;
       };
 
+      const onSingleReady = () => {
+        markVideoReady(only.id);
+        startSingle();
+      };
+
       const tryStart = () => {
-        if (cancelled || startSingle()) {
+        if (cancelled) {
           return;
         }
-        retryTimer = window.setTimeout(tryStart, 80);
+        const video = videoRefs.current[0];
+        if (!video) {
+          retryTimer = window.setTimeout(tryStart, 80);
+          return;
+        }
+        if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          onSingleReady();
+          return;
+        }
+        video.addEventListener("canplaythrough", onSingleReady, { once: true });
       };
 
       tryStart();
@@ -350,13 +496,8 @@ export default function HeroSection() {
     }
 
     const slide = heroSlides[slideIndex];
-    if (!slide) {
+    if (!slide || slide.kind !== "video") {
       return;
-    }
-
-    if (slide.kind === "image") {
-      const timer = window.setTimeout(advanceToNextSlide, SLIDE_MS);
-      return () => window.clearTimeout(timer);
     }
 
     let cancelled = false;
@@ -380,10 +521,16 @@ export default function HeroSection() {
       const onEnded = () => goNext();
 
       const startPlayback = () => {
+        if (cancelled) {
+          return;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return;
+        }
         void playHeroVideoForView(video, {
           inView: heroInViewRef.current,
-          soundUnlocked: soundUnlockedRef.current,
           restart: true,
+          soundEnabled: soundEnabledRef.current,
         }).then((played) => {
           if (played && heroInViewRef.current && !video.muted) {
             soundUnlockedRef.current = true;
@@ -397,12 +544,25 @@ export default function HeroSection() {
         });
       };
 
+      let playbackStarted = false;
+      const onReady = () => {
+        markVideoReady(slide.id);
+        if (playbackStarted) {
+          return;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return;
+        }
+        playbackStarted = true;
+        startPlayback();
+      };
+
       video.addEventListener("ended", onEnded);
 
-      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-        startPlayback();
+      if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        onReady();
       } else {
-        video.addEventListener("loadedmetadata", startPlayback, { once: true });
+        video.addEventListener("canplaythrough", onReady, { once: true });
       }
 
       cleanupVideo = () => {
@@ -430,7 +590,78 @@ export default function HeroSection() {
       if (fallbackTimer) window.clearTimeout(fallbackTimer);
       cleanupVideo?.();
     };
-  }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide]);
+  }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide, markVideoReady]);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || heroSlides.length < 2) {
+      return;
+    }
+    const slide = heroSlides[slideIndex];
+    if (slide?.kind !== "image") {
+      return;
+    }
+
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    const pending = pendingVideoIndicesAfter(heroSlides, slideIndex);
+
+    const schedule = (delayMs: number) => {
+      pollTimer = window.setTimeout(tick, delayMs);
+    };
+
+    const tick = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const elapsed = Date.now() - imageHoldStartedRef.current;
+      const videosReady =
+        pending.length === 0 ||
+        pending.every((idx) => {
+          const s = heroSlides[idx];
+          return isHeroVideoReady(
+            s.id,
+            idx,
+            videoReadyByIdRef.current,
+            videoRefs,
+          );
+        });
+
+      if (pending.length === 0) {
+        if (elapsed >= SLIDE_MS) {
+          advanceToNextSlide();
+          return;
+        }
+        schedule(Math.min(250, SLIDE_MS - elapsed));
+        return;
+      }
+
+      if (videosReady && elapsed >= MIN_IMAGE_BEFORE_VIDEO_MS) {
+        advanceToNextSlide();
+        return;
+      }
+
+      schedule(280);
+    };
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) window.clearTimeout(pollTimer);
+    };
+  }, [
+    slideIndex,
+    heroSlides,
+    heroSlidesKey,
+    advanceToNextSlide,
+    videoReadyTick,
+  ]);
+
+  
+
+
 
   return (
     <section
@@ -668,27 +899,38 @@ export default function HeroSection() {
 
           if (slide.kind === "video") {
             return (
+              
               <video
                 key={slide.id}
                 ref={(el) => {
                   videoRefs.current[i] = el;
                 }}
                 src={slide.src}
-                className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+                className={`${mediaClass} ${
+                  active ? "paciano-hero-media-drift" : ""
+                }`}
                 loop={heroSlides.length === 1}
-                autoPlay
+                muted={!soundEnabled || !active}
                 playsInline
                 preload="auto"
                 aria-label={slide.alt}
                 onLoadedData={(e) => {
-                  if (!active) return;
-                  syncActiveHeroVideo(false);
+                  const v = e.currentTarget;
+                  if (v.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                    markVideoReady(slide.id);
+                  }
+                  if (active) {
+                    syncActiveHeroVideo(false);
+                  }
                 }}
-                onCanPlay={(e) => {
-                  if (!active) return;
-                  syncActiveHeroVideo(false);
+                onCanPlayThrough={(e) => {
+                  markVideoReady(slide.id);
+                  if (active) {
+                    syncActiveHeroVideo(false);
+                  }
                 }}
               />
+              
             );
           }
 
@@ -706,6 +948,19 @@ export default function HeroSection() {
             />
           );
         })}
+        
+  <button
+    type="button"
+    onClick={toggleHeroSound}
+    className="absolute bottom-8 right-8 z-50 rounded-full
+      border border-white/30 bg-black/40 px-5 py-3
+      text-xs uppercase tracking-widest text-white
+      backdrop-blur-md transition hover:bg-black/60"
+    aria-label={soundEnabled ? "Mute video" : "Enable video sound"}
+  >
+    {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
+  </button>
+
 
         <div className="pointer-events-none absolute inset-0 z-[1]">
           <div
