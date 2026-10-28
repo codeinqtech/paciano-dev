@@ -191,9 +191,7 @@ class HomeMediaService
         $dir = config('filesystems.disks.hero_videos.root');
 
         if (! is_string($dir) || trim($dir) === '') {
-            throw new RuntimeException(
-                'Hero video storage path is not configured.'
-            );
+            $dir = public_path('media/hero-videos');
         }
 
         if (! is_dir($dir)) {
@@ -292,12 +290,13 @@ class HomeMediaService
 
         if (str_starts_with($path, 'media/hero-videos/')) {
             $root = config('filesystems.disks.hero_videos.root');
-            if (is_string($root) && $root !== '') {
-                $name = basename($path);
-                $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
-                if (is_file($full)) {
-                    @unlink($full);
-                }
+            if (! is_string($root) || trim($root) === '') {
+                $root = public_path('media/hero-videos');
+            }
+            $name = basename($path);
+            $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
+            if (is_file($full)) {
+                @unlink($full);
             }
 
             return;
@@ -321,18 +320,13 @@ class HomeMediaService
         );
 
         if (str_starts_with($path, 'media/hero-videos/')) {
-            $base = rtrim(
-                (string) config('filesystems.disks.hero_videos.url'),
-                '/'
-            );
-
+            $configured = config('filesystems.disks.hero_videos.url');
+            $base = is_string($configured) ? trim($configured) : '';
             if ($base === '') {
-                throw new RuntimeException(
-                    'Hero video public URL is not configured.'
-                );
+                $base = $this->resolveMediaBaseUrl().'/media/hero-videos';
             }
 
-            return $base.'/'.basename($path);
+            return rtrim($base, '/').'/'.basename($path);
         }
 
         // Keep the existing logic below this point unchanged.

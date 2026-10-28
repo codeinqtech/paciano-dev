@@ -126,4 +126,5 @@ jobs:
 
             mkdir -p public/uploads/banner/images public/uploads/banner/videos
             mkdir -p public/uploads/home public/uploads/reviews
-            chmod -R 775 public/uploads 2>/dev/null || true
+            mkdir -p public/media/hero-videos
+            chmod -R 775 public/uploads public/media 2>/dev/null || true
