@@ -48,23 +48,26 @@ const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
 
 const SLIDE_MS = 9000;
 
+  
+
 type HeroVideoPlayOptions = {
-  /** Hero section is on screen — when false, always mute. */
   inView: boolean;
-  /** User has interacted with the page; try hard for audible playback. */
-  soundUnlocked: boolean;
-  /** Restart from beginning (slide change). */
   restart?: boolean;
+  soundEnabled?: boolean;
 };
 
 async function playHeroVideoForView(
   video: HTMLVideoElement,
   options: HeroVideoPlayOptions,
 ): Promise<boolean> {
-  const { inView, soundUnlocked, restart = false } = options;
+  const {
+    inView,
+    restart = false,
+    soundEnabled = false,
+  } = options;
 
   if (!inView) {
-    video.muted = true;
+    video.pause();
     return true;
   }
 
@@ -72,44 +75,40 @@ async function playHeroVideoForView(
     try {
       video.currentTime = 0;
     } catch {
-      /* ignore seek errors */
+      // Metadata may not be ready yet.
     }
   }
 
-  const tryAudible = async (): Promise<boolean> => {
-    video.muted = false;
-    video.volume = 1;
-    try {
-      await video.play();
-      return !video.muted;
-    } catch {
-      return false;
-    }
-  };
+  // Restore the user's preferred sound setting.
+  video.volume = soundEnabled ? 1 : 0;
+  video.muted = !soundEnabled;
+  video.defaultMuted = !soundEnabled;
 
-  if (await tryAudible()) {
-    return true;
-  }
-
-  if (soundUnlocked) {
-    video.muted = false;
-    video.volume = 1;
-    try {
-      await video.play();
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  video.muted = true;
   try {
     await video.play();
     return true;
-  } catch {
+  } catch (error) {
+    // If sound autoplay is blocked, fall back to muted playback.
+    if (soundEnabled) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+
+      try {
+        await video.play();
+        return true;
+      } catch (retryError) {
+        console.warn("Hero video playback failed:", retryError);
+        return false;
+      }
+    }
+
+    console.warn("Hero video playback failed:", error);
     return false;
   }
 }
+
+
 
 export default function HeroSection() {
   const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
@@ -150,24 +149,66 @@ export default function HeroSection() {
   slideIndexRef.current = slideIndex;
   heroSlidesRef.current = heroSlides;
 
+
   const syncActiveHeroVideo = useCallback((restart = false) => {
     const idx = slideIndexRef.current;
     const slide = heroSlidesRef.current[idx];
     const video = videoRefs.current[idx];
+
     if (slide?.kind !== "video" || !video) {
       return;
     }
 
     void playHeroVideoForView(video, {
       inView: heroInViewRef.current,
-      soundUnlocked: soundUnlockedRef.current,
       restart,
+      soundEnabled: soundEnabledRef.current,
     }).then((played) => {
-      if (played && heroInViewRef.current && !video.muted) {
-        soundUnlockedRef.current = true;
+      if (played && heroInViewRef.current) {
+        updateSoundEnabled(!video.muted);
       }
     });
   }, []);
+
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+
+  const updateSoundEnabled = (enabled: boolean) => {
+    soundEnabledRef.current = enabled;
+    setSoundEnabled(enabled);
+  };
+
+  const toggleHeroSound = async () => {
+    const video = videoRefs.current[slideIndex];
+
+    if (!video || video.paused) return;
+
+    if (soundEnabledRef.current) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+      return;
+    }
+
+    try {
+      video.volume = 1;
+      video.muted = false;
+      video.defaultMuted = false;
+
+      await video.play();
+      updateSoundEnabled(true);
+    } catch (error) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+
+      console.warn("Could not enable video sound:", error);
+    }
+  };
+
 
   const activeSlide = heroSlides[slideIndex];
   const showImageBannerChrome = activeSlide?.kind === "image";
@@ -323,8 +364,9 @@ export default function HeroSection() {
         video.loop = true;
         void playHeroVideoForView(video, {
           inView: heroInViewRef.current,
-          soundUnlocked: soundUnlockedRef.current,
+          // soundUnlocked: soundUnlockedRef.current,
           restart: true,
+          soundEnabled: soundEnabledRef.current,
         }).then((played) => {
           if (played && heroInViewRef.current && !video.muted) {
             soundUnlockedRef.current = true;
@@ -382,8 +424,8 @@ export default function HeroSection() {
       const startPlayback = () => {
         void playHeroVideoForView(video, {
           inView: heroInViewRef.current,
-          soundUnlocked: soundUnlockedRef.current,
           restart: true,
+          soundEnabled: soundEnabledRef.current,
         }).then((played) => {
           if (played && heroInViewRef.current && !video.muted) {
             soundUnlockedRef.current = true;
@@ -393,7 +435,7 @@ export default function HeroSection() {
             Number.isFinite(video.duration) && video.duration > 0
               ? video.duration * 1000 + 400
               : SLIDE_MS;
-          fallbackTimer = window.setTimeout(goNext, ms);
+          // fallbackTimer = window.setTimeout(goNext, ms);
         });
       };
 
@@ -431,6 +473,10 @@ export default function HeroSection() {
       cleanupVideo?.();
     };
   }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide]);
+
+  
+
+
 
   return (
     <section
@@ -668,27 +714,28 @@ export default function HeroSection() {
 
           if (slide.kind === "video") {
             return (
+              
               <video
                 key={slide.id}
                 ref={(el) => {
                   videoRefs.current[i] = el;
                 }}
                 src={slide.src}
-                className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+                className={`${mediaClass} ${
+                  active ? "paciano-hero-media-drift" : ""
+                }`}
                 loop={heroSlides.length === 1}
                 autoPlay
+                muted
                 playsInline
-                preload="auto"
+                preload={active ? "auto" : "none"}
                 aria-label={slide.alt}
-                onLoadedData={(e) => {
-                  if (!active) return;
-                  syncActiveHeroVideo(false);
+                onLoadedData={() => {
+                  if (active) syncActiveHeroVideo(false);
                 }}
-                onCanPlay={(e) => {
-                  if (!active) return;
-                  syncActiveHeroVideo(false);
-                }}
+                
               />
+              
             );
           }
 
@@ -706,6 +753,19 @@ export default function HeroSection() {
             />
           );
         })}
+        
+  <button
+    type="button"
+    onClick={toggleHeroSound}
+    className="absolute bottom-8 right-8 z-50 rounded-full
+      border border-white/30 bg-black/40 px-5 py-3
+      text-xs uppercase tracking-widest text-white
+      backdrop-blur-md transition hover:bg-black/60"
+    aria-label={soundEnabled ? "Mute video" : "Enable video sound"}
+  >
+    {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
+  </button>
+
 
         <div className="pointer-events-none absolute inset-0 z-[1]">
           <div
