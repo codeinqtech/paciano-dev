@@ -750,16 +750,25 @@ export default function Accommodation() {
             className="
       relative
       w-full
-      min-h-[96px]
+      min-h-0
       flex
       items-center
-      rounded-[60px]
+      rounded-[28px]
       border
       border-[#C9C8BC]/75
       bg-[#F7F3E9]/90
+      px-3
+      py-4
       shadow-[0_12px_40px_rgba(65,73,55,0.065)]
       backdrop-blur-[8px]
-      overflow-visible
+      overflow-hidden
+      sm:rounded-[40px]
+      sm:px-4
+      lg:min-h-[96px]
+      lg:rounded-[60px]
+      lg:px-0
+      lg:py-0
+      lg:overflow-visible
     "
           >
             {/* very subtle inner border */}
@@ -786,15 +795,19 @@ export default function Accommodation() {
     relative
     z-20
     flex
-    min-h-[94px]
     w-full
+    flex-col
     items-stretch
+    gap-4
     overflow-visible
-    pl-[27px]
+    lg:min-h-[94px]
+    lg:flex-row
+    lg:gap-0
+    lg:pl-[27px]
   "
             >
               {/* Four stay navigation items */}
-              <div className="grid min-w-0 flex-1 grid-cols-[1fr_1fr_1fr_1.08fr]">
+              <div className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 md:grid-cols-4 lg:flex-1 lg:grid-cols-[1fr_1fr_1fr_1.08fr] lg:gap-y-0">
                 {displayStays.map((item, index) => {
                   const active = index === activeStay;
 
@@ -840,13 +853,15 @@ export default function Accommodation() {
                           w-full
                           items-center
                           justify-center
-                          gap-4
-                          px-3
+                          gap-2
+                          px-1
                           outline-none
                           transition-all
                           duration-500
                           disabled:pointer-events-none
-                          sm:gap-5
+                          sm:gap-4
+                          sm:px-2
+                          lg:gap-5
                           lg:px-5
                         "
                       >
@@ -864,9 +879,13 @@ export default function Accommodation() {
                             relative
                             z-10
                             flex
-                            h-[56px]
-                            w-[56px]
+                            h-[44px]
+                            w-[44px]
                             shrink-0
+                            sm:h-[50px]
+                            sm:w-[50px]
+                            lg:h-[56px]
+                            lg:w-[56px]
                             items-center
                             justify-center
                             rounded-full
@@ -1014,18 +1033,18 @@ export default function Accommodation() {
                           <span className="flex min-w-0 flex-col items-start justify-center text-left">
                             <span
                               className={`
-                              whitespace-nowrap
                               font-cormorant
                               font-medium
-                              text-[21px]
-                              leading-[1]
+                              text-[14px]
+                              leading-[1.1]
                               tracking-[0]
                               antialiased
                               transition-colors
                               duration-500
-
-                              sm:text-[20px]
+                              sm:text-[17px]
+                              sm:leading-[1]
                               lg:text-[20px]
+                              lg:whitespace-nowrap
 
                               ${active ? "text-[#1F3026]" : "text-[#3A4840] group-hover:text-[#26382D]"}
                             `}
@@ -1035,13 +1054,16 @@ export default function Accommodation() {
 
                             <span
                               className={`
-                              mt-[7px]
-                              whitespace-nowrap
+                              mt-[4px]
                               font-manrope
-                              text-[10px]
+                              text-[8px]
                               font-medium
                               uppercase
-                              tracking-[0.29em]
+                              tracking-[0.18em]
+                              sm:mt-[7px]
+                              sm:text-[9px]
+                              sm:tracking-[0.29em]
+                              lg:whitespace-nowrap
                               transition-colors
                               duration-500
                               sm:text-[9px]
@@ -1063,11 +1085,14 @@ export default function Accommodation() {
                             className={`
                           pointer-events-none
                           absolute
-                          bottom-[24px]
+                          bottom-[8px]
                           left-1/2
+                          hidden
                           h-px
                           w-[218px]
                           -translate-x-1/2
+                          lg:bottom-[24px]
+                          lg:block
                           origin-center
                           bg-gradient-to-r
                           from-transparent
@@ -1118,10 +1143,12 @@ export default function Accommodation() {
                 aria-hidden="true"
                 className="
                   my-auto
+                  hidden
                   h-[52px]
                   w-px
                   shrink-0
                   bg-[#C2C5B9]/80
+                  lg:block
                 "
               />
 
@@ -1139,23 +1166,32 @@ export default function Accommodation() {
                   group
                   relative
                   flex
-                  min-h-[116px]
-                  w-[260px]
+                  min-h-[72px]
+                  w-full
                   shrink-0
                   items-center
                   justify-center
                   overflow-visible
+                  rounded-[20px]
+                  border
+                  border-[#C9C8BC]/60
+                  bg-[#F8F5ED]/80
                   outline-none
                   transition-all
                   duration-[1100ms]
                   ease-[cubic-bezier(0.16,1,0.3,1)]
+                  lg:min-h-[116px]
+                  lg:w-[260px]
+                  lg:rounded-none
+                  lg:border-0
+                  lg:bg-transparent
                   ${
                     visible
                       ? "opacity-100 translate-x-0 blur-0"
                       : "opacity-0 translate-x-8 blur-[2px]"
                   }
+                  sm:min-h-[88px]
                   sm:w-[275px]
-                  lg:w-[260px]
                 `}
                 style={{
                   transitionDelay: visible ? "620ms" : "0ms",
@@ -1173,6 +1209,7 @@ export default function Accommodation() {
                     right-[-58px]
                     top-1/2
                     z-0
+                    hidden
                     h-[112px]
                     w-auto
                     max-w-none
@@ -1185,6 +1222,7 @@ export default function Accommodation() {
                     group-hover:translate-x-[7px]
                     group-hover:rotate-[1.5deg]
                     group-hover:opacity-100
+                    lg:block
                   "
                 />
 
