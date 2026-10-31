@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\SiteNavigationMenu;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class SiteNavigationMenuController extends Controller
@@ -14,12 +15,16 @@ class SiteNavigationMenuController extends Controller
      */
     public function publicIndex()
     {
-        $items = SiteNavigationMenu::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (SiteNavigationMenu $m) => $m->toPublicArray());
+        try {
+            $items = SiteNavigationMenu::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (SiteNavigationMenu $m) => $m->toPublicArray());
+        } catch (\Throwable) {
+            $items = collect();
+        }
 
         return response()->json([
             'success' => true,

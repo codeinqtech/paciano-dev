@@ -1,6 +1,6 @@
-const API_BASE = (
-  import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000/api"
-).replace(/\/$/, "");
+import { getApiBaseUrl } from "@/lib/apiBase";
+
+const API_BASE = getApiBaseUrl();
 
 const TOKEN_KEY = "paciano_admin_token";
 

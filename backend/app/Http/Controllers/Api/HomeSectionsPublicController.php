@@ -15,9 +15,18 @@ use Illuminate\Support\Facades\Schema;
 
 class HomeSectionsPublicController extends Controller
 {
+    private function hasTable(string $table): bool
+    {
+        try {
+            return Schema::hasTable($table);
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     public function about()
     {
-        if (! Schema::hasTable('home_about_sections')) {
+        if (! $this->hasTable('home_about_sections')) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
@@ -33,7 +42,7 @@ class HomeSectionsPublicController extends Controller
 
     public function experiences()
     {
-        if (! Schema::hasTable('home_experience_sections')) {
+        if (! $this->hasTable('home_experience_sections')) {
             return response()->json(['success' => true, 'data' => ['section' => null, 'items' => []]]);
         }
 
@@ -58,7 +67,7 @@ class HomeSectionsPublicController extends Controller
 
     public function stays()
     {
-        if (! Schema::hasTable('home_stays_sections')) {
+        if (! $this->hasTable('home_stays_sections')) {
             return response()->json(['success' => true, 'data' => ['section' => null, 'items' => []]]);
         }
 
@@ -83,7 +92,7 @@ class HomeSectionsPublicController extends Controller
 
     public function dining()
     {
-        if (! Schema::hasTable('home_dining_sections')) {
+        if (! $this->hasTable('home_dining_sections')) {
             return response()->json(['success' => true, 'data' => ['section' => null, 'slides' => []]]);
         }
 

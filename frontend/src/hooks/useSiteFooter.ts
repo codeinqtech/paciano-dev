@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 export type FooterSettings = {
   id?: number;
@@ -105,9 +106,7 @@ export function useSiteFooter(): SiteFooterData {
   });
 
   useEffect(() => {
-    const base = (
-      import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000/api"
-    ).replace(/\/$/, "");
+    const base = getApiBaseUrl();
 
     fetch(`${base}/site-footer`, { headers: { Accept: "application/json" } })
       .then((res) => (res.ok ? res.json() : Promise.reject()))

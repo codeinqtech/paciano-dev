@@ -4,11 +4,19 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class HomeMediaService
 {
+    /** Videos at or above this size are compressed with ffmpeg when available. */
+    public const VIDEO_LARGE_BYTES = 100 * 1024 * 1024;
+
+    private ?string $resolvedFfmpegBinary = null;
+
+    private bool $ffmpegLookupDone = false;
+
     public function storeBannerImage(UploadedFile $file): array
     {
         $dir = $this->uploadDirectory('banner', 'images');
@@ -26,35 +34,24 @@ class HomeMediaService
 
     public function storeBannerVideo(UploadedFile $file): array
     {
-        $dir = $this->uploadDirectory('banner', 'videos');
+        $dir = $this->ensureHeroVideoDirectory();
 
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
-        $sizeBytes = (int) $file->getSize();
-        $compressWithFfmpeg =
-            $this->ffmpegAvailable()
-            && $sizeBytes > 0
-            && $sizeBytes <= 80 * 1024 * 1024;
+        $name = $this->uniqueName('banner_vid', 'mp4');
 
-        if ($compressWithFfmpeg) {
-            $name = $this->uniqueName('banner_vid', 'mp4');
-            $dest = $dir.DIRECTORY_SEPARATOR.$name;
-            $tmp = $file->getPathname();
-            $this->runFfmpeg([
-                'ffmpeg', '-y', '-i', $tmp,
-                '-vf', 'scale=min(1920\\,iw):-2',
-                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
-                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
-                $dest,
-            ]);
-        } else {
-            $safeExt = in_array($ext, ['mp4', 'mov', 'webm'], true) ? $ext : 'mp4';
-            $name = $this->uniqueName('banner_vid', $safeExt);
-            $file->move($dir, $name);
-        }
+        $dest = rtrim($dir, DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . $name;
+
+        $compression = $this->transcodeVideoToMp4(
+            $file,
+            $dest,
+            'scale=min(1920\\,iw):-2'
+        );
 
         return [
             'file_name' => $name,
-            'file_path' => 'uploads/banner/videos/'.$name,
+            'file_path' => 'media/hero-videos/' . $name,
+            'compression' => $compression,
         ];
     }
 
@@ -91,12 +88,13 @@ class HomeMediaService
         $path = $dir.DIRECTORY_SEPARATOR.$name;
         $tmpJpg = sys_get_temp_dir().DIRECTORY_SEPARATOR.$this->uniqueName('frame', 'jpg');
 
-        if (! $this->ffmpegAvailable()) {
+        $ffmpegBin = $this->resolveFfmpegBinary();
+        if ($ffmpegBin === null) {
             throw new RuntimeException('Upload a thumbnail or install ffmpeg to capture one from the video.');
         }
 
         $this->runFfmpeg([
-            'ffmpeg', '-y', '-i', $videoFull,
+            $ffmpegBin, '-y', '-i', $videoFull,
             '-ss', '0.25', '-frames:v', '1', '-q:v', '2',
             $tmpJpg,
         ]);
@@ -122,21 +120,128 @@ class HomeMediaService
         $name = $this->uniqueName('review_vid', 'mp4');
         $dest = $dir.DIRECTORY_SEPARATOR.$name;
 
-        if ($this->ffmpegAvailable()) {
-            $this->runFfmpeg([
-                'ffmpeg', '-y', '-i', $file->getPathname(),
-                '-vf', 'scale=min(1280\\,iw):-2',
-                '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
-                '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
-                $dest,
-            ]);
-        } else {
-            $file->move($dir, $name);
-        }
+        $compression = $this->transcodeVideoToMp4(
+            $file,
+            $dest,
+            'scale=min(1280\\,iw):-2',
+        );
 
         return [
             'file_name' => $name,
             'file_path' => 'uploads/reviews/'.$year.'/'.$name,
+            'compression' => $compression,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   applied: bool,
+     *   original_bytes: int,
+     *   stored_bytes: int,
+     *   saved_percent: float
+     * }
+     */
+    private function transcodeVideoToMp4(UploadedFile $file, string $dest, string $scaleFilter): array
+    {
+        if (! $file->isValid()) {
+            throw new RuntimeException(
+                'Upload failed before the file reached the server. Ask your host to raise PHP upload_max_filesize and post_max_size (512M or higher for large videos).',
+            );
+        }
+
+        $originalBytes = max(0, (int) $file->getSize());
+        $shouldCompress = $originalBytes >= self::VIDEO_LARGE_BYTES;
+        $ffmpegBin = $this->resolveFfmpegBinary();
+
+        if ($shouldCompress && $ffmpegBin !== null) {
+            try {
+                $this->runFfmpeg([
+                    $ffmpegBin, '-y', '-i', $file->getPathname(),
+                    '-vf', $scaleFilter,
+                    '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
+                    '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
+                    $dest,
+                ]);
+                $storedBytes = is_file($dest) ? (int) filesize($dest) : 0;
+                if ($storedBytes > 0) {
+                    return $this->compressionStats(true, $originalBytes, $storedBytes);
+                }
+            } catch (RuntimeException $e) {
+                Log::warning('Video ffmpeg transcode failed; storing original upload.', [
+                    'error' => $e->getMessage(),
+                    'bytes' => $originalBytes,
+                ]);
+                if (is_file($dest)) {
+                    @unlink($dest);
+                }
+            }
+        } elseif ($shouldCompress) {
+            Log::warning('Large video upload without ffmpeg; storing original file.', [
+                'bytes' => $originalBytes,
+            ]);
+        }
+
+        $this->storeUploadedVideoAsIs($file, $dest);
+        $storedBytes = is_file($dest) ? (int) filesize($dest) : $originalBytes;
+
+        return $this->compressionStats(false, $originalBytes, $storedBytes);
+    }
+    private function ensureHeroVideoDirectory(): string
+    {
+        $dir = config('filesystems.disks.hero_videos.root');
+
+        if (! is_string($dir) || trim($dir) === '') {
+            $dir = public_path('media/hero-videos');
+        }
+
+        if (! is_dir($dir)) {
+            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                throw new RuntimeException(
+                    'Unable to create hero video directory.'
+                );
+            }
+        }
+
+        if (! is_writable($dir)) {
+            throw new RuntimeException(
+                'Hero video directory is not writable.'
+            );
+        }
+
+        return $dir;
+    }
+
+    private function storeUploadedVideoAsIs(UploadedFile $file, string $dest): void
+    {
+        $dir = dirname($dest);
+        $targetName = basename($dest);
+        $file->move($dir, $targetName);
+
+        if (! is_file($dest)) {
+            throw new RuntimeException('Could not save the uploaded video. Check folder permissions on public/uploads.');
+        }
+    }
+
+    /**
+     * @return array{
+     *   applied: bool,
+     *   original_bytes: int,
+     *   stored_bytes: int,
+     *   saved_percent: float
+     * }
+     */
+    private function compressionStats(bool $applied, int $originalBytes, int $storedBytes): array
+    {
+        $savedPercent = 0.0;
+        if ($applied && $originalBytes > 0 && $storedBytes > 0 && $storedBytes < $originalBytes) {
+            $savedPercent = round((1 - ($storedBytes / $originalBytes)) * 100, 1);
+        }
+
+        return [
+            'applied' => $applied,
+            'original_bytes' => $originalBytes,
+            'stored_bytes' => $storedBytes,
+            'saved_percent' => $savedPercent,
         ];
     }
 
@@ -180,7 +285,24 @@ class HomeMediaService
         if (! $relativePath) {
             return;
         }
-        $full = public_path(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath));
+
+        $path = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        if (str_starts_with($path, 'media/hero-videos/')) {
+            $root = config('filesystems.disks.hero_videos.root');
+            if (! is_string($root) || trim($root) === '') {
+                $root = public_path('media/hero-videos');
+            }
+            $name = basename($path);
+            $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
+            if (is_file($full)) {
+                @unlink($full);
+            }
+
+            return;
+        }
+
+        $full = public_path(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path));
         if (is_file($full)) {
             @unlink($full);
         }
@@ -192,10 +314,49 @@ class HomeMediaService
             return null;
         }
 
-        $path = ltrim(str_replace('\\', '/', $relativePath), '/');
-        $base = rtrim((string) config('app.media_url', config('app.url')), '/');
+        $path = ltrim(
+            str_replace('\\', '/', $relativePath),
+            '/'
+        );
+
+        if (str_starts_with($path, 'media/hero-videos/')) {
+            $configured = config('filesystems.disks.hero_videos.url');
+            $base = is_string($configured) ? trim($configured) : '';
+            if ($base === '') {
+                $base = $this->resolveMediaBaseUrl().'/media/hero-videos';
+            }
+
+            return rtrim($base, '/').'/'.basename($path);
+        }
+
+        // Keep the existing logic below this point unchanged.
+        $base = $this->resolveMediaBaseUrl();
 
         return $base.'/'.$path;
+    }
+
+    private function resolveMediaBaseUrl(): string
+    {
+        $base = rtrim((string) config('app.media_url', config('app.url')), '/');
+
+        // Common misconfig: API prefix used as media base → /api/uploads/... (404)
+        if (preg_match('#/api/?$#', $base)) {
+            return (string) preg_replace('#/api/?$#', '/backend/public', $base);
+        }
+
+        $host = parse_url($base, PHP_URL_HOST) ?? '';
+        $path = parse_url($base, PHP_URL_PATH) ?? '';
+        $isLocal = $host === '' || preg_match('#^(localhost|127\.0\.0\.1)$#i', $host);
+
+        if (! $isLocal && ($path === '' || $path === '/')) {
+            return $base.'/backend/public';
+        }
+
+        if (str_ends_with($base, '/backend')) {
+            return $base.'/public';
+        }
+
+        return $base;
     }
 
     private function uniqueName(string $prefix, string $extension): string
@@ -283,13 +444,68 @@ class HomeMediaService
         imagedestroy($src);
     }
 
-    private function ffmpegAvailable(): bool
+    private function resolveFfmpegBinary(): ?string
     {
+        if ($this->ffmpegLookupDone) {
+            return $this->resolvedFfmpegBinary;
+        }
+
+        $this->ffmpegLookupDone = true;
+
+        if (! $this->execIsAllowed()) {
+            return null;
+        }
+
+        $candidates = array_values(array_filter([
+            env('FFMPEG_PATH'),
+            env('FFMPEG_BINARY'),
+            'ffmpeg',
+            '/usr/bin/ffmpeg',
+            '/usr/local/bin/ffmpeg',
+        ]));
+
+        foreach ($candidates as $binary) {
+            if ($this->ffmpegBinaryWorks((string) $binary)) {
+                $this->resolvedFfmpegBinary = (string) $binary;
+
+                return $this->resolvedFfmpegBinary;
+            }
+        }
+
+        return null;
+    }
+
+    private function ffmpegBinaryWorks(string $binary): bool
+    {
+        if ($binary === '' || ! $this->execIsAllowed()) {
+            return false;
+        }
+
+        if (str_contains($binary, '/') && ! is_executable($binary)) {
+            return false;
+        }
+
         $out = [];
         $code = 1;
-        @exec('ffmpeg -version 2>&1', $out, $code);
+        @\exec(\escapeshellarg($binary).' -version 2>&1', $out, $code);
 
         return $code === 0;
+    }
+
+    private function execIsAllowed(): bool
+    {
+        if (! \function_exists('exec')) {
+            return false;
+        }
+
+        $disabled = \ini_get('disable_functions');
+        if (! is_string($disabled) || $disabled === '') {
+            return true;
+        }
+
+        $list = array_map('strtolower', array_map('trim', explode(',', $disabled)));
+
+        return ! in_array('exec', $list, true);
     }
 
     /**
@@ -297,7 +513,11 @@ class HomeMediaService
      */
     private function runFfmpeg(array $command): void
     {
-        $escaped = array_map(static fn (string $part) => escapeshellarg($part), $command);
+        if (! $this->execIsAllowed()) {
+            throw new RuntimeException('Video compression is not available (PHP exec is disabled on this server).');
+        }
+
+        $escaped = array_map(static fn (string $part) => \escapeshellarg($part), $command);
         $line = implode(' ', $escaped);
         $out = [];
         $code = 1;
@@ -306,9 +526,13 @@ class HomeMediaService
             $this->ensureDir(dirname($dest));
         }
 
-        @exec($line.' 2>&1', $out, $code);
+        @\exec($line.' 2>&1', $out, $code);
         if ($code !== 0) {
-            throw new RuntimeException('Video processing failed. Install ffmpeg or upload a smaller MP4.');
+            $detail = trim(implode("\n", array_slice($out, -3)));
+            $suffix = $detail !== '' ? ' '.$detail : '';
+            throw new RuntimeException(
+                'Video compression failed on the server.'.$suffix.' Set FFMPEG_PATH in backend .env or upload a smaller MP4.',
+            );
         }
     }
 }

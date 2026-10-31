@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiBaseUrl } from "@/lib/apiBase";
 import { resolveNavUrl } from "@/lib/resolveNavUrl";
 import { homeHref, toAppPath } from "@/lib/appBase";
 
@@ -33,9 +34,7 @@ export function useNavigationMenus(): NavLinkItem[] {
   const [links, setLinks] = useState<NavLinkItem[]>(FALLBACK);
 
   useEffect(() => {
-    const base = (
-      import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000/api"
-    ).replace(/\/$/, "");
+    const base = getApiBaseUrl();
 
     fetch(`${base}/navigation-menus`, { headers: { Accept: "application/json" } })
       .then((res) => (res.ok ? res.json() : Promise.reject()))

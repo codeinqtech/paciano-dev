@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Loader2, Save, Upload } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { AdminImageUpload } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 
 function SectionShell({
@@ -95,37 +96,11 @@ function Field({
 const inputClass =
   "w-full rounded-xl border border-[#E0D8CC] bg-white px-3 py-2.5 text-sm text-[#332C26] focus:outline-none focus:ring-2 focus:ring-[#71803F]/35";
 
-function PhotoField({
-  label,
-  currentUrl,
-  onFile,
-}: {
-  label: string;
-  currentUrl: string | null;
-  onFile: (f: File | null) => void;
-}) {
-  return (
-    <Field label={label}>
-      {currentUrl ? (
-        <img
-          src={currentUrl}
-          alt=""
-          className="mb-2 h-28 w-full max-w-xs rounded-xl object-cover border border-[#E8E0D4]"
-        />
-      ) : null}
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#C9BCA8] px-4 py-3 text-sm text-[#5F7138] hover:bg-[#F7F3EB]">
-        <Upload className="h-4 w-4" />
-        Choose photo
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-        />
-      </label>
-    </Field>
-  );
-}
+const cardGridClass =
+  "grid grid-cols-1 md:grid-cols-2 gap-4 items-start";
+
+const saveCardButtonClass =
+  "mt-6 inline-flex items-center gap-2 rounded-xl border border-[#71803F] px-4 py-2.5 text-sm font-semibold text-[#5F7138]";
 
 export function AdminAboutPage() {
   const [loading, setLoading] = useState(true);
@@ -261,21 +236,29 @@ export function AdminAboutPage() {
             }
           />
         </Field>
-        <PhotoField
-          label="Left photo"
-          currentUrl={form.photo_left_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_left: f }))}
-        />
-        <PhotoField
-          label="Center photo"
-          currentUrl={form.photo_center_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_center: f }))}
-        />
-        <PhotoField
-          label="Right photo"
-          currentUrl={form.photo_right_url}
-          onFile={(f) => setFiles((x) => ({ ...x, photo_right: f }))}
-        />
+        <div className="grid gap-4 sm:grid-cols-3">
+          <AdminImageUpload
+            title="Left photo"
+            file={files.photo_left}
+            existingUrl={form.photo_left_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_left: f }))}
+          />
+          <AdminImageUpload
+            title="Center photo"
+            file={files.photo_center}
+            existingUrl={form.photo_center_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_center: f }))}
+          />
+          <AdminImageUpload
+            title="Right photo"
+            file={files.photo_right}
+            existingUrl={form.photo_right_url}
+            optional
+            onFileChange={(f) => setFiles((x) => ({ ...x, photo_right: f }))}
+          />
+        </div>
         <button
           type="button"
           disabled={saving}
@@ -301,7 +284,10 @@ type ExperienceItem = {
   image_url: string | null;
 };
 
+type ExperiencesTabId = "home" | "items";
+
 export function AdminExperiencesPage() {
+  const [tab, setTab] = useState<ExperiencesTabId>("home");
   const [loading, setLoading] = useState(true);
   const [sectionSaving, setSectionSaving] = useState(false);
   const [itemSaving, setItemSaving] = useState<number | null>(null);
@@ -391,101 +377,120 @@ export function AdminExperiencesPage() {
   }
 
   return (
-    <SectionShell pageTitle="Experiences">
-      <div className="admin-card rounded-2xl p-6 mb-6">
-        <p className="text-sm admin-card-muted mb-4">
-          The small label “Experiences That Stay With You” stays fixed on the
-          website. Edit the large heading and each experience below.
-        </p>
-        <Field label="Main heading (first line)">
-          <input
-            className={inputClass}
-            value={headingMain}
-            onChange={(e) => setHeadingMain(e.target.value)}
-          />
-        </Field>
-        <Field label="Main heading (green line)">
-          <input
-            className={inputClass}
-            value={headingAccent}
-            onChange={(e) => setHeadingAccent(e.target.value)}
-          />
-        </Field>
-        <button
-          type="button"
-          disabled={sectionSaving}
-          onClick={saveIntro}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#5F7138] px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          {sectionSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          Save intro
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {items.map((item) => (
-          <div key={item.id} className="admin-card rounded-2xl p-6">
-            <h3 className="font-semibold text-[#332C26] mb-3">{item.title}</h3>
-            <Field label="Title">
-              <input
-                className={inputClass}
-                value={item.title}
-                onChange={(e) =>
-                  setItems((list) =>
-                    list.map((i) =>
-                      i.id === item.id ? { ...i, title: e.target.value } : i,
-                    ),
-                  )
-                }
-              />
-            </Field>
-            <Field label="Short description">
-              <textarea
-                className={`${inputClass} min-h-[72px]`}
-                value={item.description ?? ""}
-                onChange={(e) =>
-                  setItems((list) =>
-                    list.map((i) =>
-                      i.id === item.id
-                        ? { ...i, description: e.target.value }
-                        : i,
-                    ),
-                  )
-                }
-              />
-            </Field>
-            <PhotoField
-              label="Photo"
-              currentUrl={item.image_url}
-              onFile={(f) => setPhotoFiles((x) => ({ ...x, [item.id]: f }))}
+    <TabbedPageShell
+      pageTitle="Experiences"
+      wide={tab === "items"}
+      tabs={[
+        { id: "home", label: "Home section" },
+        { id: "items", label: "Each experience" },
+      ]}
+      activeTab={tab}
+      onTabChange={(id) => setTab(id as ExperiencesTabId)}
+    >
+      {tab === "home" ? (
+        <div className="admin-card rounded-2xl p-6">
+          <p className="text-sm admin-card-muted mb-4">
+            The small label “Experiences That Stay With You” stays fixed on the
+            website. Edit the large heading here; use the “Each experience” tab
+            for the five items.
+          </p>
+          <Field label="Main heading (first line)">
+            <input
+              className={inputClass}
+              value={headingMain}
+              onChange={(e) => setHeadingMain(e.target.value)}
             />
-            <button
-              type="button"
-              disabled={itemSaving === item.id}
-              onClick={() => saveItem(item)}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#71803F] px-4 py-2 text-sm font-semibold text-[#5F7138]"
-            >
-              {itemSaving === item.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Save this experience
-            </button>
-          </div>
-        ))}
-      </div>
-    </SectionShell>
+          </Field>
+          <Field label="Main heading (green line)">
+            <input
+              className={inputClass}
+              value={headingAccent}
+              onChange={(e) => setHeadingAccent(e.target.value)}
+            />
+          </Field>
+          <button
+            type="button"
+            disabled={sectionSaving}
+            onClick={saveIntro}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#5F7138] px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            {sectionSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            Save intro
+          </button>
+        </div>
+      ) : (
+        <div className={cardGridClass}>
+          {items.map((item) => (
+            <div key={item.id} className="admin-card rounded-2xl p-6">
+              <Field label="Experience name">
+                <input
+                  className={inputClass}
+                  value={item.title}
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, title: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Field label="Short description">
+                <textarea
+                  className={`${inputClass} min-h-[88px] resize-y`}
+                  rows={3}
+                  value={item.description ?? ""}
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, description: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <AdminImageUpload
+                title="Photo"
+                file={photoFiles[item.id] ?? null}
+                existingUrl={item.image_url}
+                optional
+                onFileChange={(f) =>
+                  setPhotoFiles((x) => ({ ...x, [item.id]: f }))
+                }
+              />
+              <button
+                type="button"
+                disabled={itemSaving === item.id}
+                onClick={() => saveItem(item)}
+                className={saveCardButtonClass}
+              >
+                {itemSaving === item.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save this experience
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </TabbedPageShell>
   );
 }
 
 type StayItem = {
   id: number;
   slug: string;
+  menu_label: string | null;
   title: string;
   description: string | null;
   photo_1_url: string | null;
@@ -561,6 +566,7 @@ export function AdminStaysPage() {
     setItemSaving(item.id);
     try {
       const fd = new FormData();
+      fd.append("menu_label", item.menu_label ?? "");
       fd.append("title", item.title);
       fd.append("description", item.description ?? "");
       const pf = photoFiles[item.id] ?? {};
@@ -647,12 +653,25 @@ export function AdminStaysPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={cardGridClass}>
           {items.map((item) => (
-            <div key={item.id} className="admin-card rounded-2xl p-6 h-full">
-              <h3 className="font-semibold text-[#332C26] mb-3 capitalize">
-                {item.slug.replace(/-/g, " ")}
-              </h3>
+            <div key={item.id} className="admin-card rounded-2xl p-6">
+              <Field label="Stay tab name">
+                <input
+                  className={inputClass}
+                  value={item.menu_label ?? ""}
+                  placeholder={item.slug.replace(/-/g, " ")}
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, menu_label: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
               <Field label="Stay title">
                 <input
                   className={inputClass}
@@ -681,41 +700,49 @@ export function AdminStaysPage() {
                   }
                 />
               </Field>
-              <PhotoField
-                label="Photo 1"
-                currentUrl={item.photo_1_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p1: f },
-                  }))
-                }
-              />
-              <PhotoField
-                label="Photo 2"
-                currentUrl={item.photo_2_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p2: f },
-                  }))
-                }
-              />
-              <PhotoField
-                label="Photo 3"
-                currentUrl={item.photo_3_url}
-                onFile={(f) =>
-                  setPhotoFiles((x) => ({
-                    ...x,
-                    [item.id]: { ...x[item.id], p3: f },
-                  }))
-                }
-              />
+              <div className="grid gap-4 sm:grid-cols-3">
+                <AdminImageUpload
+                  title="Photo 1"
+                  file={photoFiles[item.id]?.p1 ?? null}
+                  existingUrl={item.photo_1_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p1: f },
+                    }))
+                  }
+                />
+                <AdminImageUpload
+                  title="Photo 2"
+                  file={photoFiles[item.id]?.p2 ?? null}
+                  existingUrl={item.photo_2_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p2: f },
+                    }))
+                  }
+                />
+                <AdminImageUpload
+                  title="Photo 3"
+                  file={photoFiles[item.id]?.p3 ?? null}
+                  existingUrl={item.photo_3_url}
+                  optional
+                  onFileChange={(f) =>
+                    setPhotoFiles((x) => ({
+                      ...x,
+                      [item.id]: { ...x[item.id], p3: f },
+                    }))
+                  }
+                />
+              </div>
               <button
                 type="button"
                 disabled={itemSaving === item.id}
                 onClick={() => saveItem(item)}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#71803F] px-4 py-2 text-sm font-semibold text-[#5F7138]"
+                className={saveCardButtonClass}
               >
                 {itemSaving === item.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -900,15 +927,16 @@ export function AdminDiningPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={cardGridClass}>
           {slides.map((slide, index) => (
-            <div key={slide.id} className="admin-card rounded-2xl p-6 h-full">
-              <h3 className="font-semibold text-[#332C26] mb-3">
+            <div key={slide.id} className="admin-card rounded-2xl p-6">
+              <p className="mb-4 text-sm font-semibold text-[#332C26]">
                 Slide {index + 1}
-              </h3>
+              </p>
               <Field label="Quote text">
                 <textarea
-                  className={`${inputClass} min-h-[72px]`}
+                  className={`${inputClass} min-h-[88px] resize-y`}
+                  rows={3}
                   value={slide.quote ?? ""}
                   onChange={(e) =>
                     setSlides((list) =>
@@ -921,16 +949,20 @@ export function AdminDiningPage() {
                   }
                 />
               </Field>
-              <PhotoField
-                label="Photo"
-                currentUrl={slide.image_url}
-                onFile={(f) => setPhotoFiles((x) => ({ ...x, [slide.id]: f }))}
+              <AdminImageUpload
+                title="Photo"
+                file={photoFiles[slide.id] ?? null}
+                existingUrl={slide.image_url}
+                optional
+                onFileChange={(f) =>
+                  setPhotoFiles((x) => ({ ...x, [slide.id]: f }))
+                }
               />
               <button
                 type="button"
                 disabled={slideSaving === slide.id}
                 onClick={() => saveSlide(slide)}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#71803F] px-4 py-2 text-sm font-semibold text-[#5F7138]"
+                className={saveCardButtonClass}
               >
                 {slideSaving === slide.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -1,18 +1,20 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { Film, ImageIcon, Plus, Trash2, Pencil, Upload, X } from "lucide-react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Film, ImageIcon, Plus, Trash2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  MediaFileUploadZone,
+  VideoCompressionPanel,
+  type VideoCompressionInfo,
+} from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
 
 const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+/** Homepage hero allows one active banner slide at a time in admin. */
+const BANNER_MAX_SLIDES = 1;
+const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
@@ -68,6 +70,13 @@ export default function AdminHomepage() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerSort, setBannerSort] = useState(0);
   const [bannerSaving, setBannerSaving] = useState(false);
+  const [bannerVideoCompression, setBannerVideoCompression] =
+    useState<VideoCompressionInfo | null>(null);
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(
+    null,
+  );
+  const [reviewVideoCompression, setReviewVideoCompression] =
+    useState<VideoCompressionInfo | null>(null);
 
   const [locationForm, setLocationForm] = useState<LocationForm>({
     eyebrow: "",
@@ -162,21 +171,34 @@ export default function AdminHomepage() {
       return;
     }
     setBannerSaving(true);
+    setBannerUploadError(null);
     try {
       const fd = new FormData();
       fd.append("media_type", bannerType);
       fd.append("file", bannerFile);
       fd.append("sort_order", String(bannerSort));
-      await apiUpload("/admin/home/banner-slides", fd, "POST", {
+      const res = await apiUpload<{
+        video_compression?: VideoCompressionInfo;
+      }>("/admin/home/banner-slides", fd, "POST", {
         timeoutMs: bannerType === "video" ? 600_000 : 120_000,
       });
-      toast.success("Banner slide added");
-      setBannerModal(false);
-      setBannerFile(null);
       await loadBanners();
+      if (bannerType === "video") {
+        if (res.video_compression) {
+          setBannerVideoCompression(res.video_compression);
+        }
+        toast.success("Banner video uploaded");
+      } else {
+        toast.success("Banner slide added");
+        setBannerModal(false);
+        setBannerFile(null);
+        setBannerVideoCompression(null);
+      }
     } catch (e) {
       const err = e as { message?: string };
-      toast.error(err.message || "Upload failed");
+      const msg = err.message || "Upload failed";
+      setBannerUploadError(msg);
+      toast.error(msg);
     } finally {
       setBannerSaving(false);
     }
@@ -229,6 +251,7 @@ export default function AdminHomepage() {
     });
     setThumbFile(null);
     setVideoFile(null);
+    setReviewVideoCompression(null);
     setReviewModal(true);
   };
 
@@ -242,6 +265,7 @@ export default function AdminHomepage() {
     });
     setThumbFile(null);
     setVideoFile(null);
+    setReviewVideoCompression(null);
     setReviewModal(true);
   };
 
@@ -252,6 +276,12 @@ export default function AdminHomepage() {
     }
     if (!reviewForm.id && !videoFile) {
       toast.error("Video file is required");
+      return;
+    }
+    if (videoFile && videoFile.size > REVIEW_VIDEO_MAX_BYTES) {
+      toast.error(
+        `Video must be under ${REVIEW_VIDEO_MAX_BYTES / (1024 * 1024)} MB.`,
+      );
       return;
     }
     setReviewSaving(true);
@@ -266,19 +296,37 @@ export default function AdminHomepage() {
       if (thumbFile) fd.append("thumbnail", thumbFile);
       if (videoFile) fd.append("video", videoFile);
 
+      const uploadOpts = videoFile
+        ? { timeoutMs: 600_000 as const }
+        : undefined;
+
+      let compression: VideoCompressionInfo | undefined;
       if (reviewForm.id) {
-        await apiUpload(
+        const res = await apiUpload<{ video_compression?: VideoCompressionInfo }>(
           `/admin/home/review-videos/${reviewForm.id}`,
           fd,
           "POST",
+          uploadOpts,
         );
+        compression = res.video_compression;
         toast.success("Review video updated");
       } else {
-        await apiUpload("/admin/home/review-videos", fd);
+        const res = await apiUpload<{ video_compression?: VideoCompressionInfo }>(
+          "/admin/home/review-videos",
+          fd,
+          "POST",
+          uploadOpts,
+        );
+        compression = res.video_compression;
         toast.success("Review video added");
       }
-      setReviewModal(false);
       await loadReviews();
+      if (videoFile && compression) {
+        setReviewVideoCompression(compression);
+      } else {
+        setReviewModal(false);
+        setReviewVideoCompression(null);
+      }
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Save failed");
@@ -337,26 +385,44 @@ export default function AdminHomepage() {
 
       {tab === "banner" ? (
         <section className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setBannerType("image");
-                setBannerSort(banners.length * 10);
-                setBannerFile(null);
-                setBannerModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
-            >
-              <Plus className="h-4 w-4" />
-              Add slide
-            </button>
+          <div
+            className="rounded-2xl border border-[#E8DFD0] bg-[#FAF7F2] px-4 py-3 text-sm leading-relaxed text-[#5C534A]"
+            role="note"
+          >
+            <p className="font-semibold text-[#332C26]">Hero banner — one slide at a time</p>
+            <p className="mt-1 admin-card-muted">
+              The homepage hero can show only one banner slide (image or video)
+              from the CMS. To replace it, remove the current slide first, then
+              use <span className="font-medium text-[#332C26]">Add slide</span>.
+              Until the existing slide is removed, Add slide stays hidden.
+            </p>
           </div>
+
+          {banners.length < BANNER_MAX_SLIDES ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setBannerType("image");
+                  setBannerSort(banners.length * 10);
+                  setBannerFile(null);
+                  setBannerVideoCompression(null);
+                  setBannerUploadError(null);
+                  setBannerModal(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
+              >
+                <Plus className="h-4 w-4" />
+                Add slide
+              </button>
+            </div>
+          ) : null}
+
           <div className="admin-card overflow-hidden rounded-2xl">
             {banners.length === 0 ? (
               <p className="p-6 text-sm admin-card-muted">
-                No banner slides yet. Add images or videos for the hero
-                carousel.
+                No banner slide yet. Use Add slide to upload a hero image or
+                video.
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -519,7 +585,7 @@ export default function AdminHomepage() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6E655C]">
               Landscape photo
             </p>
-            <FileUploadZone
+            <MediaFileUploadZone
               variant="image"
               title="Location section image"
               hint="Wide landscape — converted to WebP on upload"
@@ -631,10 +697,23 @@ export default function AdminHomepage() {
       {bannerModal ? (
         <FormModal
           title="Add banner slide"
-          onClose={() => setBannerModal(false)}
-          onSave={saveBanner}
+          onClose={() => {
+            setBannerModal(false);
+            setBannerFile(null);
+            setBannerVideoCompression(null);
+            setBannerUploadError(null);
+          }}
+          onSave={
+            bannerVideoCompression
+              ? () => {
+                  setBannerModal(false);
+                  setBannerFile(null);
+                  setBannerVideoCompression(null);
+                }
+              : saveBanner
+          }
           saving={bannerSaving}
-          saveLabel="Upload slide"
+          saveLabel={bannerVideoCompression ? "Done" : "Upload slide"}
         >
           <Field label="Slide type">
             <div className="flex gap-2">
@@ -643,6 +722,7 @@ export default function AdminHomepage() {
                 onClick={() => {
                   setBannerType("image");
                   setBannerFile(null);
+                  setBannerVideoCompression(null);
                 }}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
                   bannerType === "image"
@@ -658,6 +738,7 @@ export default function AdminHomepage() {
                 onClick={() => {
                   setBannerType("video");
                   setBannerFile(null);
+                  setBannerVideoCompression(null);
                 }}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
                   bannerType === "video"
@@ -670,7 +751,7 @@ export default function AdminHomepage() {
               </button>
             </div>
           </Field>
-          <FileUploadZone
+          <MediaFileUploadZone
             variant={bannerType === "image" ? "image" : "video"}
             title={
               bannerType === "image" ? "Hero banner image" : "Hero banner video"
@@ -678,11 +759,22 @@ export default function AdminHomepage() {
             hint={
               bannerType === "image"
                 ? "PNG/JPG — saved as WebP"
-                : "MP4/MOV up to 500 MB. Files over ~80 MB are stored as-is (ffmpeg compresses smaller videos). Very large uploads may need PHP upload_max_filesize increased on the server."
+                : "MP4/MOV up to 500 MB. Videos 100 MB+ are compressed on the server (requires ffmpeg). Large uploads may take several minutes."
             }
             file={bannerFile}
-            onFileChange={setBannerFile}
+            onFileChange={(f) => {
+              setBannerFile(f);
+              setBannerVideoCompression(null);
+            }}
           />
+          {bannerType === "video" && bannerVideoCompression ? (
+            <VideoCompressionPanel info={bannerVideoCompression} />
+          ) : null}
+          {bannerUploadError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+              {bannerUploadError}
+            </div>
+          ) : null}
           <Field label="Sort order (lower shows first)">
             <input
               type="number"
@@ -700,9 +792,20 @@ export default function AdminHomepage() {
       {reviewModal ? (
         <FormModal
           title={reviewForm.id ? "Edit review video" : "Add review video"}
-          onClose={() => setReviewModal(false)}
-          onSave={saveReview}
+          onClose={() => {
+            setReviewModal(false);
+            setReviewVideoCompression(null);
+          }}
+          onSave={
+            reviewVideoCompression
+              ? () => {
+                  setReviewModal(false);
+                  setReviewVideoCompression(null);
+                }
+              : saveReview
+          }
           saving={reviewSaving}
+          saveLabel={reviewVideoCompression ? "Done" : "Save"}
           wide
         >
           <p className="text-xs text-[#6E655C] -mt-2 mb-1">
@@ -770,7 +873,7 @@ export default function AdminHomepage() {
 
           <FormSection title="Upload files">
             <div className="grid gap-4 sm:grid-cols-2">
-              <FileUploadZone
+              <MediaFileUploadZone
                 variant="image"
                 title="Thumbnail"
                 hint="Optional — first video frame is used if empty"
@@ -784,16 +887,22 @@ export default function AdminHomepage() {
                 }
                 onFileChange={setThumbFile}
               />
-              <FileUploadZone
+              <MediaFileUploadZone
                 variant="video"
                 title="Video file"
-                hint="Plays in popup when visitors click play"
+                hint="Up to 500 MB. Files 100 MB+ are compressed on upload when ffmpeg is available."
                 required={!reviewForm.id}
                 optional={!!reviewForm.id}
                 file={videoFile}
-                onFileChange={setVideoFile}
+                onFileChange={(f) => {
+                  setVideoFile(f);
+                  setReviewVideoCompression(null);
+                }}
               />
             </div>
+            {reviewVideoCompression ? (
+              <VideoCompressionPanel info={reviewVideoCompression} />
+            ) : null}
           </FormSection>
         </FormModal>
       ) : null}
@@ -896,151 +1005,6 @@ function FormModal({
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function FileUploadZone({
-  variant,
-  title,
-  hint,
-  file,
-  onFileChange,
-  required,
-  optional,
-  existingPreviewUrl,
-}: {
-  variant: "image" | "video";
-  title: string;
-  hint: string;
-  file: File | null;
-  onFileChange: (file: File | null) => void;
-  required?: boolean;
-  optional?: boolean;
-  existingPreviewUrl?: string | null;
-}) {
-  const inputId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file || variant !== "image") {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file, variant]);
-
-  const isImage = variant === "image";
-  const borderAccent = isImage
-    ? "border-[#68704D]/40 hover:border-[#68704D] focus-within:border-[#68704D] focus-within:ring-[#68704D]/20"
-    : "border-[#4a5568]/40 hover:border-[#4a5568] focus-within:border-[#4a5568] focus-within:ring-[#4a5568]/20";
-  const bgAccent = isImage ? "bg-[#68704D]/[0.06]" : "bg-[#4a5568]/[0.06]";
-  const iconBg = isImage ? "bg-[#68704D]/15 text-[#3d4a22]" : "bg-[#4a5568]/15 text-[#2d3748]";
-
-  const displayPreview =
-    preview ?? (existingPreviewUrl && !file ? existingPreviewUrl : null);
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="mb-2 flex items-center gap-2">
-        <span
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg}`}
-        >
-          {isImage ? (
-            <ImageIcon className="h-4 w-4" aria-hidden />
-          ) : (
-            <Film className="h-4 w-4" aria-hidden />
-          )}
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-[#332C26]">
-            {title}
-            {required ? (
-              <span className="ml-1 text-[#68704D]">*</span>
-            ) : null}
-            {optional ? (
-              <span className="ml-2 text-xs font-normal text-[#6E655C]">
-                (optional — keep current if empty)
-              </span>
-            ) : null}
-          </p>
-          <p className="text-[11px] text-[#6E655C]">{hint}</p>
-        </div>
-      </div>
-
-      <div
-        className={`relative flex min-h-[148px] flex-1 flex-col overflow-hidden rounded-xl border-2 border-dashed transition-all focus-within:ring-2 ${borderAccent} ${bgAccent}`}
-      >
-        {displayPreview && isImage ? (
-          <div className="relative h-28 w-full shrink-0 border-b border-[#EDE4D8]/80">
-            <img
-              src={displayPreview}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : null}
-
-        <label
-          htmlFor={inputId}
-          className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 px-4 py-5 text-center"
-        >
-          <Upload className="h-6 w-6 text-[#8A8177]" aria-hidden />
-          <span className="text-sm font-medium text-[#332C26]">
-            {file ? "Change file" : "Click to choose file"}
-          </span>
-          <span className="text-[11px] text-[#6E655C]">
-            {isImage ? "JPEG, PNG, WebP" : "MP4, MOV, WebM"}
-          </span>
-        </label>
-
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept={isImage ? "image/*" : "video/*"}
-          className="sr-only"
-          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
-        />
-      </div>
-
-      {file ? (
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white/80 px-3 py-2 text-xs ring-1 ring-[#EDE4D8]">
-          <span className="truncate font-medium text-[#332C26]">
-            {file.name}
-          </span>
-          <span className="shrink-0 text-[#6E655C]">
-            {formatFileSize(file.size)}
-          </span>
-          <button
-            type="button"
-            className="shrink-0 rounded p-0.5 text-[#6E655C] hover:bg-[#EDE4D8]/60 hover:text-red-700"
-            aria-label="Remove selected file"
-            onClick={() => {
-              onFileChange(null);
-              if (inputRef.current) inputRef.current.value = "";
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : null}
-
-      {!file && variant === "video" && existingPreviewUrl ? (
-        <p className="mt-2 text-[11px] text-[#6E655C]">
-          Current video is saved on the server. Upload a new file only if you
-          want to replace it.
-        </p>
-      ) : null}
     </div>
   );
 }

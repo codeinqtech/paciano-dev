@@ -11,6 +11,7 @@ class HomeStayItem extends Model
 
     protected $fillable = [
         'slug',
+        'menu_label',
         'title',
         'description',
         'photo_1_name',
@@ -41,6 +42,7 @@ class HomeStayItem extends Model
         return [
             'id' => $this->id,
             'slug' => $this->slug,
+            'menu_label' => $this->menu_label,
             'title' => $this->title,
             'description' => $this->description,
             'photo_1_url' => $media->publicUrl($this->photo_1_path),

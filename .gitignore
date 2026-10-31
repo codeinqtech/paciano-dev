@@ -110,3 +110,15 @@ pnpm-debug.log*
 .git
 .sql
 .backup
+
+# =========================
+# Uploaded Media (Local + Staging)
+# =========================
+
+# Uploaded hero banner videos
+/media/hero-videos/*
+!/media/hero-videos/.gitkeep
+
+# Local Laravel public hero videos
+/backend/public/media/hero-videos/*
+!/backend/public/media/hero-videos/.gitkeep
