@@ -49,8 +49,8 @@ const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
 ];
 
 const SLIDE_MS = 9000;
-/** Minimum time on an image before advancing (when the next slide is another image). */
-const MIN_IMAGE_BEFORE_VIDEO_MS = 1500;
+/** Every banner image stays at least this long. */
+const MIN_IMAGE_SLIDE_MS = 5000;
 
 function pendingVideoIndicesAfter(
   slides: (HeroImageSlide | HeroVideoSlide)[],
@@ -629,15 +629,15 @@ export default function HeroSection() {
         });
 
       if (pending.length === 0) {
-        if (elapsed >= SLIDE_MS) {
+        if (elapsed >= MIN_IMAGE_SLIDE_MS) {
           advanceToNextSlide();
           return;
         }
-        schedule(Math.min(250, SLIDE_MS - elapsed));
+        schedule(Math.min(250, MIN_IMAGE_SLIDE_MS - elapsed));
         return;
       }
 
-      if (videosReady && elapsed >= MIN_IMAGE_BEFORE_VIDEO_MS) {
+      if (videosReady && elapsed >= MIN_IMAGE_SLIDE_MS) {
         advanceToNextSlide();
         return;
       }
@@ -949,17 +949,16 @@ export default function HeroSection() {
           );
         })}
         
-  <button
-    type="button"
-    onClick={toggleHeroSound}
-    className="absolute bottom-8 right-8 z-50 rounded-full
-      border border-white/30 bg-black/40 px-5 py-3
-      text-xs uppercase tracking-widest text-white
-      backdrop-blur-md transition hover:bg-black/60"
-    aria-label={soundEnabled ? "Mute video" : "Enable video sound"}
-  >
-    {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
-  </button>
+        {activeSlide?.kind === "video" ? (
+          <button
+            type="button"
+            onClick={toggleHeroSound}
+            className="absolute bottom-8 right-8 z-50 rounded-full border border-white/30 bg-black/40 px-5 py-3 text-xs uppercase tracking-widest text-white backdrop-blur-md transition hover:bg-black/60"
+            aria-label={soundEnabled ? "Mute video" : "Enable video sound"}
+          >
+            {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
+          </button>
+        ) : null}
 
 
         <div className="pointer-events-none absolute inset-0 z-[1]">

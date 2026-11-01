@@ -39,6 +39,13 @@ class HomeAdminController extends Controller
     {
         $this->ensureHomePermission($request);
 
+        $activeCount = HomeBannerSlide::query()->where('is_active', true)->count();
+        if ($activeCount >= 1) {
+            return response()->json([
+                'message' => 'Remove the existing hero banner slide before adding a new one.',
+            ], 422);
+        }
+
         $mediaType = $request->input('media_type');
         $maxKb = $mediaType === 'video' ? 512000 : 51200;
 
