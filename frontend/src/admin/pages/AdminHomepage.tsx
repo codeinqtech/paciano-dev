@@ -11,6 +11,8 @@ import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
 
 const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+/** Homepage hero allows one active banner slide at a time in admin. */
+const BANNER_MAX_SLIDES = 1;
 const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
@@ -383,28 +385,44 @@ export default function AdminHomepage() {
 
       {tab === "banner" ? (
         <section className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setBannerType("image");
-                setBannerSort(banners.length * 10);
-                setBannerFile(null);
-                setBannerVideoCompression(null);
-                setBannerUploadError(null);
-                setBannerModal(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
-            >
-              <Plus className="h-4 w-4" />
-              Add slide
-            </button>
+          <div
+            className="rounded-2xl border border-[#E8DFD0] bg-[#FAF7F2] px-4 py-3 text-sm leading-relaxed text-[#5C534A]"
+            role="note"
+          >
+            <p className="font-semibold text-[#332C26]">Hero banner — one slide at a time</p>
+            <p className="mt-1 admin-card-muted">
+              The homepage hero can show only one banner slide (image or video)
+              from the CMS. To replace it, remove the current slide first, then
+              use <span className="font-medium text-[#332C26]">Add slide</span>.
+              Until the existing slide is removed, Add slide stays hidden.
+            </p>
           </div>
+
+          {banners.length < BANNER_MAX_SLIDES ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setBannerType("image");
+                  setBannerSort(banners.length * 10);
+                  setBannerFile(null);
+                  setBannerVideoCompression(null);
+                  setBannerUploadError(null);
+                  setBannerModal(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-4 py-2 text-sm font-semibold"
+              >
+                <Plus className="h-4 w-4" />
+                Add slide
+              </button>
+            </div>
+          ) : null}
+
           <div className="admin-card overflow-hidden rounded-2xl">
             {banners.length === 0 ? (
               <p className="p-6 text-sm admin-card-muted">
-                No banner slides yet. Add images or videos for the hero
-                carousel.
+                No banner slide yet. Use Add slide to upload a hero image or
+                video.
               </p>
             ) : (
               <div className="overflow-x-auto">
