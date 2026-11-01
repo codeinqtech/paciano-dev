@@ -9,10 +9,15 @@ use App\Http\Controllers\Api\HomeSectionsAdminController;
 use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
 use App\Http\Controllers\Api\SiteNavigationMenuController;
+use App\Http\Controllers\Admin\ContactPageController;
+use App\Http\Controllers\Admin\ContactDetailController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
 Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
+
+// Public API routes
+Route::get('contact-page', [ContactPageController::class, 'show']);
 
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
@@ -88,5 +93,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('home/sections/dining', [HomeSectionsAdminController::class, 'diningShow']);
         Route::post('home/sections/dining/intro', [HomeSectionsAdminController::class, 'diningSectionUpdate']);
         Route::post('home/sections/dining/slides/{id}', [HomeSectionsAdminController::class, 'diningSlideUpdate']);
+
+        Route::get('contact-page', [ContactPageController::class, 'show']);
+        Route::put('contact-page', [ContactPageController::class, 'update']);
+
+        // Contact Details
+        Route::apiResource('contact-details', ContactDetailController::class);
     });
 });

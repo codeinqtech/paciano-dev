@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Services;
@@ -8,36 +7,36 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ContactDetailService
 {
-    public function list(array $filters = []): LengthAwarePaginator
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
         $query = ContactDetail::query();
 
+        // Search
         if (!empty($filters['search'])) {
             $search = $filters['search'];
 
             $query->where(function ($q) use ($search) {
                 $q->where('label', 'like', "%{$search}%")
-                    ->orWhere('value', 'like', "%{$search}%");
+                  ->orWhere('value', 'like', "%{$search}%");
             });
         }
 
+        // Filter by type
         if (!empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }
 
+        // Filter by active status
         if (isset($filters['is_active'])) {
             $query->where('is_active', $filters['is_active']);
         }
 
-        $perPage = min(
-            max((int) ($filters['per_page'] ?? 10), 1),
-            100
-        );
-
         return $query
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->paginate($perPage);
+            ->paginate(
+                min(max((int) ($filters['per_page'] ?? 15), 1), 100)
+            );
     }
 
     public function create(array $data): ContactDetail
@@ -51,11 +50,11 @@ class ContactDetailService
     ): ContactDetail {
         $contactDetail->update($data);
 
-        return $contactDetail->refresh();
+        return $contactDetail->fresh();
     }
 
-    public function delete(ContactDetail $contactDetail): void
+    public function delete(ContactDetail $contactDetail): bool
     {
-        $contactDetail->delete();
+        return $contactDetail->delete();
     }
 }
