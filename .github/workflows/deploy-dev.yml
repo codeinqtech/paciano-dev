@@ -117,7 +117,7 @@ jobs:
 
             composer install --no-dev --optimize-autoloader
 
-            php artisan migrate --force
+            php artisan migrate
 
             php artisan config:clear
             php artisan cache:clear
