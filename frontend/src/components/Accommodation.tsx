@@ -25,7 +25,8 @@ type AmenityIconType = "bed" | "balcony" | "view" | "bath" | "wifi";
 type Stay = {
   id: string;
   name: string;
-  eyebrow: string;
+  buttonDescriptor: string;
+  photoLabel: string;
   title: string;
   description: string;
 
@@ -41,7 +42,8 @@ const stays: Stay[] = [
     id: "riverside",
     // name: "Riverside Suite",
     name: "Premium Suites",
-    eyebrow: "RIVERSIDE SUITE",
+    buttonDescriptor: "RIVER & MOUNTAINS",
+    photoLabel: "RIVERSIDE SUITE",
     title: "Wake to Tranquility",
     description:
       "Wake to the gentle rhythm of the river, framed by mountains and softened by the quiet of nature.",
@@ -76,7 +78,8 @@ const stays: Stay[] = [
     id: "garden",
     // name: "Garden Residence",
     name: "Standard Suites",
-    eyebrow: "GARDEN RESIDENCE",
+    buttonDescriptor: "GARDENS & GREENS",
+    photoLabel: "GARDEN RESIDENCE",
     title: "Wake Among Greenery",
     description:
       "A peaceful retreat overlooking Paciano's gardens, where quiet mornings unfold beneath open skies and surrounding greenery.",
@@ -111,7 +114,8 @@ const stays: Stay[] = [
     id: "valley",
     // name: "Valley Retreat",
     name: "Couple Suites",
-    eyebrow: "VALLEY RETREAT",
+    buttonDescriptor: "HILLS & HORIZONS",
+    photoLabel: "VALLEY RETREAT",
     title: "Closer to the Wild",
     description:
       "A quiet escape where mountain views stretch beyond the room and every morning begins a little slower.",
@@ -143,7 +147,8 @@ const stays: Stay[] = [
   {
     id: "family",
     name: "Family Sanctuary",
-    eyebrow: "FAMILY SANCTUARY",
+    buttonDescriptor: "TOGETHER IN NATURE",
+    photoLabel: "FAMILY SANCTUARY",
     title: "Space to Be Together",
     description:
       "Thoughtfully arranged for families, with generous space to slow down, reconnect and enjoy the landscape together.",
@@ -291,6 +296,9 @@ export default function Accommodation() {
       return {
         ...stay,
         name: row.menu_label?.trim() || stay.name,
+        buttonDescriptor:
+          row.button_descriptor?.trim() || stay.buttonDescriptor,
+        photoLabel: row.photo_label?.trim() || stay.photoLabel,
         title: row.title || stay.title,
         description: row.description ?? stay.description,
         images,
@@ -811,13 +819,6 @@ export default function Accommodation() {
                 {displayStays.map((item, index) => {
                   const active = index === activeStay;
 
-                  const descriptors = [
-                    "RIVER & MOUNTAINS",
-                    "GARDENS & GREENS",
-                    "HILLS & HORIZONS",
-                    "TOGETHER IN NATURE",
-                  ];
-
                   return (
                     <div
                       key={item.id}
@@ -1074,7 +1075,7 @@ export default function Accommodation() {
                               }
                             `}
                             >
-                              {descriptors[index]}
+                              {item.buttonDescriptor}
                             </span>
                           </span>
 
@@ -1524,7 +1525,7 @@ export default function Accommodation() {
                   text-white/80
                 "
                 >
-                  {stay.eyebrow}
+                  {stay.photoLabel}
                 </p>
 
                 <h3

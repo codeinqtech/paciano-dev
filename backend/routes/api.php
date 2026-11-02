@@ -22,6 +22,7 @@ Route::get('contact-page', [ContactPageController::class, 'show']);
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
     Route::get('location', [HomePublicController::class, 'location']);
+    Route::get('postcards-section', [HomePublicController::class, 'postcardsSection']);
     Route::get('review-videos', [HomePublicController::class, 'reviewVideos']);
 
     Route::get('sections/about', [HomeSectionsPublicController::class, 'about']);
@@ -73,6 +74,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('home/location', [HomeAdminController::class, 'locationShow']);
         Route::post('home/location', [HomeAdminController::class, 'locationUpdate']);
+
+        Route::get('home/postcards-section', [HomeAdminController::class, 'postcardsShow']);
+        Route::put('home/postcards-section', [HomeAdminController::class, 'postcardsUpdate']);
 
         Route::get('home/review-videos', [HomeAdminController::class, 'reviewIndex']);
         Route::post('home/review-videos', [HomeAdminController::class, 'reviewStore']);

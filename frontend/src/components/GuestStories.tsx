@@ -530,9 +530,35 @@ import {
     },
   ];
 
+  const POSTCARDS_FALLBACK = {
+    section_label: "POSTCARDS FROM PACIANO",
+    heading_primary: "The Paciano Journal,",
+    heading_accent: "Stories Worth Sharing.",
+    description:
+      "Discover inspiring journeys, hidden gems and beautiful moments that capture the essence of Paciano",
+  };
+
   const GuestStories = () => {
     const testimonialCarouselRef = useRef<CarouselHandle>(null);
-    const { ready, reviewVideos: apiVideos } = useHomeContent();
+    const { ready, reviewVideos: apiVideos, postcardsSection } =
+      useHomeContent();
+    const postcardsCopy =
+      ready && postcardsSection
+        ? {
+            section_label:
+              postcardsSection.section_label?.trim() ||
+              POSTCARDS_FALLBACK.section_label,
+            heading_primary:
+              postcardsSection.heading_primary?.trim() ||
+              POSTCARDS_FALLBACK.heading_primary,
+            heading_accent:
+              postcardsSection.heading_accent?.trim() ||
+              POSTCARDS_FALLBACK.heading_accent,
+            description:
+              postcardsSection.description?.trim() ||
+              POSTCARDS_FALLBACK.description,
+          }
+        : POSTCARDS_FALLBACK;
     const [activeVideo, setActiveVideo] = useState<HomeReviewVideo | null>(
       null,
     );
@@ -600,7 +626,7 @@ import {
             MAIN CONTENT
         ========================================================= */}
   
-        <div className="relative z-10 mx-auto max-w-[1440px] px-5  sm:px-8 lg:px-12 lg:py-24 xl:px-16">
+        <div className="relative z-10 mx-auto max-w-[1440px] px-5 pt-8 sm:px-8 sm:pt-10 lg:px-12 lg:py-24 xl:px-16">
           {/* <div className="relative z-10 mx-auto max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-24 xl:px-16"></div> */}
           {/* =======================================================
                 CENTERED TESTIMONIAL EYEBROW
@@ -947,12 +973,12 @@ import {
               STORIES DIVIDER
           ======================================================= */}
   
-          <RevealItem delay={0}>
-            <div className="mt-14 flex flex-col items-center justify-center">
+          <RevealItem delay={0} className="!mt-2">
+            <div className="mt-0 flex flex-col items-center justify-center">
               {/* SMALL BOTANICAL MARK */}
               <svg
                 viewBox="0 0 40 40"
-                className="mb-[8px] h-[30px] w-[30px] text-[#71883F]"
+                className="mb-1 h-[26px] w-[26px] text-[#71883F]"
                 fill="none"
                 aria-hidden="true"
               >
@@ -975,12 +1001,11 @@ import {
               </svg>
   
               {/* ELEGANT CENTERED RULE + LABEL */}
-              <div className="flex w-full items-center justify-center gap-5 sm:gap-7 mb-7">
+              <div className="mb-3 flex w-full items-center justify-center gap-4 sm:gap-6">
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
-  
+
                 <span className="whitespace-nowrap font-[Mona_Sans,sans-serif] text-[12px] font-medium tracking-[0.38em] text-[#77715c] sm:text-[10px] sm:tracking-[0.4em]">
-                  {/* MEMORIES MADE AT PACIANO */}
-                  POSTCARDS FROM PACIANO
+                  {postcardsCopy.section_label}
                 </span>
   
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
@@ -1008,15 +1033,14 @@ import {
                   lg:text-[60px]
                 "
               >
-               The Paciano Journal,
+                {postcardsCopy.heading_primary}
                 <br />
                 <span className="italic text-[#789541]">
-                Stories Worth Sharing.
+                  {postcardsCopy.heading_accent}
                 </span>
               </h2>  
               <p
                   className="
-                   
                       mx-auto
                       mt-5
                       max-w-[700px]
@@ -1030,7 +1054,7 @@ import {
                       lg:text-[14px]
                     "
                 >
-                  Discover inspiring journeys, hidden gems and beautiful moments that capture the essence of Paciano
+                  {postcardsCopy.description}
                 </p>         
               
             </RevealItem>
@@ -1143,19 +1167,6 @@ import {
                   >
                     {story.name}
                   </h3>
-  
-                  <div
-                    className="
-              mt-3
-              font-[Mona_Sans,sans-serif]
-              text-[10px]
-              font-light
-              tracking-[0.38em]
-              text-[#696b67]
-            "
-                  >
-                    {story.location}
-                  </div>
                 </article>
               ))}
             </Carousel>
@@ -1188,8 +1199,8 @@ import {
                 autoPlay
                 playsInline
               />
-              <p className="mt-3 px-2 text-center font-[Mona_Sans,sans-serif] text-xs tracking-[0.2em] text-white/80">
-                {activeVideo.reviewer_name} · {activeVideo.location}
+              <p className="mt-3 px-2 text-center font-[Mona_Sans,sans-serif] text-sm text-white/90">
+                {activeVideo.reviewer_name}
               </p>
             </div>
           </div>

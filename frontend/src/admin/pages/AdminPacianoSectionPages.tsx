@@ -491,7 +491,9 @@ type StayItem = {
   id: number;
   slug: string;
   menu_label: string | null;
+  button_descriptor: string | null;
   title: string;
+  photo_label: string | null;
   description: string | null;
   photo_1_url: string | null;
   photo_2_url: string | null;
@@ -567,7 +569,9 @@ export function AdminStaysPage() {
     try {
       const fd = new FormData();
       fd.append("menu_label", item.menu_label ?? "");
+      fd.append("button_descriptor", item.button_descriptor ?? "");
       fd.append("title", item.title);
+      fd.append("photo_label", item.photo_label ?? "");
       fd.append("description", item.description ?? "");
       const pf = photoFiles[item.id] ?? {};
       if (pf.p1) fd.append("photo_1", pf.p1);
@@ -656,11 +660,14 @@ export function AdminStaysPage() {
         <div className={cardGridClass}>
           {items.map((item) => (
             <div key={item.id} className="admin-card rounded-2xl p-6">
-              <Field label="Stay tab name">
+              <p className="mb-3 text-sm font-medium capitalize text-[#332C26]">
+                {item.slug.replace(/-/g, " ")} stay
+              </p>
+              <Field label="Button name (large text on the home page tabs)">
                 <input
                   className={inputClass}
                   value={item.menu_label ?? ""}
-                  placeholder={item.slug.replace(/-/g, " ")}
+                  placeholder="e.g. Premium Suites"
                   onChange={(e) =>
                     setItems((list) =>
                       list.map((i) =>
@@ -672,7 +679,39 @@ export function AdminStaysPage() {
                   }
                 />
               </Field>
-              <Field label="Stay title">
+              <Field label="Short line under the button name">
+                <input
+                  className={inputClass}
+                  value={item.button_descriptor ?? ""}
+                  placeholder="e.g. RIVER & MOUNTAINS"
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, button_descriptor: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Field label="Small line above the photo title">
+                <input
+                  className={inputClass}
+                  value={item.photo_label ?? ""}
+                  placeholder="e.g. RIVERSIDE SUITE"
+                  onChange={(e) =>
+                    setItems((list) =>
+                      list.map((i) =>
+                        i.id === item.id
+                          ? { ...i, photo_label: e.target.value }
+                          : i,
+                      ),
+                    )
+                  }
+                />
+              </Field>
+              <Field label="Main title on the photo">
                 <input
                   className={inputClass}
                   value={item.title}
@@ -685,7 +724,7 @@ export function AdminStaysPage() {
                   }
                 />
               </Field>
-              <Field label="Description">
+              <Field label="Description on the photo">
                 <textarea
                   className={`${inputClass} min-h-[88px]`}
                   value={item.description ?? ""}

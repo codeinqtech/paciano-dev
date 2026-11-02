@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\HomeBannerSlide;
 use App\Models\HomeLocationSetting;
+use App\Models\HomePostcardsSetting;
 use App\Models\HomeReviewVideo;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
@@ -40,6 +41,24 @@ class HomePublicController extends Controller
 
         try {
             $row = HomeLocationSetting::singleton();
+            if (! $row->is_active) {
+                return response()->json(['success' => true, 'data' => null]);
+            }
+
+            return response()->json(['success' => true, 'data' => $row->toPublicArray()]);
+        } catch (QueryException) {
+            return response()->json(['success' => true, 'data' => null]);
+        }
+    }
+
+    public function postcardsSection()
+    {
+        try {
+            if (! Schema::hasTable('home_postcards_settings')) {
+                return response()->json(['success' => true, 'data' => null]);
+            }
+
+            $row = HomePostcardsSetting::singleton();
             if (! $row->is_active) {
                 return response()->json(['success' => true, 'data' => null]);
             }
