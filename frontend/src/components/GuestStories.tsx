@@ -987,7 +987,56 @@ import {
               </div>
             </div>
           </RevealItem>
-  
+
+          
+          {/* =========================================================
+                POSTCARDS HEADING
+            ========================================================= */}
+            <RevealItem delay={120} className="!mt-0">
+              <h2
+                className="
+                  mx-auto
+                  mt-2
+                  max-w-[950px]
+                  text-center
+                  font-cormorant
+                  text-[43px]
+                  leading-[.95]
+                  tracking-[-.025em]
+                  text-[#17251B]
+                  sm:text-[52px]
+                  lg:text-[60px]
+                "
+              >
+               The Paciano Journal,
+                <br />
+                <span className="italic text-[#789541]">
+                Stories Worth Sharing.
+                </span>
+              </h2>  
+              <p
+                  className="
+                   
+                      mx-auto
+                      mt-5
+                      max-w-[700px]
+                      px-4
+                      text-center
+                      font-manrope
+                      text-[12px]
+                      leading-[1.8]
+                      text-[#657067]
+                      sm:text-[13px]
+                      lg:text-[14px]
+                    "
+                >
+                  Discover inspiring journeys, hidden gems and beautiful moments that capture the essence of Paciano
+                </p>         
+              
+            </RevealItem>
+
+
+          
           {/* =======================================================
               VIDEO STORIES CAROUSEL
           ======================================================= */}
@@ -1006,12 +1055,13 @@ import {
                 <article key={story.id} className="group">
                   <div
                     className="
-              relative
-              aspect-[1.45/1]
-              overflow-hidden
-              rounded-[12px]
-              bg-[#d6d0bf]
-            "
+                    relative
+                    aspect-[1.45/1]
+                    overflow-hidden
+                    rounded-[12px]
+                    mt-[8px]
+                    bg-[#d6d0bf]
+                  "
                   >
                     {story.image ? (
                       <img
