@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import pacianoLogo from "@/images/paciano-logo.png";
 import bookingImage from "@/images/paciano-booking.png";
@@ -7,7 +7,12 @@ import {
   type NavLinkItem,
 } from "@/hooks/useNavigationMenus";
 import { toAppPath } from "@/lib/appBase";
-import { openPacianoBooking } from "@/lib/pacianoBooking";
+import {
+  getPacianoBookingPrefs,
+  openPacianoBooking,
+  PACIANO_BOOKING_PLANNER_EVENT,
+  savePacianoBookingPrefs,
+} from "@/lib/pacianoBooking";
 
 interface NavbarProps {
   scrolled?: boolean;
@@ -20,16 +25,53 @@ export default function Navbar({
 }: NavbarProps) {
   const navLinks = useNavigationMenus();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [rooms, setRooms] = useState(1);
+  const [pets, setPets] = useState(0);
 
-  /* Luxury booking modal (dates/guests) — disabled; Plan Your Stay uses IPMS247. */
-  // const [bookingOpen, setBookingOpen] = useState(false);
-  // const [checkIn, setCheckIn] = useState("2026-10-14");
-  // const [checkOut, setCheckOut] = useState("2026-10-17");
-  // const [adults, setAdults] = useState(2);
-  // const [children, setChildren] = useState(0);
-  // const [rooms, setRooms] = useState(1);
-  // const [pets, setPets] = useState(0);
-  // const handleCheckAvailability = () => { ... };
+  const openBookingPlanner = useCallback(() => {
+    const p = getPacianoBookingPrefs();
+    setCheckIn(p.checkin);
+    setCheckOut(p.checkout);
+    setAdults(p.adults);
+    setChildren(p.children);
+    setRooms(p.rooms);
+    setBookingOpen(true);
+  }, []);
+
+  const handleCheckAvailability = () => {
+    if (!checkIn || !checkOut) {
+      alert("Please select your arrival and departure dates.");
+      return;
+    }
+
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      alert("Departure must be after arrival.");
+      return;
+    }
+
+    const prefs = {
+      checkin: checkIn,
+      checkout: checkOut,
+      adults,
+      children,
+      rooms,
+    };
+    savePacianoBookingPrefs(prefs);
+    openPacianoBooking(prefs);
+    setBookingOpen(false);
+  };
+
+  useEffect(() => {
+    const onPlanner = () => openBookingPlanner();
+    window.addEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+    return () =>
+      window.removeEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+  }, [openBookingPlanner]);
 
   // Prevent body scroll when mobile menu is open
   // useEffect(() => {
@@ -45,7 +87,7 @@ export default function Navbar({
   // }, [menuOpen]);
 
   useEffect(() => {
-    const shouldLockScroll = menuOpen;
+    const shouldLockScroll = menuOpen || bookingOpen;
 
     if (shouldLockScroll) {
       const scrollbarWidth =
@@ -61,7 +103,7 @@ export default function Navbar({
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     };
-  }, [menuOpen]);
+  }, [menuOpen, bookingOpen]);
 
   return (
     <>
@@ -189,7 +231,7 @@ export default function Navbar({
               {/* CTA BUTTON */}
               <button
                 type="button"
-                onClick={() => openPacianoBooking()}
+                onClick={() => openBookingPlanner()}
                 className="
                   group
                   relative
@@ -321,10 +363,6 @@ export default function Navbar({
         </div>
       </header>
 
-      {/* =========================================================
-            PACIANO — LUXURY BOOKING MODAL (disabled — external booking)
-        ========================================================= */}
-      {/*
       <BookingModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
@@ -342,7 +380,6 @@ export default function Navbar({
         setPets={setPets}
         onCheckAvailability={handleCheckAvailability}
       />
-      */}
 
       {/* MOBILE MENU */}
       <MobileMenu
@@ -352,7 +389,7 @@ export default function Navbar({
         navLinks={navLinks}
         onBooking={() => {
           setMenuOpen(false);
-          openPacianoBooking();
+          openBookingPlanner();
         }}
       />
     </>
