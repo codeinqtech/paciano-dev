@@ -79,25 +79,22 @@ const PacianoLocationMapCard = forwardRef<HTMLDivElement, Props>(
     const shellClass = isHome
       ? `
     absolute
+    left-[11.1%]
+    bottom-[-55px]
     z-[100]
+    w-[79%]
+    h-[230px]
     transform
     transition-all
     duration-[1900ms]
     ease-[cubic-bezier(0.22,1,0.36,1)]
     will-change-transform
-    left-3
-    right-3
-    bottom-[-24px]
-    w-auto
-    h-auto
-    sm:left-[5%]
-    sm:right-[5%]
-    sm:bottom-[-36px]
-    md:left-[11.1%]
-    md:right-auto
-    md:w-[79%]
-    md:bottom-[-55px]
-    md:h-[230px]
+    max-md:relative
+    max-md:bottom-auto
+    max-md:left-auto
+    max-md:mx-auto
+    max-md:h-auto
+    max-md:w-full
     ${
       isVisible
         ? "translate-y-0 scale-100 opacity-100"
