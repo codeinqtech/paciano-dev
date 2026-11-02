@@ -7,6 +7,7 @@ import {
   type NavLinkItem,
 } from "@/hooks/useNavigationMenus";
 import { toAppPath } from "@/lib/appBase";
+import { openPacianoBooking } from "@/lib/pacianoBooking";
 
 interface NavbarProps {
   scrolled?: boolean;
@@ -19,36 +20,16 @@ export default function Navbar({
 }: NavbarProps) {
   const navLinks = useNavigationMenus();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
 
-  const [checkIn, setCheckIn] = useState("2026-10-14");
-  const [checkOut, setCheckOut] = useState("2026-10-17");
-  const [adults, setAdults] = useState(2);
-  const [children, setChildren] = useState(0);
-  const [rooms, setRooms] = useState(1);
-  const [pets, setPets] = useState(0);
-
-  const handleCheckAvailability = () => {
-    if (!checkIn || !checkOut) {
-      alert("Please select your arrival and departure dates.");
-      return;
-    }
-
-    if (new Date(checkOut) <= new Date(checkIn)) {
-      alert("Departure must be after arrival.");
-      return;
-    }
-
-    console.log({
-      checkIn,
-      checkOut,
-      adults,
-      children,
-      rooms,
-      pets,
-    });
-    // Later we can connect this to your actual booking system.
-  };
+  /* Luxury booking modal (dates/guests) — disabled; Plan Your Stay uses IPMS247. */
+  // const [bookingOpen, setBookingOpen] = useState(false);
+  // const [checkIn, setCheckIn] = useState("2026-10-14");
+  // const [checkOut, setCheckOut] = useState("2026-10-17");
+  // const [adults, setAdults] = useState(2);
+  // const [children, setChildren] = useState(0);
+  // const [rooms, setRooms] = useState(1);
+  // const [pets, setPets] = useState(0);
+  // const handleCheckAvailability = () => { ... };
 
   // Prevent body scroll when mobile menu is open
   // useEffect(() => {
@@ -64,7 +45,7 @@ export default function Navbar({
   // }, [menuOpen]);
 
   useEffect(() => {
-    const shouldLockScroll = menuOpen || bookingOpen;
+    const shouldLockScroll = menuOpen;
 
     if (shouldLockScroll) {
       const scrollbarWidth =
@@ -80,7 +61,7 @@ export default function Navbar({
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
     };
-  }, [menuOpen, bookingOpen]);
+  }, [menuOpen]);
 
   return (
     <>
@@ -208,7 +189,7 @@ export default function Navbar({
               {/* CTA BUTTON */}
               <button
                 type="button"
-                onClick={() => setBookingOpen(!bookingOpen)}
+                onClick={() => openPacianoBooking()}
                 className="
                   group
                   relative
@@ -341,8 +322,9 @@ export default function Navbar({
       </header>
 
       {/* =========================================================
-            PACIANO — LUXURY BOOKING MODAL
+            PACIANO — LUXURY BOOKING MODAL (disabled — external booking)
         ========================================================= */}
+      {/*
       <BookingModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
@@ -360,6 +342,7 @@ export default function Navbar({
         setPets={setPets}
         onCheckAvailability={handleCheckAvailability}
       />
+      */}
 
       {/* MOBILE MENU */}
       <MobileMenu
@@ -369,7 +352,7 @@ export default function Navbar({
         navLinks={navLinks}
         onBooking={() => {
           setMenuOpen(false);
-          setBookingOpen(true);
+          openPacianoBooking();
         }}
       />
     </>

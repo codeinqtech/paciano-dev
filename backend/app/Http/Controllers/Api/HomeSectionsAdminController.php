@@ -173,7 +173,9 @@ class HomeSectionsAdminController extends Controller
         $item = HomeStayItem::query()->where('is_active', true)->findOrFail($id);
         $data = $request->validate([
             'menu_label' => ['nullable', 'string', 'max:120'],
+            'button_descriptor' => ['nullable', 'string', 'max:120'],
             'title' => ['sometimes', 'string', 'max:200'],
+            'photo_label' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'photo_1' => ['nullable', 'file', 'max:51200'],

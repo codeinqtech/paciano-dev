@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\HomeBannerSlide;
 use App\Models\HomeLocationSetting;
+use App\Models\HomePostcardsSetting;
 use App\Models\HomeReviewVideo;
 use App\Models\User;
 use App\Services\HomeMediaService;
@@ -185,6 +186,36 @@ class HomeAdminController extends Controller
         return response()->json(['success' => true, 'data' => $row->fresh()->toPublicArray()]);
     }
 
+    public function postcardsShow(Request $request)
+    {
+        $this->ensureHomePermission($request);
+
+        $row = HomePostcardsSetting::singleton();
+
+        return response()->json([
+            'success' => true,
+            'data' => $row->toPublicArray(),
+        ]);
+    }
+
+    public function postcardsUpdate(Request $request)
+    {
+        $this->ensureHomePermission($request);
+
+        $data = $request->validate([
+            'section_label' => ['nullable', 'string', 'max:120'],
+            'heading_primary' => ['nullable', 'string', 'max:200'],
+            'heading_accent' => ['nullable', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $row = HomePostcardsSetting::singleton();
+        $row->fill($data);
+        $row->save();
+
+        return response()->json(['success' => true, 'data' => $row->fresh()->toPublicArray()]);
+    }
+
     public function reviewIndex(Request $request)
     {
         $this->ensureHomePermission($request);
@@ -208,7 +239,7 @@ class HomeAdminController extends Controller
 
         $data = $request->validate([
             'reviewer_name' => ['required', 'string', 'max:120'],
-            'location' => ['required', 'string', 'max:200'],
+            'location' => ['nullable', 'string', 'max:200'],
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],
@@ -228,7 +259,7 @@ class HomeAdminController extends Controller
 
         $item = HomeReviewVideo::query()->create([
             'reviewer_name' => trim($data['reviewer_name']),
-            'location' => trim($data['location']),
+            'location' => trim($data['location'] ?? ''),
             'display_title' => isset($data['display_title']) ? trim($data['display_title']) : null,
             'thumbnail_name' => $thumb['file_name'],
             'thumbnail_path' => $thumb['file_path'],
@@ -253,7 +284,7 @@ class HomeAdminController extends Controller
         $item = $this->findActiveReview($id);
         $data = $request->validate([
             'reviewer_name' => ['sometimes', 'string', 'max:120'],
-            'location' => ['sometimes', 'string', 'max:200'],
+            'location' => ['sometimes', 'nullable', 'string', 'max:200'],
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'thumbnail' => ['nullable', 'file', 'max:20480'],

@@ -36,6 +36,13 @@ export type HomeReviewVideo = {
   sort_order: number;
 };
 
+export type HomePostcardsSection = {
+  section_label: string | null;
+  heading_primary: string | null;
+  heading_accent: string | null;
+  description: string | null;
+};
+
 export type HomeAboutContent = {
   heading_line_1: string | null;
   heading_line_2: string | null;
@@ -67,7 +74,9 @@ export type HomeStayItemContent = {
   id: number;
   slug: string;
   menu_label: string | null;
+  button_descriptor: string | null;
   title: string;
+  photo_label: string | null;
   description: string | null;
   photo_1_url: string | null;
   photo_2_url: string | null;
@@ -107,6 +116,7 @@ type HomeContentValue = {
   bannerSlides: HomeBannerSlide[];
   location: HomeLocationContent | null;
   reviewVideos: HomeReviewVideo[];
+  postcardsSection: HomePostcardsSection | null;
   about: HomeAboutContent | null;
   experiences: HomeExperiencesContent | null;
   stays: HomeStaysContent | null;
@@ -122,6 +132,7 @@ const emptyLoaded: Omit<HomeContentValue, "loading"> = {
   bannerSlides: [],
   location: null,
   reviewVideos: [],
+  postcardsSection: null,
   about: null,
   experiences: null,
   stays: null,
@@ -167,13 +178,14 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
       let bannerSlides: HomeBannerSlide[] = [];
       let location: HomeLocationContent | null = null;
       let reviewVideos: HomeReviewVideo[] = [];
+      let postcardsSection: HomePostcardsSection | null = null;
       let about: HomeAboutContent | null = null;
       let experiences: HomeExperiencesContent | null = null;
       let stays: HomeStaysContent | null = null;
       let dining: HomeDiningContent | null = null;
 
       try {
-        const [b, l, r, a, e, s, d] = await Promise.all([
+        const [b, l, r, p, a, e, s, d] = await Promise.all([
           fetchJson<HomeBannerSlide[]>(
             "/home/banner-slides",
             controller.signal,
@@ -181,6 +193,10 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
           fetchJson<HomeLocationContent>("/home/location", controller.signal),
           fetchJson<HomeReviewVideo[]>(
             "/home/review-videos",
+            controller.signal,
+          ),
+          fetchJson<HomePostcardsSection>(
+            "/home/postcards-section",
             controller.signal,
           ),
           fetchJson<HomeAboutContent>(
@@ -203,6 +219,7 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
         bannerSlides = b ?? [];
         location = l;
         reviewVideos = r ?? [];
+        postcardsSection = p;
         about = a;
         experiences = e;
         stays = s;
@@ -218,6 +235,7 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
           bannerSlides,
           location,
           reviewVideos,
+          postcardsSection,
           about,
           experiences,
           stays,

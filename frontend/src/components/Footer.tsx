@@ -13,6 +13,7 @@ import {
 
 import footerLeaf from "@/images/location-left-leaves.png";
 import { toAppPath } from "@/lib/appBase";
+import { PACIANO_BOOKING_URL } from "@/lib/pacianoBooking";
 
 const exploreLinks = [
   "Home",
@@ -1693,7 +1694,7 @@ export default function Footer({
           ========================================================= */}
 
             <motion.a
-              href="#"
+              href={PACIANO_BOOKING_URL}
               initial={{
                 opacity: 0,
                 x: 20,

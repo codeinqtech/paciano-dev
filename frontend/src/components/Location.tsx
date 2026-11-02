@@ -1914,7 +1914,8 @@ style={{
                 group-hover:translate-x-[2px]
               "
             >
-              â†’
+              &rarr; 
+              {/* &uarr; */}
             </span>
           </span>
 
