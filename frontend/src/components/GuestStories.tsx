@@ -550,7 +550,7 @@ import {
         : STATIC_MEMORY_STORIES;
 
     return (
-      <section className="relative isolate overflow-hidden bg-[#F4F0E7] text-[#1d2828]">
+      <section className="relative isolate overflow-hidden bg-[#F4F0E7] pb-6 text-[#1d2828] max-md:pb-10 md:pb-0">
         {/* <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]"></section> */}
         
         {/* =========================================================
