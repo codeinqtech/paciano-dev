@@ -19,7 +19,7 @@ class WhatsAppService
                 [
                     'From' => config('services.twilio.whatsapp_from'),
                     'To' => config('services.twilio.whatsapp_to'),
-                    'Body' => $message,
+                    'ContentSid' => config('services.twilio.content_sid'),
                 ]
             );
 
@@ -29,7 +29,7 @@ class WhatsAppService
                 'response' => $response->json(),
             ]);
 
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 $response->json('message') ?? 'Twilio request failed'
             );
         }

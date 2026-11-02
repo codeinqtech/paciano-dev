@@ -13,49 +13,19 @@ use App\Http\Controllers\Admin\ContactPageController;
 use App\Http\Controllers\Admin\ContactDetailController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-use App\Services\WhatsAppService;
+use App\Http\Controllers\Api\EnquiryController;
+use App\Http\Controllers\Api\WhatsAppTestController;
 
-
-Route::post('/whatsapp/test', function (
-    Request $request,
-    WhatsAppService $whatsapp
-) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:100',
-        'phone' => 'required|string|max:25',
-        'email' => 'nullable|email',
-        'message' => 'required|string|max:1000',
-    ]);
-
-    $body = "New Paciano Test Enquiry\n\n"
-        . "Name: {$validated['name']}\n"
-        . "Phone: {$validated['phone']}\n"
-        . "Email: " . ($validated['email'] ?? 'Not provided') . "\n"
-        . "Message: {$validated['message']}";
-
-    try {
-        $result = $whatsapp->send($body);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'WhatsApp API request accepted.',
-            'twilio_sid' => $result['sid'] ?? null,
-            'twilio_status' => $result['status'] ?? null,
-        ], 200);
-
-    } catch (\Throwable $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'WhatsApp notification failed.',
-        ], 502);
-    }
-});
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
 Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
 // Public API routes
 Route::get('contact-page', [ContactPageController::class, 'show']);
+Route::post('/enquiries', [EnquiryController::class, 'store']);
+
+// Temporary testing route
+Route::post('/whatsapp/test', [WhatsAppTestController::class, 'send']);
 
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
