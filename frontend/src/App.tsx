@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "@/pages/HomePage";
 import ContactPage from "@/pages/ContactPage";
 import StayPage from "@/pages/StayPage";
+import IconLibrary from "@/components/common/icons/IconLibrary";
+
+
 import AdminLayout from "@/admin/layouts/AdminLayout";
 import AdminLogin from "@/admin/pages/AdminLogin";
 import AdminForgotPassword from "@/admin/pages/AdminForgotPassword";
@@ -12,6 +15,7 @@ import AdminContentSection from "@/admin/pages/AdminContentSection";
 import AdminHomepage from "@/admin/pages/AdminHomepage";
 import AdminNavbarMenus from "@/admin/pages/AdminNavbarMenus";
 import AdminFooter from "@/admin/pages/AdminFooter";
+import AdminContactUsSection from "@/admin/pages/AdminContactUsSection";
 import {
   AdminAboutPage,
   AdminDiningPage,
@@ -19,12 +23,16 @@ import {
   AdminStaysPage,
 } from "@/admin/pages/AdminPacianoSectionPages";
 
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/stay" element={<StayPage />} />
+      
+      {/* Developer Tools */}
+      <Route path="/dev/icon-library" element={<IconLibrary />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
@@ -38,7 +46,7 @@ export default function App() {
         <Route path="experiences" element={<AdminExperiencesPage />} />
         <Route path="stays" element={<AdminStaysPage />} />
         <Route path="dining" element={<AdminDiningPage />} />
-        <Route path="contact" element={<AdminContentSection menuId="contact" />} />
+        <Route path="contact" element={<AdminContactUsSection />} />
         <Route path="stay" element={<AdminContentSection menuId="stay" />} />
         <Route path="navbar" element={<AdminNavbarMenus />} />
         <Route path="footer" element={<AdminFooter />} />
