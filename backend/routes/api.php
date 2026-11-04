@@ -16,12 +16,20 @@ use App\Http\Controllers\Api\SiteNavigationMenuController;
 use App\Http\Controllers\Admin\ContactPageController;
 use App\Http\Controllers\Admin\ContactDetailController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Api\EnquiryController;
+use App\Http\Controllers\Api\WhatsAppTestController;
+
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
 Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
 // Public API routes
 Route::get('contact-page', [ContactPageController::class, 'show']);
+Route::post('/enquiries', [EnquiryController::class, 'store']);
+
+// Temporary testing route
+Route::post('/whatsapp/test', [WhatsAppTestController::class, 'send']);
 Route::get('about/google-reviews', [GoogleReviewPublicController::class, 'aboutReviews']);
 Route::get('about/page', [AboutPagePublicController::class, 'show']);
 Route::get('google-profile-photo', [GoogleProfilePhotoController::class, 'show']);

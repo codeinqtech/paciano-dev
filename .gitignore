@@ -44,6 +44,7 @@ docker-compose.local.yml
 docker-compose.yml
 /docker/
 .dockerignore
+/devcontainer/
 
 # =========================
 # IDE / Editors
