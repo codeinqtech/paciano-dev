@@ -6,6 +6,10 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HomeAdminController;
 use App\Http\Controllers\Api\HomePublicController;
 use App\Http\Controllers\Api\HomeSectionsAdminController;
+use App\Http\Controllers\Api\GoogleReviewAdminController;
+use App\Http\Controllers\Api\GoogleProfilePhotoController;
+use App\Http\Controllers\Api\AboutPagePublicController;
+use App\Http\Controllers\Api\GoogleReviewPublicController;
 use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
 use App\Http\Controllers\Api\SiteNavigationMenuController;
@@ -18,6 +22,9 @@ Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
 // Public API routes
 Route::get('contact-page', [ContactPageController::class, 'show']);
+Route::get('about/google-reviews', [GoogleReviewPublicController::class, 'aboutReviews']);
+Route::get('about/page', [AboutPagePublicController::class, 'show']);
+Route::get('google-profile-photo', [GoogleProfilePhotoController::class, 'show']);
 
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
@@ -83,8 +90,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('home/review-videos/{id}', [HomeAdminController::class, 'reviewUpdate']);
         Route::delete('home/review-videos/{id}', [HomeAdminController::class, 'reviewDestroy']);
 
+        Route::get('google-reviews', [GoogleReviewAdminController::class, 'index']);
+        Route::post('google-reviews/sync', [GoogleReviewAdminController::class, 'sync']);
+        Route::patch('google-reviews/{id}', [GoogleReviewAdminController::class, 'updateApproval']);
+
         Route::get('home/sections/about', [HomeSectionsAdminController::class, 'aboutShow']);
         Route::post('home/sections/about', [HomeSectionsAdminController::class, 'aboutUpdate']);
+
+        Route::get('about/page', [HomeSectionsAdminController::class, 'aboutPageAdmin']);
+        Route::post('about/blocks/{sectionKey}', [HomeSectionsAdminController::class, 'aboutBlockUpdate']);
+        Route::post('about/values/{id}', [HomeSectionsAdminController::class, 'aboutValueUpdate']);
 
         Route::get('home/sections/experiences', [HomeSectionsAdminController::class, 'experiencesShow']);
         Route::post('home/sections/experiences/intro', [HomeSectionsAdminController::class, 'experiencesSectionUpdate']);

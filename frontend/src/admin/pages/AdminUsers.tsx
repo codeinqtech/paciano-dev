@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
 import type { AuthUser } from "../../context/AuthContext";
 import { ASSIGNABLE_MENUS, ROLES, type MenuId } from "../data/permissions";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
 
 type UserForm = {
   id?: number;
@@ -34,6 +36,9 @@ export default function AdminUsers() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<UserForm>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  const { paginatedItems: pagedUsers, paginationProps: usersPagination } =
+    useClientPagination(users, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -184,7 +189,7 @@ export default function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {users.map((user) => (
+                {pagedUsers.map((user) => (
                   <tr key={user.id}>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
                       {user.name}
@@ -231,6 +236,9 @@ export default function AdminUsers() {
             </table>
           </div>
         )}
+        {!loading && users.length > 0 ? (
+          <ListPagination {...usersPagination} itemLabel="users" />
+        ) : null}
       </div>
 
       {modalOpen ? (

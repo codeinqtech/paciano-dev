@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import { truncateWords } from "@/utils/aboutWords";
 import storyImage from "@/images/story.png";
 import aboutNature from "@/images/about-nature-first.jpg";
 import aboutHospitality from "@/images/about-genuine-hospitality.jpg";
@@ -1319,8 +1321,20 @@ export default function AboutUs() {
             DESCRIPTION
         ==================================================== */}
 
-            <p
-              className="
+            {(() => {
+              const p1 =
+                (ready && aboutCms?.paragraph_1) ||
+                "Paciano is more than a resort — it's a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments.";
+              const teaserWords = aboutCms?.home_teaser_words ?? 42;
+              const { text: homeP1, truncated } = truncateWords(p1, teaserWords);
+              const tagline =
+                (ready &&
+                  aboutCms?.home_tagline) ||
+                "A place to retreat. A place to reconnect. A place that stays with you long after you leave.";
+              return (
+                <>
+                  <p
+                    className="
             paciano-reveal
             paciano-delay-2
 
@@ -1336,12 +1350,19 @@ export default function AboutUs() {
 
             sm:text-[15px]
           "
-            >
-              {(ready && aboutCms?.paragraph_1) ||
-                "Paciano is more than a resort — it's a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments."}{" "}
-            </p>
-            <p
-              className="
+                  >
+                    {homeP1}{" "}
+                    {truncated ? (
+                      <Link
+                        to="/about"
+                        className="font-semibold text-[#5F7138] underline-offset-2 hover:underline"
+                      >
+                        View more
+                      </Link>
+                    ) : null}
+                  </p>
+                  <p
+                    className="
             paciano-reveal
             paciano-delay-2
 
@@ -1357,10 +1378,12 @@ export default function AboutUs() {
 
             sm:text-[14px]
           "
-            >
-              {(ready && aboutCms?.paragraph_2) ||
-                "A place to retreat. A place to reconnect. A place that stays with you long after you leave."}
-            </p>
+                  >
+                    {tagline}
+                  </p>
+                </>
+              );
+            })()}
 
             {/* ============================================================
     PACIANO — DISCOVER OUR STORY
@@ -1371,8 +1394,8 @@ export default function AboutUs() {
     DISCOVER OUR STORY — LUXURY CTA
 ============================================================ */}
 
-            <button
-              type="button"
+            <Link
+              to="/about"
               className="
     group
     relative
@@ -1673,7 +1696,7 @@ export default function AboutUs() {
       group-hover:opacity-80
     "
               />
-            </button>
+            </Link>
           </div>
 
           {/* ======================================================

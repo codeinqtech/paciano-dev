@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\HomeAboutSection;
+use App\Models\AboutIntro;
+use App\Models\AboutExperienceItem;
+use App\Models\AboutExperienceSection;
 use App\Models\HomeDiningSection;
 use App\Models\HomeDiningSlide;
-use App\Models\HomeExperienceItem;
-use App\Models\HomeExperienceSection;
 use App\Models\HomeStayItem;
 use App\Models\HomeStaysSection;
 use Illuminate\Database\Seeder;
@@ -15,18 +15,19 @@ class HomeSectionSeeder extends Seeder
 {
     public function run(): void
     {
-        HomeAboutSection::query()->updateOrCreate(
+        AboutIntro::query()->updateOrCreate(
             ['id' => 1],
             [
                 'heading_line_1' => 'Inspired By',
                 'heading_line_2' => 'Nature.',
                 'heading_accent' => 'Created For You.',
                 'paragraph_1' => 'Paciano is more than a resort — it\'s a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments.',
-                'paragraph_2' => 'A place to retreat. A place to reconnect. A place that stays with you long after you leave.',
+                'home_tagline' => 'A place to retreat. A place to reconnect. A place that stays with you long after you leave.',
+                'paragraph_2' => 'Nestled in serene landscapes of Dooars, our retreat is thoughtfully designed for those who seek a deeper connection with nature, meaningful experiences and time that truly belongs to themselves.',
             ],
         );
 
-        HomeExperienceSection::query()->updateOrCreate(
+        AboutExperienceSection::query()->updateOrCreate(
             ['id' => 1],
             [
                 'heading_main' => 'Moments Crafted by Nature,',
@@ -43,7 +44,7 @@ class HomeSectionSeeder extends Seeder
         ];
 
         foreach ($experiences as $exp) {
-            HomeExperienceItem::query()->updateOrCreate(
+            AboutExperienceItem::query()->updateOrCreate(
                 ['title' => $exp['title']],
                 [
                     'description' => $exp['description'],

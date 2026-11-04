@@ -8,6 +8,8 @@ import {
 } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
 
 const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
 const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
@@ -121,6 +123,11 @@ export default function AdminHomepage() {
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [reviewSaving, setReviewSaving] = useState(false);
+
+  const { paginatedItems: pagedBanners, paginationProps: bannerPagination } =
+    useClientPagination(banners, { pageSize: 5 });
+  const { paginatedItems: pagedReviews, paginationProps: reviewPagination } =
+    useClientPagination(reviews, { pageSize: 10 });
 
   const loadBanners = useCallback(async () => {
     const res = await apiRequest<{ data: BannerRow[] }>(
@@ -493,7 +500,7 @@ export default function AdminHomepage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {banners.map((row) => (
+                    {pagedBanners.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -532,6 +539,9 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {banners.length > 0 ? (
+              <ListPagination {...bannerPagination} itemLabel="slides" />
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -786,7 +796,7 @@ export default function AdminHomepage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reviews.map((row) => (
+                    {pagedReviews.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -828,6 +838,9 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {reviews.length > 0 ? (
+              <ListPagination {...reviewPagination} itemLabel="videos" />
+            ) : null}
           </div>
         </section>
       ) : null}

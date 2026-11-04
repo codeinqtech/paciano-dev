@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { getApiBaseUrl } from "@/lib/apiBase";
+import { normalizeAboutIntro } from "./useAboutPageContent";
 
 export type HomeBannerSlide = {
   id: number;
@@ -48,7 +49,18 @@ export type HomeAboutContent = {
   heading_line_2: string | null;
   heading_accent: string | null;
   paragraph_1: string | null;
-  paragraph_2: string | null;
+  /** Second paragraph (About page only). */
+  paragraph_2?: string | null;
+  home_tagline?: string | null;
+  home_teaser_words?: number;
+  word_limits?: {
+    combined_max: number;
+    p1_max: number;
+    p2_max: number;
+    p1_words: number;
+    p2_words: number;
+    total_words: number;
+  };
   photo_left_url: string | null;
   photo_center_url: string | null;
   photo_right_url: string | null;
@@ -220,7 +232,9 @@ export function HomeContentProvider({ children }: { children: ReactNode }) {
         location = l;
         reviewVideos = r ?? [];
         postcardsSection = p;
-        about = a;
+        about = a
+          ? normalizeAboutIntro(a as unknown as Record<string, unknown>)
+          : null;
         experiences = e;
         stays = s;
         dining = d;
