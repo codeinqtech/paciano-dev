@@ -11,6 +11,7 @@ import {
   Upload,
   Save,
   Plus,
+  AlertCircle,
 } from "@/components/common/icons";
 
 type TabId =
@@ -62,18 +63,52 @@ const initialFormData: ContactFormData = {
   until_we_meet_video: null,
 };
 
-const inputClass =
-  "w-full rounded-lg border border-[#E0D5C8] bg-white px-4 py-3 text-sm text-[#332C26] placeholder:text-[#A49A8E] outline-none transition focus:border-[#8FAA42] focus:ring-2 focus:ring-[#8FAA42]/10";
+const inputClass = "w-full rounded-lg border border-[#E0D5C8] bg-white px-4 py-3 text-sm text-[#332C26] placeholder:text-[#A49A8E] outline-none transition focus:border-[#8FAA42] focus:ring-2 focus:ring-[#8FAA42]/10";
 
-const labelClass =
-  "mb-2 block text-sm font-medium text-[#51483F]";
+const labelClass = "mb-2 block text-sm font-medium text-[#51483F]";
 
 const AdminContactUsSection = () => {
-  const [activeTab, setActiveTab] =
-    useState<TabId>("banner");
+  const [activeTab, setActiveTab] = useState<TabId>("banner");
+  
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const [formData, setFormData] =
-    useState<ContactFormData>(initialFormData);
+  const handleBannerImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPG, JPEG, PNG and WebP images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      alert("Maximum file size allowed is 5 MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      banner_image: file,
+    }));
+
+    setBannerPreview(URL.createObjectURL(file));
+  };
+
+  const [formData, setFormData] = useState<ContactFormData>(initialFormData);
 
   const handleChange = (
     field: keyof ContactFormData,
@@ -136,37 +171,85 @@ const AdminContactUsSection = () => {
     accept: string
   ) => (
     <div>
-      <label className={labelClass}>{label}</label>
+      <label className={labelClass}>Banner Image</label>
 
-      <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#C8BC82] bg-[#F7F3EB] p-7 transition hover:border-[#8FAA42] hover:bg-[#8FAA42]/5">
-        <Upload className="mb-3 h-7 w-7 text-[#8FAA42]" />
+      <div className="rounded-2xl border border-[#E8DFD0] bg-white p-5 shadow-sm">
 
-        <span className="text-sm font-medium text-[#51483F]">
-          Click to upload
-        </span>
+        {/* Image Preview */}
+        <div className="relative overflow-hidden rounded-xl border border-[#E8DFD0] bg-[#FAF7F2]">
 
-        <span className="mt-1 text-xs text-[#91877B]">
-          Supported format: {accept}
-        </span>
+          {bannerPreview ? (
+            <img
+              src={bannerPreview}
+              alt="Banner Preview"
+              className="h-56 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-56 flex-col items-center justify-center">
+              <Image className="mb-3 h-12 w-12 text-[#C8BC82]" />
 
-        <input
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(e) =>
-            handleChange(
-              field,
-              e.target.files?.[0] ?? null
-            )
-          }
-        />
-      </label>
+              <p className="text-sm font-medium text-[#51483F]">
+                No banner image selected
+              </p>
 
-      {formData[field] instanceof File && (
-        <p className="mt-2 text-xs text-[#718A38]">
-          Selected: {(formData[field] as File).name}
-        </p>
-      )}
+              <p className="mt-1 text-xs text-[#A49A8E]">
+                Your banner preview will appear here
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Upload Information */}
+        <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+          <div className="min-w-0">
+            {formData.banner_image ? (
+              <>
+                <p className="truncate text-sm font-semibold text-[#332C26]">
+                  {formData.banner_image.name}
+                </p>
+
+                <p className="mt-1 text-xs text-[#8A8075]">
+                  {(formData.banner_image.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-[#332C26]">
+                  Upload banner image
+                </p>
+
+                <p className="mt-1 text-xs text-[#8A8075]">
+                  Choose an image for your Contact Us banner.
+                </p>
+              </>
+            )}
+          </div>
+
+          <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#8FAA42] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#788F36]">
+            <Upload className="h-4 w-4" />
+
+            {formData.banner_image ? "Change Image" : "Choose Image"}
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleBannerImageChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+
+        {/* Maximum File Size Note */}
+        <div className="mt-4 flex items-start gap-2 rounded-lg bg-[#FAF7F2] p-3">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#A58B45]" />
+
+          <p className="text-xs leading-relaxed text-[#6E655C]">
+            Maximum file size: <strong>5 MB</strong>.
+            Please use a high-quality image for the best visual appearance.
+          </p>
+        </div>
+      </div>
     </div>
   );
 
