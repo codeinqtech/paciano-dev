@@ -35,9 +35,10 @@ class GoogleReviewsSnapshotSeeder extends Seeder
 
         $placeRow = $payload['place'];
         $lastSynced = $placeRow['last_synced_at'] ?? null;
+        $placeId = GooglePlace::configuredPlaceId();
 
         $place = GooglePlace::query()->updateOrCreate(
-            ['place_id' => (string) $placeRow['place_id']],
+            ['place_id' => $placeId],
             [
                 'display_name' => $placeRow['display_name'] ?? null,
                 'rating' => isset($placeRow['rating']) ? (float) $placeRow['rating'] : null,

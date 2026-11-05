@@ -2669,46 +2669,73 @@ export default function AboutUs() {
         <div
           ref={experienceRef}
           className="
-    paciano-experiences
-    relative
+            paciano-experiences
+            relative
+            mt-[55px]
+            grid
+            grid-cols-2
+            items-stretch
+            gap-x-[14px]
+            gap-y-[35px]
 
-    mt-[55px]
+            sm:grid-cols-3
 
-    grid
-    grid-cols-2
-    gap-x-[14px]
-    gap-y-[35px]
+            lg:grid-cols-5
+            lg:gap-x-[18px]
+            lg:gap-y-0
 
-    sm:grid-cols-3
+            xl:px-[10px]
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:grid-cols-6
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:gap-x-5
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:gap-y-10
 
-    lg:grid-cols-5
-    lg:gap-x-[18px]
-    lg:gap-y-0
-
-    xl:px-[10px]
-  "
+            [@media(orientation:landscape)_and_(pointer:coarse)]:grid-cols-6
+            [@media(orientation:landscape)_and_(pointer:coarse)]:gap-x-[18px]
+            [@media(orientation:landscape)_and_(pointer:coarse)]:gap-y-[35px]
+          "
         >
           {displayExperiences.map((experience, index) => (
             <article
               key={experience.title}
               className={`
-  paciano-experience
-  paciano-experience-${index + 1}
+                paciano-experience
+                paciano-experience-${index + 1}
+                group
+                relative
+                min-w-0
+                flex
+                flex-col
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-span-2
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!transform-none
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:[--experience-y:0px]
+                ${
+                  index === 3
+                    ? `
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-start-2
+                  [@media(orientation:landscape)_and_(pointer:coarse)]:!col-start-2
+                `
+                    : ""
+                }
+                ${
+                  index === 4
+                    ? `
+                    [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-start-4
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!col-start-4
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!mx-0
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!w-full
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!max-w-none
+                  `
+                    : ""
+                }
+                [@media(orientation:landscape)_and_(pointer:coarse)]:!col-span-2
+                [@media(orientation:landscape)_and_(pointer:coarse)]:[--experience-y:0px]
+                [@media(orientation:landscape)_and_(pointer:coarse)]:!transform-none
 
-  group
-  relative
-
-  ${experienceVisible ? "paciano-experience-visible" : ""}
-`}
+                ${experienceVisible ? "paciano-experience-visible" : ""}
+              `}
               style={
                 {
                   "--experience-delay": `${index * 450}ms`,
-                  "--experience-y":
-                    index === 1 || index === 3
-                      ? "22px"
-                      : index === 2
-                        ? "35px"
-                        : "0px",
                 } as React.CSSProperties
               }
             >
@@ -2786,28 +2813,34 @@ export default function AboutUs() {
 
               <div
                 className="
-          relative
-          z-10
+                  relative
+                  z-10
+                  mt-[18px]
+                  text-center
 
-          mt-[18px]
+                  min-h-[125px]
+                  min-[380px]:min-h-[115px]
 
-          text-center
-        "
+                  sm:min-h-0
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!min-h-[145px]
+                "
               >
                 <h4
                   className="
-    paciano-experience-title
-    font-cormorant
-    text-[28px]
-    font-medium
-    leading-[1.05]
-    tracking-[-0.015em]
-    text-[#17251B]
-    transition-all
-    duration-[1000ms]
-    ease-[cubic-bezier(.22,1,.36,1)]
-    group-hover:text-[#617638]
-  "
+                    paciano-experience-title
+                    font-cormorant
+                    text-[23px]
+                    sm:text-[24px]
+                    md:text-[28px]
+                    font-medium
+                    leading-[1.05]
+                    tracking-[-0.015em]
+                    text-[#17251B]
+                    transition-all
+                    duration-[1000ms]
+                    ease-[cubic-bezier(.22,1,.36,1)]
+                    group-hover:text-[#617638]
+                  "
                 >
                   {experience.title}
                 </h4>
@@ -2839,35 +2872,32 @@ export default function AboutUs() {
 
               <div
                 className="
-    paciano-experience-image
-    group/image
-    relative
-    mt-[23px]
+                  paciano-experience-image
+                  group/image
+                  relative
+                  mt-[23px]
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!mt-[18px]
+                  w-full
+                  shrink-0
 
-    h-[270px]
-    sm:h-[275px]
-    lg:h-[285px]
-    xl:h-[295px]
+                  h-[220px]
+                  min-[380px]:h-[245px]
+                  sm:h-[275px]
+                  lg:h-[285px]
+                  xl:h-[295px]
+                  [@media(orientation:landscape)_and_(pointer:coarse)]:!h-[245px]
 
-    overflow-hidden
-
-    rounded-[70px_70px_28px_28px]
-
-    bg-[#E7DFCF]
-
-    shadow-[0_24px_60px_rgba(45,48,35,.12)]
-
-    animate-paciano-card-float
-
-    transition-shadow
-    duration-[1200ms]
-
-    hover:shadow-[0_32px_75px_rgba(45,48,35,.17)]
-
-    will-change-transform
-
-    motion-reduce:animate-none
-  "
+                  overflow-hidden
+                  rounded-[70px_70px_28px_28px]
+                  bg-[#E7DFCF]
+                  shadow-[0_24px_60px_rgba(45,48,35,.12)]
+                  animate-paciano-card-float
+                  transition-shadow
+                  duration-[1200ms]
+                  hover:shadow-[0_32px_75px_rgba(45,48,35,.17)]
+                  will-change-transform
+                  motion-reduce:animate-none
+                "
               >
                 {/* soft botanical border */}
 
@@ -3778,6 +3808,123 @@ export default function AboutUs() {
   animation-duration: 7s;
   border-top-color: rgba(113, 128, 63, 0.85);
 }
+
+            /* Desktop stagger: preserve the original design */
+            .paciano-experience-2,
+            .paciano-experience-4 {
+              --experience-y: 22px;
+            }
+
+            .paciano-experience-3 {
+              --experience-y: 35px;
+            }
+
+            /* MOBILE ONLY — align experience cards in consistent rows */
+            @media (max-width: 639px) and (orientation: portrait) {
+              .paciano-experiences {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: start;
+                column-gap: 14px;
+                row-gap: 35px;
+              }
+
+              .paciano-experience {
+                --experience-y: 0px;
+
+                display: grid;
+                grid-template-rows: 72px 165px 245px 35px;
+                align-content: start;
+                align-items: start;
+                min-width: 0;
+                min-height: 0;
+                transform: none;
+              }
+
+              .paciano-experience-visible {
+                animation-name: pacianoExperienceRevealMobile;
+                animation-duration: 3.2s;
+                animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+                animation-fill-mode: both;
+                animation-delay: var(--experience-delay, 0ms);
+              }
+
+              @keyframes pacianoExperienceRevealMobile {
+                from {
+                  opacity: 0;
+                  transform: none;
+                }
+
+                to {
+                  opacity: 1;
+                  transform: none;
+                }
+              }
+
+              .paciano-experience-icon {
+                grid-row: 1;
+                margin: 0 auto;
+              }
+
+              .paciano-experience > div:nth-child(2) {
+                grid-row: 2;
+                min-height: 0;
+                height: 165px;
+                margin-top: 18px;
+                align-self: start;
+              }
+
+              .paciano-experience-image {
+                grid-row: 3;
+                width: 100%;
+                height: 245px;
+                min-height: 0;
+                margin-top: 0;
+                align-self: start;
+              }
+
+              .paciano-experience-botanical {
+                grid-row: 4;
+                margin-top: 17px;
+                justify-self: center;
+              }
+
+              .paciano-experience-5 {
+                grid-column: 1 / -1;
+                grid-template-rows: 72px 165px 245px 35px;
+                width: 100%;
+                max-width: 240px;
+                justify-self: center;
+              }
+            }
+
+            @media (max-width: 379px) and (orientation: portrait) {
+              .paciano-experience {
+                grid-template-rows: 72px 180px 220px 35px;
+              }
+
+              .paciano-experience > div:nth-child(2) {
+                height: 180px;
+              }
+
+              .paciano-experience-image {
+                height: 220px;
+              }
+
+              .paciano-experience-5 {
+                grid-template-rows: 72px 180px 220px 35px;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              .paciano-experience-2,
+              .paciano-experience-4 {
+                --experience-y: 22px;
+              }
+
+              .paciano-experience-3 {
+                --experience-y: 35px;
+              }
+            }
 
   `}
       </style>
