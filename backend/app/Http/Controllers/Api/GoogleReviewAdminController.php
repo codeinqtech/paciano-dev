@@ -31,7 +31,7 @@ class GoogleReviewAdminController extends Controller
             ]);
         }
 
-        $place = GooglePlace::forConfiguredPlace();
+        $place = GooglePlace::forReviewQueries();
 
         $reviewModels = GoogleReview::query()
             ->where('google_place_id', $place->id)
@@ -66,7 +66,7 @@ class GoogleReviewAdminController extends Controller
             'is_approved' => ['required', 'boolean'],
         ]);
 
-        $place = GooglePlace::forConfiguredPlace();
+        $place = GooglePlace::forReviewQueries();
         $review = GoogleReview::query()
             ->where('google_place_id', $place->id)
             ->findOrFail($id);

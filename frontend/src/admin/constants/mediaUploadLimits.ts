@@ -1,7 +1,7 @@
-export const IMAGE_UPLOAD_MAX_BYTES = 2 * 1024 * 1024;
+export const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
 export const VIDEO_UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
 
-export const IMAGE_UPLOAD_MAX_MB = 2;
+export const IMAGE_UPLOAD_MAX_MB = 5;
 export const VIDEO_UPLOAD_MAX_MB = 50;
 
 export function rejectOversizedUpload(

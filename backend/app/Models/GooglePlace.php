@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GooglePlace extends Model
 {
+    public const DEFAULT_PLACE_ID = 'ChIJ835SmFAR5DkRmylIBPB9QX4';
+
     protected $fillable = [
         'place_id',
         'display_name',
@@ -27,17 +29,44 @@ class GooglePlace extends Model
         ];
     }
 
+    public static function configuredPlaceId(): string
+    {
+        $placeId = trim((string) config('google_places.place_id'));
+
+        return $placeId !== '' ? $placeId : self::DEFAULT_PLACE_ID;
+    }
+
     public static function forConfiguredPlace(): self
     {
-        $placeId = (string) config('google_places.place_id');
-
         return static::query()->firstOrCreate(
-            ['place_id' => $placeId],
+            ['place_id' => static::configuredPlaceId()],
             [
                 'display_name' => 'Paciano',
                 'maps_url' => 'https://maps.google.com/?cid=9097691192082573723',
             ],
         );
+    }
+
+    /**
+     * Resolve the place row whose reviews should be shown in admin/public APIs.
+     * Falls back to any place that already has seeded/synced reviews when the
+     * configured place row is empty (e.g. legacy empty GOOGLE_PLACE_ID on staging).
+     */
+    public static function forReviewQueries(): self
+    {
+        $configured = static::forConfiguredPlace();
+
+        if ($configured->reviews()->exists()) {
+            return $configured;
+        }
+
+        $withReviews = static::query()
+            ->withCount('reviews')
+            ->orderByDesc('reviews_count')
+            ->get()
+            ->first(fn (self $place) => $place->reviews_count > 0);
+
+        return $withReviews ?? $configured;
     }
 
     /**

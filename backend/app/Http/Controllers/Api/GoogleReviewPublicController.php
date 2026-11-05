@@ -21,19 +21,7 @@ class GoogleReviewPublicController extends Controller
             ]);
         }
 
-        $place = GooglePlace::query()
-            ->where('place_id', config('google_places.place_id'))
-            ->first();
-
-        if (! $place) {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'place' => null,
-                    'reviews' => [],
-                ],
-            ]);
-        }
+        $place = GooglePlace::forReviewQueries();
 
         $reviews = GoogleReview::query()
             ->where('google_place_id', $place->id)
