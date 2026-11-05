@@ -10,9 +10,6 @@ use RuntimeException;
 
 class HomeMediaService
 {
-    /** Videos at or above this size are compressed with ffmpeg when available. */
-    public const VIDEO_LARGE_BYTES = 100 * 1024 * 1024;
-
     private ?string $resolvedFfmpegBinary = null;
 
     private bool $ffmpegLookupDone = false;
@@ -24,7 +21,7 @@ class HomeMediaService
         $name = $this->uniqueName('banner', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
 
-        $this->convertImageToWebp($file->getPathname(), $path, 2400, 82);
+        $this->convertImageToWebp($file->getPathname(), $path, 2400);
 
         return [
             'file_name' => $name,
@@ -62,7 +59,7 @@ class HomeMediaService
         $name = $this->uniqueName('review_thumb', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
 
-        $this->convertImageToWebp($file->getPathname(), $path, 1200, 80);
+        $this->convertImageToWebp($file->getPathname(), $path, 1200);
 
         return [
             'file_name' => $name,
@@ -100,7 +97,7 @@ class HomeMediaService
         ]);
 
         try {
-            $this->convertImageToWebp($tmpJpg, $path, 1200, 80);
+            $this->convertImageToWebp($tmpJpg, $path, 1200);
         } finally {
             if (is_file($tmpJpg)) {
                 @unlink($tmpJpg);
@@ -145,20 +142,20 @@ class HomeMediaService
     {
         if (! $file->isValid()) {
             throw new RuntimeException(
-                'Upload failed before the file reached the server. Ask your host to raise PHP upload_max_filesize and post_max_size (512M or higher for large videos).',
+                'Upload failed before the file reached the server. Raise PHP upload_max_filesize and post_max_size to at least 50M for videos (2M for images).',
             );
         }
 
         $originalBytes = max(0, (int) $file->getSize());
-        $shouldCompress = $originalBytes >= self::VIDEO_LARGE_BYTES;
         $ffmpegBin = $this->resolveFfmpegBinary();
+        $crf = (string) config('media_upload.video_crf', 26);
 
-        if ($shouldCompress && $ffmpegBin !== null) {
+        if ($ffmpegBin !== null) {
             try {
                 $this->runFfmpeg([
                     $ffmpegBin, '-y', '-i', $file->getPathname(),
                     '-vf', $scaleFilter,
-                    '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
+                    '-c:v', 'libx264', '-crf', $crf, '-preset', 'medium',
                     '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
                     $dest,
                 ]);
@@ -175,8 +172,8 @@ class HomeMediaService
                     @unlink($dest);
                 }
             }
-        } elseif ($shouldCompress) {
-            Log::warning('Large video upload without ffmpeg; storing original file.', [
+        } else {
+            Log::warning('Video upload without ffmpeg; storing original file.', [
                 'bytes' => $originalBytes,
             ]);
         }
@@ -252,7 +249,7 @@ class HomeMediaService
         $name = $this->uniqueName('location', 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
 
-        $this->convertImageToWebp($file->getPathname(), $path, 2560, 82);
+        $this->convertImageToWebp($file->getPathname(), $path, 2560);
 
         return [
             'file_name' => $name,
@@ -264,6 +261,45 @@ class HomeMediaService
      * @param  string  $folder  e.g. about, experiences, stays, dining
      * @return array{file_name: string, file_path: string}
      */
+    public function storeContactPageImage(UploadedFile $file): array
+    {
+        $dir = $this->uploadDirectory('contact', 'images');
+
+        $name = $this->uniqueName('contact', 'webp');
+        $path = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $this->convertImageToWebp($file->getPathname(), $path, 2400);
+
+        return [
+            'file_name' => $name,
+            'file_path' => 'uploads/contact/images/'.$name,
+        ];
+    }
+
+    /**
+     * @return array{file_name: string, file_path: string, compression?: array<string, mixed>}
+     */
+    public function storeContactPageVideo(UploadedFile $file): array
+    {
+        $dir = public_path('media/contact');
+        $this->ensureDir($dir);
+
+        $name = $this->uniqueName('contact_vid', 'mp4');
+        $dest = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $compression = $this->transcodeVideoToMp4(
+            $file,
+            $dest,
+            'scale=min(1920\\,iw):-2',
+        );
+
+        return [
+            'file_name' => $name,
+            'file_path' => 'media/contact/'.$name,
+            'compression' => $compression,
+        ];
+    }
+
     public function storeHomeSectionImage(UploadedFile $file, string $folder): array
     {
         $safe = preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?: 'misc';
@@ -272,7 +308,7 @@ class HomeMediaService
         $name = $this->uniqueName('home_'.$safe, 'webp');
         $path = $dir.DIRECTORY_SEPARATOR.$name;
 
-        $this->convertImageToWebp($file->getPathname(), $path, 2400, 82);
+        $this->convertImageToWebp($file->getPathname(), $path, 2400);
 
         return [
             'file_name' => $name,
@@ -403,7 +439,7 @@ class HomeMediaService
         }
     }
 
-    private function convertImageToWebp(string $source, string $dest, int $maxWidth, int $quality): void
+    private function convertImageToWebp(string $source, string $dest, int $maxWidth): void
     {
         if (! function_exists('imagewebp')) {
             throw new RuntimeException('GD WebP support is required for image uploads.');
@@ -436,12 +472,30 @@ class HomeMediaService
             $src = $resized;
         }
 
-        if (! imagewebp($src, $dest, $quality)) {
-            imagedestroy($src);
-            throw new RuntimeException('Could not write WebP image.');
+        $qualityStart = (int) config('media_upload.webp_quality_start', 84);
+        $qualityMin = (int) config('media_upload.webp_quality_min', 68);
+        $qualityStart = max($qualityMin, min(100, $qualityStart));
+
+        $written = false;
+        for ($quality = $qualityStart; $quality >= $qualityMin; $quality -= 4) {
+            if (! imagewebp($src, $dest, $quality)) {
+                continue;
+            }
+            $written = true;
+            if (! is_file($dest)) {
+                break;
+            }
+            $size = (int) filesize($dest);
+            if ($size <= 900 * 1024 || $quality <= $qualityMin) {
+                break;
+            }
         }
 
         imagedestroy($src);
+
+        if (! $written || ! is_file($dest)) {
+            throw new RuntimeException('Could not write WebP image.');
+        }
     }
 
     private function resolveFfmpegBinary(): ?string

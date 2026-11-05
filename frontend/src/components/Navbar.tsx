@@ -16,7 +16,7 @@ import {
 
 interface NavbarProps {
   scrolled?: boolean;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
 }
 
 export default function Navbar({
@@ -3039,10 +3039,12 @@ function DateField({
 
 function isDynamicNavActive(
   label: string,
-  activeNav: "home" | "contact" | "stay",
+  activeNav: "home" | "contact" | "stay" | "about",
 ): boolean {
-  if (label === "Contact") return activeNav === "contact";
-  if (label === "Stay") return activeNav === "stay";
+  const key = label.trim().toLowerCase();
+  if (key === "contact") return activeNav === "contact";
+  if (key === "stay") return activeNav === "stay";
+  if (key === "about us" || key === "about") return activeNav === "about";
   return false;
 }
 
@@ -3122,7 +3124,7 @@ function MobileMenu({
   open: boolean;
   onClose: () => void;
   onBooking: () => void;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
   navLinks: NavLinkItem[];
 }) {
   return (
