@@ -21,20 +21,30 @@ export interface ContactPageData {
   until_we_meet_video: string | null;
 }
 
-export const getContactPage = async () => {
-  const response = await api.get("/admin/contact-page");
+interface ContactPageApiResponse {
+  success?: boolean;
+  message?: string;
+  data: ContactPageData;
+}
+
+export const getContactPage = async (): Promise<ContactPageData> => {
+  const response = await api.get<ContactPageApiResponse>(
+    "/admin/contact-page"
+  );
+
   return response.data.data;
 };
 
-export const updateContactPage = async (formData: FormData) => {
-  const response = await api.post("/admin/contact-page", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    params: {
-      _method: "PUT",
-    },
-  });
+export const updateContactPage = async (
+  formData: FormData
+): Promise<ContactPageData> => {
 
-  return response.data;
+  formData.append("_method", "PUT");
+
+  const response = await api.post<ContactPageApiResponse>(
+    "/admin/contact-page",
+    formData
+  );
+
+  return response.data.data;
 };
