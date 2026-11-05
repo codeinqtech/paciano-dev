@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SiteFooterSeeder::class);
         $this->call(HomePageSeeder::class);
         $this->call(HomeSectionSeeder::class);
+        $this->call(GoogleReviewLegacySeeder::class);
 
         User::query()->updateOrCreate(
             ['email' => 'superadmin@paciano.local'],

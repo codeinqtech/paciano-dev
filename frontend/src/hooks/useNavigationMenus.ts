@@ -19,7 +19,7 @@ const FALLBACK: NavLinkItem[] = [
     openInNewTab: false,
   },
   { id: 0, label: "Dining", href: homeHref("#dining"), openInNewTab: false },
-  { id: 0, label: "About Us", href: homeHref("#about"), openInNewTab: false },
+  { id: 0, label: "About Us", href: homeHref("/about"), openInNewTab: false },
   { id: 0, label: "Contact", href: toAppPath("/contact"), openInNewTab: false },
 ];
 

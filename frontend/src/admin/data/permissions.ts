@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Users,
   UserCircle,
+  MessageSquareQuote,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export type MenuId =
   | "stay"
   | "navbar"
   | "footer"
+  | "google_reviews"
   | "users"
   | "profile";
 
@@ -38,6 +40,12 @@ export type AdminMenu = {
   path: string;
   icon: LucideIcon;
 };
+
+/** Submenus under About Paciano in the sidebar. */
+export const ABOUT_CHILD_MENUS = [
+  { label: "About page", path: "/admin/about/page" },
+  { label: "Experiences", path: "/admin/about/experiences" },
+] as const;
 
 export const ASSIGNABLE_MENUS: AdminMenu[] = [
   {
@@ -49,14 +57,8 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
   {
     id: "about",
     label: "About Paciano",
-    path: "/admin/about",
+    path: "/admin/about/page",
     icon: Leaf,
-  },
-  {
-    id: "experiences",
-    label: "Experiences",
-    path: "/admin/experiences",
-    icon: Sparkles,
   },
   {
     id: "stays",
@@ -94,6 +96,12 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
     path: "/admin/footer",
     icon: PanelBottom,
   },
+  {
+    id: "google_reviews",
+    label: "Google reviews",
+    path: "/admin/google-reviews",
+    icon: MessageSquareQuote,
+  },
 ];
 
 export const SUPERADMIN_MENUS: AdminMenu[] = [
@@ -123,20 +131,31 @@ const PATH_TO_MENU: Record<string, MenuId> = {
   "/admin": "dashboard",
   "/admin/homepage": "homepage",
   "/admin/about": "about",
-  "/admin/experiences": "experiences",
+  "/admin/about/page": "about",
+  "/admin/about/experiences": "about",
+  "/admin/about/story": "about",
+  "/admin/about/our-place": "about",
+  "/admin/experiences": "about",
   "/admin/stays": "stays",
   "/admin/dining": "dining",
   "/admin/contact": "contact",
   "/admin/stay": "stay",
   "/admin/navbar": "navbar",
   "/admin/footer": "footer",
+  "/admin/google-reviews": "google_reviews",
   "/admin/users": "users",
   "/admin/profile": "profile",
 };
 
 export function getMenuIdFromPath(pathname: string): MenuId | null {
   const normalized = pathname.replace(/\/+$/, "") || "/admin";
-  return PATH_TO_MENU[normalized] ?? null;
+  if (PATH_TO_MENU[normalized]) {
+    return PATH_TO_MENU[normalized];
+  }
+  if (normalized.startsWith("/admin/about")) {
+    return "about";
+  }
+  return null;
 }
 
 export function menusForUser(
