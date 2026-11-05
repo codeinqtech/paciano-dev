@@ -16,7 +16,13 @@ import {
 import {
   getContactPage,
   updateContactPage,
+  getContactDetails,
+  createContactDetail,
+  updateContactDetail,
+  deleteContactDetail,
   type ContactPageData,
+  type ContactDetail,
+  type ContactDetailPayload,
 } from "@/admin/services/contactPageService";
 
 type TabId =

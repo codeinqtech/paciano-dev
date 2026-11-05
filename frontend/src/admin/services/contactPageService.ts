@@ -48,3 +48,59 @@ export const updateContactPage = async (
 
   return response.data.data;
 };
+
+
+export interface ContactDetail {
+  id: number;
+  type: string;
+  label: string;
+  value: string;
+  icon: string | null;
+  sort_order: number;
+  is_active: boolean | number;
+}
+
+export interface ContactDetailPayload {
+  type: string;
+  label: string;
+  value: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export const getContactDetails = async (): Promise<ContactDetail[]> => {
+  const response = await api.get("/admin/contact-details");
+
+  return response.data.data ?? response.data;
+};
+
+export const createContactDetail = async (
+  payload: ContactDetailPayload
+): Promise<ContactDetail> => {
+  const response = await api.post(
+    "/admin/contact-details",
+    payload
+  );
+
+  return response.data.data ?? response.data;
+};
+
+export const updateContactDetail = async (
+  id: number,
+  payload: ContactDetailPayload
+): Promise<ContactDetail> => {
+  const response = await api.put(
+    `/admin/contact-details/${id}`,
+    payload
+  );
+
+  return response.data.data ?? response.data;
+};
+
+export const deleteContactDetail = async (
+  id: number
+): Promise<void> => {
+  await api.delete(`/admin/contact-details/${id}`);
+};
+
