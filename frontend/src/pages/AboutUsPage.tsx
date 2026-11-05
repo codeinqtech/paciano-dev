@@ -22,7 +22,7 @@ export default function AboutUsPage() {
 
   return (
     <>
-      <Navbar scrolled={scrolled} activeNav="contact" />
+      <Navbar scrolled={scrolled} activeNav="about" />
       <main style={{ background: PARCHMENT }}>
         <AboutUsHero />
         <AboutUsInfo />

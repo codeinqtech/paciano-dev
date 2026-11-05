@@ -15,6 +15,7 @@ use App\Models\HomeStaysSection;
 use App\Models\User;
 use App\Services\HomeMediaService;
 use App\Support\AboutIntroWordLimits;
+use App\Support\MediaUploadLimits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -44,9 +45,9 @@ class HomeSectionsAdminController extends Controller
             'paragraph_1' => ['required', 'string', 'max:5000'],
             'paragraph_2' => ['nullable', 'string', 'max:5000'],
             'home_tagline' => ['nullable', 'string', 'max:2000'],
-            'photo_left' => ['nullable', 'file', 'max:51200'],
-            'photo_center' => ['nullable', 'file', 'max:51200'],
-            'photo_right' => ['nullable', 'file', 'max:51200'],
+            'photo_left' => MediaUploadLimits::imageFileRules(),
+            'photo_center' => MediaUploadLimits::imageFileRules(),
+            'photo_right' => MediaUploadLimits::imageFileRules(),
         ]);
 
         $wordErrors = AboutIntroWordLimits::validateIntro(
@@ -136,7 +137,7 @@ class HomeSectionsAdminController extends Controller
             'heading_line_2' => ['nullable', 'string', 'max:300'],
             'heading_accent' => ['nullable', 'string', 'max:300'],
             'body_text' => ['nullable', 'string', 'max:8000'],
-            'photo' => ['nullable', 'file', 'max:51200'],
+            'photo' => MediaUploadLimits::imageFileRules(),
         ]);
 
         $row = AboutContentBlock::forKey($sectionKey);
@@ -223,7 +224,7 @@ class HomeSectionsAdminController extends Controller
             'title' => ['sometimes', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:2000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'photo' => ['nullable', 'file', 'max:51200'],
+            'photo' => MediaUploadLimits::imageFileRules(),
         ]);
 
         if ($request->hasFile('photo')) {
@@ -288,9 +289,9 @@ class HomeSectionsAdminController extends Controller
             'photo_label' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:5000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'photo_1' => ['nullable', 'file', 'max:51200'],
-            'photo_2' => ['nullable', 'file', 'max:51200'],
-            'photo_3' => ['nullable', 'file', 'max:51200'],
+            'photo_1' => MediaUploadLimits::imageFileRules(),
+            'photo_2' => MediaUploadLimits::imageFileRules(),
+            'photo_3' => MediaUploadLimits::imageFileRules(),
         ]);
 
         foreach (['photo_1', 'photo_2', 'photo_3'] as $slot) {
@@ -356,7 +357,7 @@ class HomeSectionsAdminController extends Controller
         $data = $request->validate([
             'quote' => ['nullable', 'string', 'max:2000'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'photo' => ['nullable', 'file', 'max:51200'],
+            'photo' => MediaUploadLimits::imageFileRules(),
         ]);
 
         if ($request->hasFile('photo')) {

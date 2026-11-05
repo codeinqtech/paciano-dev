@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Contact;
 
+use App\Support\MediaUploadLimits;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,11 +23,13 @@ class UpdateContactPageRequest extends FormRequest
      */
     public function rules(): array
     {
+        $imgMax = MediaUploadLimits::imageMaxKb();
+        $vidMax = MediaUploadLimits::videoMaxKb();
+
         return [
-            
             'banner_image' => [
                 'sometimes', 'nullable', 'image',
-                'mimes:jpg,jpeg,png,webp', 'max:5120',
+                'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
             ],
 
             'heading_one' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -40,11 +43,11 @@ class UpdateContactPageRequest extends FormRequest
 
             'connect_with_us_image_one' => [
                 'sometimes', 'nullable', 'image',
-                'mimes:jpg,jpeg,png,webp', 'max:5120',
+                'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
             ],
             'connect_with_us_image_two' => [
                 'sometimes', 'nullable', 'image',
-                'mimes:jpg,jpeg,png,webp', 'max:5120',
+                'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
             ],
 
             'subtitle_one' => ['sometimes', 'nullable', 'string', 'max:5000'],
@@ -59,7 +62,7 @@ class UpdateContactPageRequest extends FormRequest
 
             'until_we_meet_video' => [
                 'sometimes', 'nullable', 'file',
-                'mimes:mp4,webm,mov', 'max:51200',
+                'mimes:mp4,webm,mov', 'max:'.$vidMax,
             ],
         ];
     }

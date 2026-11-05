@@ -9,6 +9,7 @@ use App\Models\HomePostcardsSetting;
 use App\Models\HomeReviewVideo;
 use App\Models\User;
 use App\Services\HomeMediaService;
+use App\Support\MediaUploadLimits;
 use Illuminate\Http\Request;
 
 class HomeAdminController extends Controller
@@ -48,11 +49,14 @@ class HomeAdminController extends Controller
         }
 
         $mediaType = $request->input('media_type');
-        $maxKb = $mediaType === 'video' ? 512000 : 51200;
+        $maxKb = $mediaType === 'video'
+            ? MediaUploadLimits::videoMaxKb()
+            : MediaUploadLimits::imageMaxKb();
 
         if ($mediaType === 'video' && ! $request->hasFile('file')) {
             return response()->json([
-                'message' => 'The video did not reach the server. Increase PHP upload_max_filesize and post_max_size on Hostinger (512M or higher), then try again.',
+                'message' => 'The video did not reach the server. Set PHP upload_max_filesize and post_max_size to at least '
+                    .MediaUploadLimits::videoMaxMb().'M, then try again.',
             ], 422);
         }
 
@@ -158,7 +162,7 @@ class HomeAdminController extends Controller
             'feature_labels' => ['nullable', 'array', 'max:4'],
             'feature_labels.*.line1' => ['required_with:feature_labels', 'string', 'max:80'],
             'feature_labels.*.line2' => ['nullable', 'string', 'max:80'],
-            'landscape_image' => ['nullable', 'file', 'max:51200'],
+            'landscape_image' => MediaUploadLimits::imageFileRules(),
         ]);
 
         $row = HomeLocationSetting::singleton();
@@ -242,8 +246,8 @@ class HomeAdminController extends Controller
             'location' => ['nullable', 'string', 'max:200'],
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['required', 'file', 'max:512000'],
+            'thumbnail' => MediaUploadLimits::imageFileRules(),
+            'video' => MediaUploadLimits::videoFileRules(true),
         ]);
 
         @set_time_limit(600);
@@ -287,8 +291,8 @@ class HomeAdminController extends Controller
             'location' => ['sometimes', 'nullable', 'string', 'max:200'],
             'display_title' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
-            'thumbnail' => ['nullable', 'file', 'max:20480'],
-            'video' => ['nullable', 'file', 'max:512000'],
+            'thumbnail' => MediaUploadLimits::imageFileRules(),
+            'video' => MediaUploadLimits::videoFileRules(false),
         ]);
 
         if ($request->hasFile('video')) {

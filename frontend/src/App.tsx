@@ -17,12 +17,10 @@ import AdminNavbarMenus from "@/admin/pages/AdminNavbarMenus";
 import AdminFooter from "@/admin/pages/AdminFooter";
 import AdminContactUsSection from "@/admin/pages/AdminContactUsSection";
 import AdminGoogleReviews from "@/admin/pages/AdminGoogleReviews";
-import {
-  AdminAboutSitePage,
-  AdminDiningPage,
-  AdminExperiencesPage,
-  AdminStaysPage,
-} from "@/admin/pages/AdminPacianoSectionPages";
+import { AdminAboutSitePage } from "@/admin/pages/about/AdminAboutSitePage";
+import { AdminExperiencesPage } from "@/admin/pages/about/AdminExperiencesPage";
+import { AdminStaysPage } from "@/admin/pages/stays/AdminStaysPage";
+import { AdminDiningPage } from "@/admin/pages/dining/AdminDiningPage";
 
 import AboutUsPage from "@/pages/AboutUsPage";
 

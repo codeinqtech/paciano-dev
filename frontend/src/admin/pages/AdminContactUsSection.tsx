@@ -362,7 +362,7 @@ const AdminContactUsSection = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-7">
+    <div className="w-full max-w-[1400px] space-y-7">
 
       {/* Page Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">

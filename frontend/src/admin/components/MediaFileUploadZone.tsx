@@ -1,6 +1,8 @@
 import { Film, ImageIcon, Upload, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
+import { rejectOversizedUpload } from "../constants/mediaUploadLimits";
 
 export type VideoCompressionInfo = {
   applied: boolean;
@@ -21,8 +23,7 @@ export function VideoCompressionPanel({ info }: { info: VideoCompressionInfo }) 
       <div className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950">
         <p className="font-medium">Uploaded without server compression</p>
         <p className="mt-1 text-xs text-amber-900/90">
-          Final size: {formatFileSize(info.stored_bytes)}. Install ffmpeg on
-          the server to compress large videos automatically.
+          Final size: {formatFileSize(info.stored_bytes)}.           Install ffmpeg on the server to compress videos automatically.
         </p>
       </div>
     );
@@ -197,7 +198,21 @@ export function MediaFileUploadZone({
           type="file"
           accept={accept ?? defaultAccept}
           className="sr-only"
-          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            const next = e.target.files?.[0] ?? null;
+            if (next) {
+              const err = rejectOversizedUpload(
+                next,
+                isImage ? "image" : "video",
+              );
+              if (err) {
+                toast.error(err);
+                e.target.value = "";
+                return;
+              }
+            }
+            onFileChange(next);
+          }}
         />
       </div>
 
@@ -239,7 +254,8 @@ export function MediaFileUploadZone({
   );
 }
 
-const DEFAULT_IMAGE_HINT = "PNG/JPG — saved as WebP on upload";
+const DEFAULT_IMAGE_HINT =
+  "PNG/JPG/WebP, max 2 MB — saved as WebP on the server";
 
 export function AdminImageUpload({
   title,

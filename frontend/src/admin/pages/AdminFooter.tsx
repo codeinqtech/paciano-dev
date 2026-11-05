@@ -270,7 +270,7 @@ export default function AdminFooter() {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full max-w-[1400px] space-y-6">
       <div>
         <h1 className="text-2xl font-bold admin-page-title">Footer content</h1>
         <p className="text-sm admin-card-muted mt-1">
