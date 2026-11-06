@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Image,
@@ -11,7 +10,20 @@ import {
   Upload,
   Save,
   Plus,
+  AlertCircle,
 } from "@/components/common/icons";
+
+import {
+  getContactPage,
+  updateContactPage,
+  getContactDetails,
+  createContactDetail,
+  updateContactDetail,
+  deleteContactDetail,
+  type ContactPageData,
+  type ContactDetail,
+  type ContactDetailPayload,
+} from "@/admin/services/contactPageService";
 
 type TabId =
   | "banner"
@@ -21,14 +33,13 @@ type TabId =
   | "video"
   | "details";
 
-const tabs = [
-  { id: "banner", label: "Banner", icon: Image },
-  { id: "connect", label: "Connect With Us", icon: MessageSquare },
-  { id: "subtitle", label: "Subtitles", icon: FileText },
-  { id: "message", label: "Message", icon: Mail },
-  { id: "video", label: "Until We Meet", icon: Video },
-  { id: "details", label: "Contact Details", icon: Phone },
-] as const;
+type MediaField =
+  | "banner_image"
+  | "connect_with_us_image_one"
+  | "connect_with_us_image_two"
+  | "until_we_meet_video";
+
+type TextField = Exclude<keyof ContactFormData, MediaField>;
 
 interface ContactFormData {
   banner_image: File | null;
@@ -46,6 +57,8 @@ interface ContactFormData {
   until_we_meet_video: File | null;
 }
 
+type MediaUrls = Record<MediaField, string | null>;
+
 const initialFormData: ContactFormData = {
   banner_image: null,
   heading_one: "",
@@ -62,22 +75,127 @@ const initialFormData: ContactFormData = {
   until_we_meet_video: null,
 };
 
+const initialMediaUrls: MediaUrls = {
+  banner_image: null,
+  connect_with_us_image_one: null,
+  connect_with_us_image_two: null,
+  until_we_meet_video: null,
+};
+
+const textFields: TextField[] = [
+  "heading_one",
+  "heading_two",
+  "heading_highlight",
+  "connect_with_us",
+  "connect_with_us_supporting_text",
+  "subtitle_one",
+  "subtitle_two",
+  "send_us_message_text",
+  "until_we_meet_text",
+];
+
+const imageFields: MediaField[] = [
+  "banner_image",
+  "connect_with_us_image_one",
+  "connect_with_us_image_two",
+];
+
 const inputClass =
   "w-full rounded-lg border border-[#E0D5C8] bg-white px-4 py-3 text-sm text-[#332C26] placeholder:text-[#A49A8E] outline-none transition focus:border-[#8FAA42] focus:ring-2 focus:ring-[#8FAA42]/10";
 
-const labelClass =
-  "mb-2 block text-sm font-medium text-[#51483F]";
+const labelClass = "mb-2 block text-sm font-medium text-[#51483F]";
+
+const tabs = [
+  { id: "banner", label: "Banner", icon: Image },
+  { id: "connect", label: "Connect With Us", icon: MessageSquare },
+  { id: "subtitle", label: "Subtitles", icon: FileText },
+  { id: "message", label: "Message", icon: Mail },
+  { id: "video", label: "Until We Meet", icon: Video },
+  { id: "details", label: "Contact Details", icon: Phone },
+] as const;
 
 const AdminContactUsSection = () => {
-  const [activeTab, setActiveTab] =
-    useState<TabId>("banner");
+  const [activeTab, setActiveTab] = useState<TabId>("banner");
 
   const [formData, setFormData] =
     useState<ContactFormData>(initialFormData);
 
+  const [mediaUrls, setMediaUrls] =
+    useState<MediaUrls>(initialMediaUrls);
+
+  const [previewUrls, setPreviewUrls] =
+    useState<Partial<MediaUrls>>({});
+
+  const previewUrlsRef = useRef<Partial<MediaUrls>>({});
+
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Cleanup temporary object URLs when component unmounts.
+  useEffect(() => {
+    return () => {
+      Object.values(previewUrlsRef.current).forEach((url) => {
+        if (url?.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, []);
+
+  // Load existing Contact Us content from Laravel.
+  useEffect(() => {
+    const loadContactPage = async () => {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const data: ContactPageData = await getContactPage();
+
+        setFormData({
+          banner_image: null,
+          heading_one: data.heading_one ?? "",
+          heading_two: data.heading_two ?? "",
+          heading_highlight: data.heading_highlight ?? "",
+          connect_with_us: data.connect_with_us ?? "",
+          connect_with_us_supporting_text:
+            data.connect_with_us_supporting_text ?? "",
+          connect_with_us_image_one: null,
+          connect_with_us_image_two: null,
+          subtitle_one: data.subtitle_one ?? "",
+          subtitle_two: data.subtitle_two ?? "",
+          send_us_message_text: data.send_us_message_text ?? "",
+          until_we_meet_text: data.until_we_meet_text ?? "",
+          until_we_meet_video: null,
+        });
+
+        setMediaUrls({
+          banner_image: data.banner_image ?? null,
+          connect_with_us_image_one:
+            data.connect_with_us_image_one ?? null,
+          connect_with_us_image_two:
+            data.connect_with_us_image_two ?? null,
+          until_we_meet_video: data.until_we_meet_video ?? null,
+        });
+      } catch (error: unknown) {
+        console.error("Contact page loading error:", error);
+
+        setErrorMessage(
+          getErrorMessage(error, "Failed to load Contact Us content.")
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContactPage();
+  }, []);
+
   const handleChange = (
-    field: keyof ContactFormData,
-    value: string | File | null
+    field: TextField,
+    value: string
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -85,13 +203,203 @@ const AdminContactUsSection = () => {
     }));
   };
 
-  const handleSave = () => {
-    console.log("Contact Page Data:", formData);
+  // Handle image and video uploads.
+  const handleFileChange = (
+    field: MediaField,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const isVideo = field === "until_we_meet_video";
+
+    if (isVideo) {
+      const allowedVideoTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+      ];
+
+      const validExtension = /\.(mp4|webm|mov)$/i.test(file.name);
+
+      if (
+        !allowedVideoTypes.includes(file.type) &&
+        !validExtension
+      ) {
+        alert("Only MP4, WebM and MOV videos are allowed.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert("Maximum video size allowed is 50 MB.");
+        event.target.value = "";
+        return;
+      }
+    } else {
+      const allowedImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ];
+
+      if (!allowedImageTypes.includes(file.type)) {
+        alert("Only JPG, JPEG, PNG and WebP images are allowed.");
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Maximum image size allowed is 5 MB.");
+        event.target.value = "";
+        return;
+      }
+    }
+
+    // Revoke previous temporary preview URL.
+    const previousUrl = previewUrlsRef.current[field];
+
+    if (previousUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previousUrl);
+    }
+
+    const newPreviewUrl = URL.createObjectURL(file);
+
+    previewUrlsRef.current[field] = newPreviewUrl;
+
+    setPreviewUrls((prev) => ({
+      ...prev,
+      [field]: newPreviewUrl,
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    // Allow selecting the same file again.
+    event.target.value = "";
   };
+
+  // Remove temporary preview after successful save.
+  const clearTemporaryPreviews = () => {
+    Object.values(previewUrlsRef.current).forEach((url) => {
+      if (url?.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    previewUrlsRef.current = {};
+    setPreviewUrls({});
+  };
+
+  // Save Contact Us content.
+  const handleSave = async () => {
+    try {
+      setUploading(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const payload = new FormData();
+
+      // Append all text fields.
+      textFields.forEach((field) => {
+        payload.append(field, formData[field]);
+      });
+
+      // Append only newly selected media files.
+      const mediaFields: MediaField[] = [
+        "banner_image",
+        "connect_with_us_image_one",
+        "connect_with_us_image_two",
+        "until_we_meet_video",
+      ];
+
+      mediaFields.forEach((field) => {
+        const file = formData[field];
+
+        if (file instanceof File) {
+          payload.append(field, file);
+        }
+      });
+
+      const updatedData: ContactPageData =
+        await updateContactPage(payload);
+
+      // Update media URLs returned by Laravel.
+      setMediaUrls({
+        banner_image: updatedData.banner_image ?? null,
+        connect_with_us_image_one:
+          updatedData.connect_with_us_image_one ?? null,
+        connect_with_us_image_two:
+          updatedData.connect_with_us_image_two ?? null,
+        until_we_meet_video:
+          updatedData.until_we_meet_video ?? null,
+      });
+
+      // Reset selected files after successful upload.
+      setFormData((prev) => ({
+        ...prev,
+        banner_image: null,
+        connect_with_us_image_one: null,
+        connect_with_us_image_two: null,
+        until_we_meet_video: null,
+      }));
+
+      clearTemporaryPreviews();
+
+      setSuccessMessage("Contact Us content updated successfully.");
+
+    } catch (error: unknown) {
+      console.error("Contact page update error:", error);
+
+      setErrorMessage(
+        getErrorMessage(error, "Failed to update Contact Us content.")
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Extract Laravel/Axios error message.
+  function getErrorMessage(
+    error: unknown,
+    fallback: string
+  ): string {
+    const axiosError = error as {
+      response?: {
+        data?: {
+          message?: string;
+          errors?: Record<string, string[]>;
+        };
+      };
+      message?: string;
+    };
+
+    const responseData = axiosError.response?.data;
+
+    if (responseData?.errors) {
+      const firstError = Object.values(responseData.errors)[0];
+
+      if (firstError?.length) {
+        return firstError[0];
+      }
+    }
+
+    return (
+      responseData?.message ||
+      axiosError.message ||
+      fallback
+    );
+  }
 
   const renderInput = (
     label: string,
-    field: keyof ContactFormData,
+    field: TextField,
     placeholder: string
   ) => (
     <div>
@@ -99,9 +407,9 @@ const AdminContactUsSection = () => {
 
       <input
         type="text"
-        value={formData[field] as string}
-        onChange={(e) =>
-          handleChange(field, e.target.value)
+        value={formData[field]}
+        onChange={(event) =>
+          handleChange(field, event.target.value)
         }
         placeholder={placeholder}
         className={inputClass}
@@ -111,7 +419,7 @@ const AdminContactUsSection = () => {
 
   const renderTextarea = (
     label: string,
-    field: keyof ContactFormData,
+    field: TextField,
     placeholder: string,
     rows = 4
   ) => (
@@ -119,9 +427,9 @@ const AdminContactUsSection = () => {
       <label className={labelClass}>{label}</label>
 
       <textarea
-        value={formData[field] as string}
-        onChange={(e) =>
-          handleChange(field, e.target.value)
+        value={formData[field]}
+        onChange={(event) =>
+          handleChange(field, event.target.value)
         }
         placeholder={placeholder}
         rows={rows}
@@ -130,45 +438,130 @@ const AdminContactUsSection = () => {
     </div>
   );
 
+  // Reusable image/video upload component.
   const renderFileUpload = (
     label: string,
-    field: keyof ContactFormData,
+    field: MediaField,
     accept: string
-  ) => (
-    <div>
-      <label className={labelClass}>{label}</label>
+  ) => {
+    const isVideo = field === "until_we_meet_video";
 
-      <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#C8BC82] bg-[#F7F3EB] p-7 transition hover:border-[#8FAA42] hover:bg-[#8FAA42]/5">
-        <Upload className="mb-3 h-7 w-7 text-[#8FAA42]" />
+    const selectedFile = formData[field];
 
-        <span className="text-sm font-medium text-[#51483F]">
-          Click to upload
-        </span>
+    const previewUrl =
+      previewUrls[field] || mediaUrls[field];
 
-        <span className="mt-1 text-xs text-[#91877B]">
-          Supported format: {accept}
-        </span>
+    const fileSizeLimit = isVideo ? "50 MB" : "5 MB";
 
-        <input
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(e) =>
-            handleChange(
-              field,
-              e.target.files?.[0] ?? null
-            )
-          }
-        />
-      </label>
+    return (
+      <div>
+        <label className={labelClass}>{label}</label>
 
-      {formData[field] instanceof File && (
-        <p className="mt-2 text-xs text-[#718A38]">
-          Selected: {(formData[field] as File).name}
-        </p>
-      )}
-    </div>
-  );
+        <div className="rounded-2xl border border-[#E8DFD0] bg-white p-5 shadow-sm">
+
+          {/* Media Preview */}
+          <div className="relative overflow-hidden rounded-xl border border-[#E8DFD0] bg-[#FAF7F2]">
+
+            {previewUrl ? (
+              isVideo ? (
+                <video
+                  key={previewUrl}
+                  src={previewUrl}
+                  controls
+                  className="h-56 w-full bg-black object-contain"
+                />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt={`${label} Preview`}
+                  className="h-56 w-full object-cover"
+                />
+              )
+            ) : (
+              <div className="flex h-56 flex-col items-center justify-center">
+                {isVideo ? (
+                  <Video className="mb-3 h-12 w-12 text-[#C8BC82]" />
+                ) : (
+                  <Image className="mb-3 h-12 w-12 text-[#C8BC82]" />
+                )}
+
+                <p className="text-sm font-medium text-[#51483F]">
+                  No {isVideo ? "video" : "image"} selected
+                </p>
+
+                <p className="mt-1 text-xs text-[#A49A8E]">
+                  Your {isVideo ? "video" : "image"} preview will appear here
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Upload Information */}
+          <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+            <div className="min-w-0">
+              {selectedFile ? (
+                <>
+                  <p className="truncate text-sm font-semibold text-[#332C26]">
+                    {selectedFile.name}
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#8A8075]">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-[#332C26]">
+                    {previewUrl
+                      ? `Current ${isVideo ? "video" : "image"}`
+                      : `Upload ${label.toLowerCase()}`}
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#8A8075]">
+                    Choose a {isVideo ? "video" : "new image"} for this section.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <label className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#8FAA42] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#788F36]">
+              <Upload className="h-4 w-4" />
+
+              {selectedFile
+                ? isVideo
+                  ? "Change Video"
+                  : "Change Image"
+                : isVideo
+                  ? "Choose Video"
+                  : "Choose Image"}
+
+              <input
+                type="file"
+                accept={accept}
+                onChange={(event) =>
+                  handleFileChange(field, event)
+                }
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* File Size Note */}
+          <div className="mt-4 flex items-start gap-2 rounded-lg bg-[#FAF7F2] p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#A58B45]" />
+
+            <p className="text-xs leading-relaxed text-[#6E655C]">
+              Maximum file size: <strong>{fileSizeLimit}</strong>.
+              {isVideo
+                ? " Supported formats: MP4, WebM and MOV."
+                : " Supported formats: JPG, JPEG, PNG and WebP."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -179,6 +572,7 @@ const AdminContactUsSection = () => {
               <h2 className="font-cormorant text-3xl text-[#332C26]">
                 Banner & Heading
               </h2>
+
               <p className="mt-1 text-sm text-[#82776B]">
                 Manage the main banner and heading content.
               </p>
@@ -187,7 +581,7 @@ const AdminContactUsSection = () => {
             {renderFileUpload(
               "Banner Image",
               "banner_image",
-              "image/*"
+              "image/jpeg,image/png,image/webp"
             )}
 
             <div className="grid gap-5 md:grid-cols-2">
@@ -219,6 +613,7 @@ const AdminContactUsSection = () => {
               <h2 className="font-cormorant text-3xl text-[#332C26]">
                 Connect With Us
               </h2>
+
               <p className="mt-1 text-sm text-[#82776B]">
                 Manage connection content and images.
               </p>
@@ -241,13 +636,13 @@ const AdminContactUsSection = () => {
               {renderFileUpload(
                 "Image One",
                 "connect_with_us_image_one",
-                "image/*"
+                "image/jpeg,image/png,image/webp"
               )}
 
               {renderFileUpload(
                 "Image Two",
                 "connect_with_us_image_two",
-                "image/*"
+                "image/jpeg,image/png,image/webp"
               )}
             </div>
           </div>
@@ -260,6 +655,7 @@ const AdminContactUsSection = () => {
               <h2 className="font-cormorant text-3xl text-[#332C26]">
                 Subtitles
               </h2>
+
               <p className="mt-1 text-sm text-[#82776B]">
                 Manage supporting subtitles.
               </p>
@@ -286,6 +682,7 @@ const AdminContactUsSection = () => {
               <h2 className="font-cormorant text-3xl text-[#332C26]">
                 Send Us a Message
               </h2>
+
               <p className="mt-1 text-sm text-[#82776B]">
                 Manage the message section content.
               </p>
@@ -307,6 +704,7 @@ const AdminContactUsSection = () => {
               <h2 className="font-cormorant text-3xl text-[#332C26]">
                 Until We Meet
               </h2>
+
               <p className="mt-1 text-sm text-[#82776B]">
                 Manage closing content and video.
               </p>
@@ -322,7 +720,7 @@ const AdminContactUsSection = () => {
             {renderFileUpload(
               "Until We Meet Video",
               "until_we_meet_video",
-              "video/mp4,video/quicktime"
+              "video/mp4,video/webm,video/quicktime,.mov"
             )}
           </div>
         );
@@ -335,6 +733,7 @@ const AdminContactUsSection = () => {
                 <h2 className="font-cormorant text-3xl text-[#332C26]">
                   Contact Details
                 </h2>
+
                 <p className="mt-1 text-sm text-[#82776B]">
                   Manage phone, email and address information.
                 </p>
@@ -367,18 +766,14 @@ const AdminContactUsSection = () => {
       {/* Page Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 className="text-2xl font-bold admin-page-title">
-                Contact Us
-            </h1>
+          <h1 className="text-2xl font-bold admin-page-title">
+            Contact Us
+          </h1>
 
-            <p className="mt-2 text-sm text-[#82776B]">
-                Manage your contact page content and information.
-            </p>
+          <p className="mt-2 text-sm text-[#82776B]">
+            Manage your contact page content and information.
+          </p>
         </div>
-
-        <span className="rounded-full border border-[#C8BC82]/50 bg-[#C8BC82]/10 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[#817344]">
-          Page Settings
-        </span>
       </div>
 
       {/* Main Card */}
@@ -410,19 +805,46 @@ const AdminContactUsSection = () => {
 
         {/* Tab Content */}
         <div className="bg-white p-5 md:p-8">
-          {renderTabContent()}
 
-          {/* Footer */}
-          <div className="mt-9 flex justify-end border-t border-[#EDE4D8] pt-5">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#8FAA42] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#718A38]"
-            >
-              <Save size={17} />
-              Save Changes
-            </button>
-          </div>
+          {loading ? (
+            <div className="flex min-h-64 items-center justify-center">
+              <p className="text-sm text-[#82776B]">
+                Loading Contact Us content...
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Success Message */}
+              {successMessage && (
+                <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  {successMessage}
+                </div>
+              )}
+
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {errorMessage}
+                </div>
+              )}
+
+              {renderTabContent()}
+
+              {/* Footer */}
+              <div className="mt-9 flex justify-end border-t border-[#EDE4D8] pt-5">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#8FAA42] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#718A38] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Save size={17} />
+
+                  {uploading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
