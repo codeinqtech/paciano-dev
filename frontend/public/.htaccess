@@ -1,9 +1,12 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /design/tmp_1/
 
-  RewriteRule ^index\.html$ - [L]
+  # Missing built files must not fall back to index.html (breaks Hostinger CDN image proxy).
+  RewriteCond %{REQUEST_URI} ^/assets/ [NC]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ - [R=404,L]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /design/tmp_1/index.html [L]
+  RewriteRule . /index.html [L]
 </IfModule>

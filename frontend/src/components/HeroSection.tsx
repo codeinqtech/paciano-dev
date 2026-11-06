@@ -1,13 +1,326 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import heroImage from "@/images/hero6.png";
+import { useHomeContent } from "@/hooks/useHomeContent";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 import leafImage from "@/images/hh.png";
 import logoImage from "@/images/paciano-logo.png";
 
+const HERO_VIDEO_SRC = `${
+  import.meta.env.BASE_URL
+}videos/contact-video.MOV`.replace(/\/{2,}/g, "/");
+
+type HeroImageSlide = {
+  id: string;
+  kind: "image";
+  src: string;
+  alt: string;
+  objectPosition?: string;
+};
+
+type HeroVideoSlide = {
+  id: string;
+  kind: "video";
+  src: string;
+  alt: string;
+};
+
+const DEFAULT_HERO_IMAGE: HeroImageSlide = {
+  id: "hero-fallback",
+  kind: "image",
+  src: heroImage,
+  alt: "Paciano river valley at sunset",
+};
+
+const FALLBACK_HERO_SLIDES: (HeroImageSlide | HeroVideoSlide)[] = [
+  DEFAULT_HERO_IMAGE,
+  {
+    id: "story",
+    kind: "video",
+    src: HERO_VIDEO_SRC,
+    alt: "Paciano — our story",
+  },
+];
+
+const SLIDE_MS = 9000;
+/** Every banner image stays at least this long. */
+const MIN_IMAGE_SLIDE_MS = 5000;
+
+function pendingVideoIndicesAfter(
+  slides: (HeroImageSlide | HeroVideoSlide)[],
+  fromIndex: number,
+): number[] {
+  if (slides.length < 2) {
+    return [];
+  }
+
+  const forward: number[] = [];
+  for (let j = fromIndex + 1; j < slides.length; j++) {
+    if (slides[j].kind === "video") {
+      forward.push(j);
+    } else {
+      break;
+    }
+  }
+  if (forward.length > 0) {
+    return forward;
+  }
+
+  const next = (fromIndex + 1) % slides.length;
+  if (slides[next]?.kind !== "video") {
+    return [];
+  }
+
+  const wrapped: number[] = [];
+  let j = next;
+  while (j !== fromIndex && slides[j]?.kind === "video") {
+    wrapped.push(j);
+    j = (j + 1) % slides.length;
+  }
+  return wrapped;
+}
+
+function isHeroVideoReady(
+  slideId: string,
+  index: number,
+  readyById: Record<string, boolean>,
+  videoRefs: React.MutableRefObject<(HTMLVideoElement | null)[]>,
+): boolean {
+  if (readyById[slideId]) {
+    return true;
+  }
+  const el = videoRefs.current[index];
+  if (!el) {
+    return false;
+  }
+  return el.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
+}
+
+function initialHeroSlideIndex(
+  slides: (HeroImageSlide | HeroVideoSlide)[],
+): number {
+  if (slides.length === 0) {
+    return 0;
+  }
+  if (slides[0].kind === "image") {
+    return 0;
+  }
+  const firstImage = slides.findIndex((s) => s.kind === "image");
+  return firstImage >= 0 ? firstImage : 0;
+}
+
+type HeroVideoPlayOptions = {
+  inView: boolean;
+  restart?: boolean;
+  soundEnabled?: boolean;
+};
+
+async function playHeroVideoForView(
+  video: HTMLVideoElement,
+  options: HeroVideoPlayOptions,
+): Promise<boolean> {
+  const {
+    inView,
+    restart = false,
+    soundEnabled = false,
+  } = options;
+
+  if (!inView) {
+    video.pause();
+    return true;
+  }
+
+  if (restart) {
+    try {
+      video.currentTime = 0;
+    } catch {
+      // Metadata may not be ready yet.
+    }
+  }
+
+  // Restore the user's preferred sound setting.
+  video.volume = soundEnabled ? 1 : 0;
+  video.muted = !soundEnabled;
+  video.defaultMuted = !soundEnabled;
+
+  try {
+    await video.play();
+    return true;
+  } catch (error) {
+    // If sound autoplay is blocked, fall back to muted playback.
+    if (soundEnabled) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+
+      try {
+        await video.play();
+        return true;
+      } catch (retryError) {
+        console.warn("Hero video playback failed:", retryError);
+        return false;
+      }
+    }
+
+    console.warn("Hero video playback failed:", error);
+    return false;
+  }
+}
+
+
+
 export default function HeroSection() {
+  const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
+  const heroSlides = useMemo((): (HeroImageSlide | HeroVideoSlide)[] => {
+    if (!ready || apiBannerSlides.length === 0) {
+      return FALLBACK_HERO_SLIDES;
+    }
+
+    const cmsSlides = apiBannerSlides.map((s) => {
+      const src = resolveMediaUrl(s.url) ?? s.url;
+      return s.media_type === "video"
+        ? {
+            id: `banner-${s.id}`,
+            kind: "video" as const,
+            src,
+            alt: "Paciano banner video",
+          }
+        : {
+            id: `banner-${s.id}`,
+            kind: "image" as const,
+            src,
+            alt: "Paciano banner",
+          };
+    });
+
+    const hasCmsImage = apiBannerSlides.some((s) => s.media_type === "image");
+    if (!hasCmsImage) {
+      return [DEFAULT_HERO_IMAGE, ...cmsSlides];
+    }
+
+    return cmsSlides;
+  }, [ready, apiBannerSlides]);
+
+  const heroSlidesKey = heroSlides.map((s) => `${s.id}:${s.src}`).join("|");
+
   const [intro, setIntro] = useState(false);
   const [camera, setCamera] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const slideIndexRef = useRef(slideIndex);
+  const heroSlidesRef = useRef(heroSlides);
+  const heroInViewRef = useRef(true);
+  const soundUnlockedRef = useRef(false);
+  const videoReadyByIdRef = useRef<Record<string, boolean>>({});
+  const imageHoldStartedRef = useRef(Date.now());
+  const [videoReadyTick, setVideoReadyTick] = useState(0);
+  slideIndexRef.current = slideIndex;
+  heroSlidesRef.current = heroSlides;
+
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+
+  const updateSoundEnabled = (enabled: boolean) => {
+    soundEnabledRef.current = enabled;
+    setSoundEnabled(enabled);
+  };
+
+  const markVideoReady = useCallback((slideId: string) => {
+    if (videoReadyByIdRef.current[slideId]) {
+      return;
+    }
+    videoReadyByIdRef.current[slideId] = true;
+    setVideoReadyTick((n) => n + 1);
+  }, []);
+
+  const syncActiveHeroVideo = useCallback((restart = false) => {
+    const idx = slideIndexRef.current;
+    const slide = heroSlidesRef.current[idx];
+    const video = videoRefs.current[idx];
+
+    if (slide?.kind !== "video" || !video) {
+      return;
+    }
+
+    if (
+      !isHeroVideoReady(slide.id, idx, videoReadyByIdRef.current, videoRefs)
+    ) {
+      return;
+    }
+
+    void playHeroVideoForView(video, {
+      inView: heroInViewRef.current,
+      restart,
+      soundEnabled: soundEnabledRef.current,
+    }).then((played) => {
+      if (played && heroInViewRef.current) {
+        updateSoundEnabled(!video.muted);
+      }
+    });
+  }, []);
+
+  const toggleHeroSound = async () => {
+    const video = videoRefs.current[slideIndex];
+
+    if (!video || video.paused) return;
+
+    if (soundEnabledRef.current) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+      return;
+    }
+
+    try {
+      video.volume = 1;
+      video.muted = false;
+      video.defaultMuted = false;
+
+      await video.play();
+      updateSoundEnabled(true);
+    } catch (error) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0;
+      updateSoundEnabled(false);
+
+      console.warn("Could not enable video sound:", error);
+    }
+  };
+
+
+  const activeSlide = heroSlides[slideIndex];
+  const showImageBannerChrome = activeSlide?.kind === "image";
+
+  useEffect(() => {
+    videoReadyByIdRef.current = {};
+    setVideoReadyTick(0);
+    setSlideIndex(initialHeroSlideIndex(heroSlidesRef.current));
+  }, [heroSlidesKey]);
+
+  useEffect(() => {
+    if (heroSlides[slideIndex]?.kind === "image") {
+      imageHoldStartedRef.current = Date.now();
+    }
+  }, [slideIndex, heroSlidesKey, heroSlides]);
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      setSlideIndex(
+        (index + heroSlides.length) % Math.max(heroSlides.length, 1),
+      );
+    },
+    [heroSlides.length],
+  );
 
   useEffect(() => {
     /*
@@ -45,8 +358,316 @@ export default function HeroSection() {
     };
   }, []);
 
+  const advanceToNextSlide = useCallback(() => {
+    setSlideIndex((i) => (i + 1) % heroSlides.length);
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      if (i !== slideIndex) {
+        video.pause();
+      }
+    });
+  }, [slideIndex]);
+
+  useEffect(() => {
+    const unlockHeroSound = () => {
+      const wasLocked = !soundUnlockedRef.current;
+      soundUnlockedRef.current = true;
+      if (wasLocked || heroInViewRef.current) {
+        syncActiveHeroVideo(false);
+      }
+    };
+
+    const opts: AddEventListenerOptions = { capture: true, passive: true };
+    window.addEventListener("pointerdown", unlockHeroSound, opts);
+    window.addEventListener("touchstart", unlockHeroSound, opts);
+    window.addEventListener("keydown", unlockHeroSound, opts);
+    window.addEventListener("wheel", unlockHeroSound, opts);
+    window.addEventListener("scroll", unlockHeroSound, opts);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockHeroSound, opts);
+      window.removeEventListener("touchstart", unlockHeroSound, opts);
+      window.removeEventListener("keydown", unlockHeroSound, opts);
+      window.removeEventListener("wheel", unlockHeroSound, opts);
+      window.removeEventListener("scroll", unlockHeroSound, opts);
+    };
+  }, [syncActiveHeroVideo]);
+
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+
+    const syncHeroVideoAudio = (inView: boolean) => {
+      heroInViewRef.current = inView;
+
+      for (const video of videoRefs.current) {
+        if (!video) continue;
+        if (!inView) {
+          video.muted = true;
+        }
+      }
+
+      if (inView) {
+        syncActiveHeroVideo(false);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const inView =
+          entry.isIntersecting && entry.intersectionRatio >= 0.12;
+        syncHeroVideoAudio(inView);
+      },
+      { threshold: [0, 0.12, 0.35, 0.6] },
+    );
+
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [heroSlidesKey, syncActiveHeroVideo]);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      return;
+    }
+
+    if (heroSlides.length < 2) {
+      const only = heroSlides[0];
+      if (only?.kind !== "video") {
+        return;
+      }
+
+      let cancelled = false;
+      let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+      const startSingle = (): boolean => {
+        const video = videoRefs.current[0];
+        if (!video || cancelled) {
+          return false;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return false;
+        }
+        video.loop = true;
+        void playHeroVideoForView(video, {
+          inView: heroInViewRef.current,
+          // soundUnlocked: soundUnlockedRef.current,
+          restart: true,
+          soundEnabled: soundEnabledRef.current,
+        }).then((played) => {
+          if (played && heroInViewRef.current && !video.muted) {
+            soundUnlockedRef.current = true;
+          }
+        });
+        return true;
+      };
+
+      const onSingleReady = () => {
+        markVideoReady(only.id);
+        startSingle();
+      };
+
+      const tryStart = () => {
+        if (cancelled) {
+          return;
+        }
+        const video = videoRefs.current[0];
+        if (!video) {
+          retryTimer = window.setTimeout(tryStart, 80);
+          return;
+        }
+        if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          onSingleReady();
+          return;
+        }
+        video.addEventListener("canplaythrough", onSingleReady, { once: true });
+      };
+
+      tryStart();
+
+      return () => {
+        cancelled = true;
+        if (retryTimer) window.clearTimeout(retryTimer);
+        videoRefs.current[0]?.pause();
+      };
+    }
+
+    const slide = heroSlides[slideIndex];
+    if (!slide || slide.kind !== "video") {
+      return;
+    }
+
+    let cancelled = false;
+    let cleanupVideo: (() => void) | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const bindActiveVideo = (): boolean => {
+      const video = videoRefs.current[slideIndex];
+      if (!video || cancelled) {
+        return false;
+      }
+
+      video.loop = false;
+
+      const goNext = () => {
+        if (!cancelled) {
+          advanceToNextSlide();
+        }
+      };
+
+      const onEnded = () => goNext();
+
+      const startPlayback = () => {
+        if (cancelled) {
+          return;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return;
+        }
+        void playHeroVideoForView(video, {
+          inView: heroInViewRef.current,
+          restart: true,
+          soundEnabled: soundEnabledRef.current,
+        }).then((played) => {
+          if (played && heroInViewRef.current && !video.muted) {
+            soundUnlockedRef.current = true;
+          }
+          if (played || cancelled) return;
+          const ms =
+            Number.isFinite(video.duration) && video.duration > 0
+              ? video.duration * 1000 + 400
+              : SLIDE_MS;
+          fallbackTimer = window.setTimeout(goNext, ms);
+        });
+      };
+
+      let playbackStarted = false;
+      const onReady = () => {
+        markVideoReady(slide.id);
+        if (playbackStarted) {
+          return;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
+          return;
+        }
+        playbackStarted = true;
+        startPlayback();
+      };
+
+      video.addEventListener("ended", onEnded);
+
+      if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+        onReady();
+      } else {
+        video.addEventListener("canplaythrough", onReady, { once: true });
+      }
+
+      cleanupVideo = () => {
+        video.removeEventListener("ended", onEnded);
+        video.pause();
+      };
+
+      return true;
+    };
+
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const tryBind = () => {
+      if (cancelled || bindActiveVideo()) {
+        return;
+      }
+      retryTimer = window.setTimeout(tryBind, 80);
+    };
+
+    tryBind();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) window.clearTimeout(retryTimer);
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      cleanupVideo?.();
+    };
+  }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide, markVideoReady]);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced || heroSlides.length < 2) {
+      return;
+    }
+    const slide = heroSlides[slideIndex];
+    if (slide?.kind !== "image") {
+      return;
+    }
+
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    const pending = pendingVideoIndicesAfter(heroSlides, slideIndex);
+
+    const schedule = (delayMs: number) => {
+      pollTimer = window.setTimeout(tick, delayMs);
+    };
+
+    const tick = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const elapsed = Date.now() - imageHoldStartedRef.current;
+      const videosReady =
+        pending.length === 0 ||
+        pending.every((idx) => {
+          const s = heroSlides[idx];
+          return isHeroVideoReady(
+            s.id,
+            idx,
+            videoReadyByIdRef.current,
+            videoRefs,
+          );
+        });
+
+      if (pending.length === 0) {
+        if (elapsed >= MIN_IMAGE_SLIDE_MS) {
+          advanceToNextSlide();
+          return;
+        }
+        schedule(Math.min(250, MIN_IMAGE_SLIDE_MS - elapsed));
+        return;
+      }
+
+      if (videosReady && elapsed >= MIN_IMAGE_SLIDE_MS) {
+        advanceToNextSlide();
+        return;
+      }
+
+      schedule(280);
+    };
+
+    tick();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) window.clearTimeout(pollTimer);
+    };
+  }, [
+    slideIndex,
+    heroSlides,
+    heroSlidesKey,
+    advanceToNextSlide,
+    videoReadyTick,
+  ]);
+
+  
+
+
+
   return (
-    <section className="relative isolate h-screen min-h-[680px] w-full overflow-hidden bg-[#050a06] text-[#f5f0e7]">
+    <section
+      ref={sectionRef}
+      className="relative isolate h-[100dvh] min-h-[560px] max-h-[100dvh] w-full overflow-hidden bg-[#050a06] text-[#f5f0e7] supports-[min-height:100dvh]:min-h-[100dvh] sm:min-h-[680px]"
+    >
       <style>{`
             @keyframes pacianoHeroDrift {
   from {
@@ -54,7 +675,14 @@ export default function HeroSection() {
   }
 
   to {
-    transform: translate3d(3.8%, 1.2%, 0) scale(1.06);
+    transform: translate3d(2.2%, 0.8%, 0) scale(1.03);
+  }
+}
+
+@media (min-width: 768px) {
+  .paciano-hero-media-drift {
+    animation: pacianoHeroDrift 42s linear infinite;
+    transform-origin: center center;
   }
 }
 
@@ -259,67 +887,85 @@ export default function HeroSection() {
       ========================================================== */}
 
       <div className="absolute inset-0 overflow-hidden">
-        {/* <img
-          src={heroImage}
-          alt="Paciano river valley at sunset"
-          className={[
-            "absolute inset-0",
-            "h-full w-full max-w-none",
-            "object-cover",
-            "object-center",
-            "brightness-[0.94] saturate-[0.86] contrast-[0.98]",
-            "transition-transform duration-[16000ms]",
-            "ease-[cubic-bezier(0.22,1,0.36,1)]",
-            camera
-              ? "translate-x-0 translate-y-[-0.2%] scale-[1.005]"
-              : "translate-x-0 translate-y-0 scale-100",
-          ].join(" ")}
-        /> */}
-        <img
-          src={heroImage}
-          alt="Paciano river valley at sunset"
-          //   className="
-          //     absolute
-          //     inset-0
-          //     h-full
-          //     w-full
-          //     max-w-none
-          //     object-cover
-          //     object-center
-          //     brightness-[0.94]
-          //     saturate-[0.86]
-          //     contrast-[0.98]
-          // "
-          className="
-  absolute
-  inset-0
-  h-full
-  w-full
-  max-w-none
-  object-cover
-  object-center
-"
-          style={{
-            animation: "pacianoHeroDrift 42s linear forwards",
-            transformOrigin: "center center",
-          }}
-        />
-        <div
-          className="
-    pointer-events-none
-    absolute
-    inset-0
-    z-[1]
-  "
-        >
+        {heroSlides.map((slide, i) => {
+          const active = i === slideIndex;
+          const mediaClass = `
+            absolute inset-0 h-full w-full min-h-full min-w-full max-w-none
+            object-cover object-center
+            [-webkit-transform:translateZ(0)]
+            transition-opacity duration-[2200ms] ease-[cubic-bezier(0.22,1,0.36,1)]
+            ${active ? "opacity-100 z-[0]" : "opacity-0 z-[-1]"}
+          `;
+
+          if (slide.kind === "video") {
+            return (
+              
+              <video
+                key={slide.id}
+                ref={(el) => {
+                  videoRefs.current[i] = el;
+                }}
+                src={slide.src}
+                className={`${mediaClass} ${
+                  active ? "paciano-hero-media-drift" : ""
+                }`}
+                loop={heroSlides.length === 1}
+                muted={!soundEnabled || !active}
+                playsInline
+                preload="auto"
+                aria-label={slide.alt}
+                onLoadedData={(e) => {
+                  const v = e.currentTarget;
+                  if (v.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                    markVideoReady(slide.id);
+                  }
+                  if (active) {
+                    syncActiveHeroVideo(false);
+                  }
+                }}
+                onCanPlayThrough={(e) => {
+                  markVideoReady(slide.id);
+                  if (active) {
+                    syncActiveHeroVideo(false);
+                  }
+                }}
+              />
+              
+            );
+          }
+
+          const pos = slide.objectPosition ?? "center center";
+
+          return (
+            <img
+              key={slide.id}
+              src={slide.src}
+              alt={slide.alt}
+              decoding="async"
+              fetchPriority={slide.id === "hero" ? "high" : "auto"}
+              className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+              style={{ objectPosition: pos }}
+            />
+          );
+        })}
+        
+        {activeSlide?.kind === "video" ? (
+          <button
+            type="button"
+            onClick={toggleHeroSound}
+            className="absolute bottom-8 right-8 z-50 rounded-full border border-white/30 bg-black/40 px-5 py-3 text-xs uppercase tracking-widest text-white backdrop-blur-md transition hover:bg-black/60"
+            aria-label={soundEnabled ? "Mute video" : "Enable video sound"}
+          >
+            {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
+          </button>
+        ) : null}
+
+
+        <div className="pointer-events-none absolute inset-0 z-[1]">
           <div
-            className="
-      absolute
-      inset-0
-      opacity-0
-    "
+            className="absolute inset-0 opacity-0"
             style={{
-              animation: "pacianoSunsetVeil 42s linear forwards",
+              animation: "pacianoSunsetVeil 42s linear infinite",
             }}
           />
         </div>
@@ -375,6 +1021,38 @@ via-[#020603]/10
         />
       </div>
 
+      {showImageBannerChrome && heroSlides.length > 1 ? (
+        <div
+          className="
+          absolute
+          bottom-[118px]
+          left-[4.5vw]
+          z-[35]
+          flex
+          items-center
+          gap-2.5
+        "
+        >
+          {heroSlides.map((slide, i) => (
+            <button
+              key={slide.id}
+              type="button"
+              aria-label={`Show banner ${i + 1}`}
+              aria-current={i === slideIndex ? "true" : undefined}
+              onClick={() => goToSlide(i)}
+              className={`
+              h-2 rounded-full transition-all duration-500
+              ${
+                i === slideIndex
+                  ? "w-7 bg-[#a5d56d]/90"
+                  : "w-2 bg-white/35 hover:bg-white/55"
+              }
+            `}
+            />
+          ))}
+        </div>
+      ) : null}
+
       {/* =========================================================
     SOFT CENTER ATMOSPHERE
     Keeps the hero image visible while gently separating
@@ -405,12 +1083,9 @@ via-[#020603]/10
   "
       />
 
-      {/* =========================================================
-    RIGHT LEAF — MAIN FOREGROUND FRAME
-========================================================== */}
-
-      <div
-        className={`
+      {showImageBannerChrome ? (
+        <div
+          className={`
     pointer-events-none
     absolute
     inset-y-0
@@ -429,12 +1104,12 @@ via-[#020603]/10
 
     ${intro ? "translate-x-0 opacity-100" : "translate-x-[8%] opacity-0"}
   `}
-      >
-        <img
-          src={leafImage}
-          alt=""
-          aria-hidden="true"
-          className={`
+        >
+          <img
+            src={leafImage}
+            alt=""
+            aria-hidden="true"
+            className={`
       absolute
       right-[0%]
       top-[-8%]
@@ -446,13 +1121,11 @@ via-[#020603]/10
       object-contain
       object-right-top
 
-      /* KEEP THE ORIGINAL LEAF COLOUR VISIBLE */
       brightness-[0.78]
       saturate-[0.95]
       contrast-[1.04]
       opacity-100
 
-      /* soft separation from the hero */
       drop-shadow-[-18px_0_45px_rgba(0,0,0,0.28)]
 
       transition-transform
@@ -465,12 +1138,10 @@ via-[#020603]/10
           : "translate-x-0 translate-y-0 scale-100"
       }
     `}
-        />
+          />
 
-        {/* VERY LIGHT lower integration.
-      Do NOT make this dark — the leaf itself must remain visible. */}
-        <div
-          className="
+          <div
+            className="
       pointer-events-none
       absolute
       inset-x-0
@@ -482,8 +1153,9 @@ via-[#020603]/10
       via-[#020603]/8
       to-transparent
     "
-        />
-      </div>
+          />
+        </div>
+      ) : null}
       {/* =========================================================
           LOGO
       ========================================================== */}
@@ -533,28 +1205,29 @@ via-[#020603]/10
     PACIANO CENTER BRAND MARK
 ========================================================== */}
 
-      <div
-        className={[
-          "absolute",
-          "left-1/2",
-          "top-[13.5%]",
-          "z-40",
-          "-translate-x-1/2",
-          "flex",
-          "flex-col",
-          "items-center",
-          "justify-center",
-          "pointer-events-none",
-          "transition-all",
-          "duration-[1800ms]",
-          "ease-[cubic-bezier(0.22,1,0.36,1)]",
-          logoOpen ? "opacity-100" : "translate-y-6 opacity-0",
-        ].join(" ")}
-      >
-        <img
-          src={logoImage}
-          alt="Paciano"
-          className="
+      {showImageBannerChrome ? (
+        <div
+          className={[
+            "absolute",
+            "left-1/2",
+            "top-[13.5%]",
+            "z-40",
+            "-translate-x-1/2",
+            "flex",
+            "flex-col",
+            "items-center",
+            "justify-center",
+            "pointer-events-none",
+            "transition-all",
+            "duration-[1800ms]",
+            "ease-[cubic-bezier(0.22,1,0.36,1)]",
+            logoOpen ? "opacity-100" : "translate-y-6 opacity-0",
+          ].join(" ")}
+        >
+          <img
+            src={logoImage}
+            alt="Paciano"
+            className="
       h-auto
       w-[145px]
       object-contain
@@ -566,16 +1239,15 @@ via-[#020603]/10
       brightness-[0.98]
       saturate-[1.02]
     "
-          style={{
-            animation: logoOpen
-              ? "pacianoLogoReveal 1800ms cubic-bezier(0.22,1,0.36,1) both, pacianoLogoGlow 7s ease-in-out 2s infinite"
-              : "none",
-          }}
-        />
+            style={{
+              animation: logoOpen
+                ? "pacianoLogoReveal 1800ms cubic-bezier(0.22,1,0.36,1) both, pacianoLogoGlow 7s ease-in-out 2s infinite"
+                : "none",
+            }}
+          />
 
-        {/* very subtle luxury halo */}
-        <div
-          className="
+          <div
+            className="
       pointer-events-none
       absolute
       -inset-8
@@ -584,15 +1256,13 @@ via-[#020603]/10
       bg-[#a5d56d]/[0.035]
       blur-3xl
     "
-        />
-      </div>
+          />
+        </div>
+      ) : null}
 
-      {/* =========================================================
-          HERO CONTENT
-      ========================================================== */}
-
-      <div
-        className={`
+      {showImageBannerChrome ? (
+        <div
+          className={`
           relative
           z-30
 
@@ -615,7 +1285,7 @@ via-[#020603]/10
 
           ${intro ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}
         `}
-      >
+        >
         <div
           className="
             flex
@@ -1001,12 +1671,10 @@ lg:mt-[75px]
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      ) : null}
 
-      {/* =========================================================
-          RIGHT STORY
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1023,6 +1691,10 @@ lg:mt-[75px]
       >
         <button
           type="button"
+          onClick={() => {
+            const videoIdx = heroSlides.findIndex((s) => s.kind === "video");
+            if (videoIdx >= 0) goToSlide(videoIdx);
+          }}
           className="
             group
 
@@ -1084,11 +1756,9 @@ lg:mt-[75px]
           OUR STORY
         </p>
       </div>
+      ) : null}
 
-      {/* =========================================================
-          CENTER SCROLL
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1131,11 +1801,9 @@ lg:mt-[75px]
           TO EXPLORE
         </p>
       </div>
+      ) : null}
 
-      {/* =========================================================
-          MOBILE SCROLL
-      ========================================================== */}
-
+      {showImageBannerChrome ? (
       <div
         className="
           absolute
@@ -1165,6 +1833,7 @@ lg:mt-[75px]
           Scroll to explore
         </span>
       </div>
+      ) : null}
     </section>
   );
 }

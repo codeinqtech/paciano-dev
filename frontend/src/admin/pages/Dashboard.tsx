@@ -22,6 +22,9 @@ export default function Dashboard() {
 
   const order: MenuId[] = [
     "homepage",
+    "about",
+    "stays",
+    "dining",
     "contact",
     "stay",
     "navbar",

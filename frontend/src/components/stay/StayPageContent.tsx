@@ -316,7 +316,7 @@ function Hero({ onExperience }: { onExperience: () => void }) {
   )
 }
 
-function RoomCard({ room, onSelect }: { room: Room onSelect: () => void }) {
+function RoomCard({ room, onSelect }: { room: Room; onSelect: () => void }) {
   return (
     <article className="room-card group relative h-[385px] w-[280px] shrink-0 snap-start overflow-hidden rounded-[22px] sm:w-[300px] lg:h-[420px] lg:w-[318px]">
       <img

@@ -1,35 +1,47 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import pacianoLogo from "@/images/paciano-logo.png";
 import bookingImage from "@/images/paciano-booking.png";
-import { homeHref, toAppPath } from "@/lib/appBase";
-
-const NAV_LINKS = [
-  { label: "Stay", href: toAppPath("/stay") },
-  { label: "Experiences", href: homeHref("#experiences") },
-  { label: "Dining", href: homeHref("#dining") },
-  { label: "About Us", href: homeHref("#about") },
-  { label: "Contact", href: toAppPath("/contact") },
-];
+import {
+  useNavigationMenus,
+  type NavLinkItem,
+} from "@/hooks/useNavigationMenus";
+import { toAppPath } from "@/lib/appBase";
+import {
+  getPacianoBookingPrefs,
+  openPacianoBooking,
+  PACIANO_BOOKING_PLANNER_EVENT,
+  savePacianoBookingPrefs,
+} from "@/lib/pacianoBooking";
 
 interface NavbarProps {
   scrolled?: boolean;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
 }
 
 export default function Navbar({
   scrolled = false,
   activeNav = "home",
 }: NavbarProps) {
+  const navLinks = useNavigationMenus();
   const [menuOpen, setMenuOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-
-  const [checkIn, setCheckIn] = useState("2026-10-14");
-  const [checkOut, setCheckOut] = useState("2026-10-17");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [pets, setPets] = useState(0);
+
+  const openBookingPlanner = useCallback(() => {
+    const p = getPacianoBookingPrefs();
+    setCheckIn(p.checkin);
+    setCheckOut(p.checkout);
+    setAdults(p.adults);
+    setChildren(p.children);
+    setRooms(p.rooms);
+    setBookingOpen(true);
+  }, []);
 
   const handleCheckAvailability = () => {
     if (!checkIn || !checkOut) {
@@ -42,16 +54,24 @@ export default function Navbar({
       return;
     }
 
-    console.log({
-      checkIn,
-      checkOut,
+    const prefs = {
+      checkin: checkIn,
+      checkout: checkOut,
       adults,
       children,
       rooms,
-      pets,
-    });
-    // Later we can connect this to your actual booking system.
+    };
+    savePacianoBookingPrefs(prefs);
+    openPacianoBooking(prefs);
+    setBookingOpen(false);
   };
+
+  useEffect(() => {
+    const onPlanner = () => openBookingPlanner();
+    window.addEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+    return () =>
+      window.removeEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+  }, [openBookingPlanner]);
 
   // Prevent body scroll when mobile menu is open
   // useEffect(() => {
@@ -188,23 +208,15 @@ export default function Navbar({
                 active={activeNav === "home"}
               />
 
-              <NavItem
-                label="Stay"
-                href={toAppPath("/stay")}
-                active={activeNav === "stay"}
-              />
-
-              <NavItem label="Experiences" href={homeHref("#experiences")} />
-
-              <NavItem label="Dining" href={homeHref("#dining")} />
-
-              <NavItem label="About Us" href={homeHref("#about")} />
-
-              <NavItem
-                label="Contact"
-                href={toAppPath("/contact")}
-                active={activeNav === "contact"}
-              />
+              {navLinks.map((item) => (
+                <NavItem
+                  key={item.id || item.label}
+                  label={item.label}
+                  href={item.href}
+                  active={isDynamicNavActive(item.label, activeNav)}
+                  openInNewTab={item.openInNewTab}
+                />
+              ))}
             </div>
           </nav>
 
@@ -219,7 +231,7 @@ export default function Navbar({
               {/* CTA BUTTON */}
               <button
                 type="button"
-                onClick={() => setBookingOpen(!bookingOpen)}
+                onClick={() => openBookingPlanner()}
                 className="
                   group
                   relative
@@ -351,9 +363,6 @@ export default function Navbar({
         </div>
       </header>
 
-      {/* =========================================================
-            PACIANO — LUXURY BOOKING MODAL
-        ========================================================= */}
       <BookingModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
@@ -377,9 +386,10 @@ export default function Navbar({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         activeNav={activeNav}
+        navLinks={navLinks}
         onBooking={() => {
           setMenuOpen(false);
-          setBookingOpen(true);
+          openBookingPlanner();
         }}
       />
     </>
@@ -3027,18 +3037,33 @@ function DateField({
   );
 }
 
+function isDynamicNavActive(
+  label: string,
+  activeNav: "home" | "contact" | "stay" | "about",
+): boolean {
+  const key = label.trim().toLowerCase();
+  if (key === "contact") return activeNav === "contact";
+  if (key === "stay") return activeNav === "stay";
+  if (key === "about us" || key === "about") return activeNav === "about";
+  return false;
+}
+
 function NavItem({
   label,
   href,
   active = false,
+  openInNewTab = false,
 }: {
   label: string;
   href: string;
   active?: boolean;
+  openInNewTab?: boolean;
 }) {
   return (
     <a
       href={href}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       className={`
     group
     relative
@@ -3094,11 +3119,13 @@ function MobileMenu({
   onClose,
   onBooking,
   activeNav = "home",
+  navLinks,
 }: {
   open: boolean;
   onClose: () => void;
   onBooking: () => void;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
+  navLinks: NavLinkItem[];
 }) {
   return (
     <div
@@ -3171,18 +3198,13 @@ function MobileMenu({
             onClick={onClose}
           />
 
-          {NAV_LINKS.map((item) => (
+          {navLinks.map((item) => (
             <MobileNavItem
-              key={item.label}
+              key={item.id || item.label}
               label={item.label}
               href={item.href}
-              active={
-                item.label === "Contact"
-                  ? activeNav === "contact"
-                  : item.label === "Stay"
-                    ? activeNav === "stay"
-                    : false
-              }
+              active={isDynamicNavActive(item.label, activeNav)}
+              openInNewTab={item.openInNewTab}
               onClick={onClose}
             />
           ))}
@@ -3286,16 +3308,20 @@ function MobileNavItem({
   href,
   onClick,
   active = false,
+  openInNewTab = false,
 }: {
   label: string;
   href: string;
   onClick: () => void;
   active?: boolean;
+  openInNewTab?: boolean;
 }) {
   return (
     <a
       href={href}
       onClick={onClick}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       className={`
         group
         flex

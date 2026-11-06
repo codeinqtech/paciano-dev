@@ -20,6 +20,7 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  appType: "spa",
   server: {
     host: "0.0.0.0",
     port: parseInt(process.env.PORT || "5173", 10),

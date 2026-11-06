@@ -7,6 +7,10 @@ import {
   } from "react";
   import testimonialLeaf from "@/images/testimonial-leaf.png";
   import guestStoriesLandscape from "@/images/paciano-guest-stories-landscape.webp";
+  import {
+    useHomeContent,
+    type HomeReviewVideo,
+  } from "@/hooks/useHomeContent";
   type CarouselHandle = {
     next: () => void;
     previous: () => void;
@@ -480,38 +484,101 @@ import {
     );
   };
   
-  const stories = [
+  const STATIC_MEMORY_STORIES: {
+    id: string;
+    title: string;
+    name: string;
+    location: string;
+    image: string;
+    videoUrl: string | null;
+  }[] = [
     {
+      id: "static-1",
       title: "A Family’s Escape",
-      duration: "03:12",
+      name: "A Family’s Escape",
+      location: "03:12",
       image:
         "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-2",
       title: "Finding Stillness",
-      duration: "02:48",
+      name: "Finding Stillness",
+      location: "02:48",
       image:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-3",
       title: "A Second Home",
-      duration: "02:05",
+      name: "A Second Home",
+      location: "02:05",
       image:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
     {
+      id: "static-4",
       title: "More Than a Stay",
-      duration: "01:56",
+      name: "More Than a Stay",
+      location: "01:56",
       image:
         "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1000&q=85",
+      videoUrl: null,
     },
   ];
-  
+
+  const POSTCARDS_FALLBACK = {
+    section_label: "POSTCARDS FROM PACIANO",
+    heading_primary: "The Paciano Journal,",
+    heading_accent: "Stories Worth Sharing.",
+    description:
+      "Discover inspiring journeys, hidden gems and beautiful moments that capture the essence of Paciano",
+  };
+
   const GuestStories = () => {
     const testimonialCarouselRef = useRef<CarouselHandle>(null);
-  
+    const { ready, reviewVideos: apiVideos, postcardsSection } =
+      useHomeContent();
+    const postcardsCopy =
+      ready && postcardsSection
+        ? {
+            section_label:
+              postcardsSection.section_label?.trim() ||
+              POSTCARDS_FALLBACK.section_label,
+            heading_primary:
+              postcardsSection.heading_primary?.trim() ||
+              POSTCARDS_FALLBACK.heading_primary,
+            heading_accent:
+              postcardsSection.heading_accent?.trim() ||
+              POSTCARDS_FALLBACK.heading_accent,
+            description:
+              postcardsSection.description?.trim() ||
+              POSTCARDS_FALLBACK.description,
+          }
+        : POSTCARDS_FALLBACK;
+    const [activeVideo, setActiveVideo] = useState<HomeReviewVideo | null>(
+      null,
+    );
+
+    const memoryStories =
+      ready && apiVideos.length > 0
+        ? apiVideos.map((v) => ({
+            id: String(v.id),
+            title: v.display_title || v.reviewer_name,
+            name: v.reviewer_name,
+            location: v.location,
+            image: v.thumbnail_url ?? "",
+            videoUrl: v.video_url,
+          }))
+        : STATIC_MEMORY_STORIES;
+
     return (
-      <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]">
+      <section className="relative isolate overflow-hidden bg-[#F4F0E7] pb-6 text-[#1d2828] max-md:pb-10 md:pb-0">
+        {/* <section className="relative isolate overflow-hidden bg-[#f4efe4] text-[#1d2828]"></section> */}
+        
         {/* =========================================================
             SOFT ATMOSPHERIC BACKGROUND
         ========================================================= */}
@@ -559,12 +626,13 @@ import {
             MAIN CONTENT
         ========================================================= */}
   
-        <div className="relative z-10 mx-auto max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-24 xl:px-16">
+        <div className="relative z-10 mx-auto max-w-[1440px] px-5 pt-8 sm:px-8 sm:pt-10 lg:px-12 lg:py-24 xl:px-16">
+          {/* <div className="relative z-10 mx-auto max-w-[1440px] px-5 py-20 sm:px-8 lg:px-12 lg:py-24 xl:px-16"></div> */}
           {/* =======================================================
                 CENTERED TESTIMONIAL EYEBROW
             ======================================================= */}
   
-          <RevealItem delay={0}>
+          {/* <RevealItem delay={0}>
             <div className="flex flex-col items-center justify-center">
               <svg
                 viewBox="0 0 40 40"
@@ -614,34 +682,34 @@ import {
                 <span className="hidden h-px w-16 bg-[#aaa17f] sm:block" />
               </div>
             </div>
-          </RevealItem>
+          </RevealItem> */}
   
           {/* =======================================================
                 HEADER
             ======================================================= */}
   
-          <div className="mt-8 grid items-end gap-10 lg:grid-cols-[1.1fr_0.85fr_auto] lg:gap-8">
+          {/* <div className="mt-8 grid items-end gap-10 lg:grid-cols-[1.1fr_0.85fr_auto] lg:gap-8"> */}
             {/* HEADING */}
-            <RevealItem delay={120}>
+            {/* <RevealItem delay={120}>
               <h2 className="max-w-[650px] font-['Cormorant_Garamond',serif] text-[48px] font-medium leading-[0.88] tracking-[-0.045em] text-[#172224] sm:text-[58px] md:text-[68px] lg:text-[72px]">
                 What Our Guests Say
                 <span className="block font-['Cormorant_Garamond',serif] text-[#817b5d] italic">
                   About Paciano.
                 </span>
               </h2>
-            </RevealItem>
+            </RevealItem> */}
             {/* DESCRIPTION */}
-            <RevealItem delay={180}>
+            {/* <RevealItem delay={180}>
               <div className="border-l border-[#bdb59a] pl-7 lg:mb-2">
                 <p className="max-w-[430px]  font-manrope text-[15px] font-light leading-[1.85] text-[#565b59] sm:text-[15px]">
                   From meaningful experiences to unforgettable moments, our guests
                   share what makes Paciano truly special.
                 </p>
               </div>
-            </RevealItem>
+            </RevealItem> */}
   
             {/* ARROWS */}
-            <RevealItem delay={300}>
+            {/* <RevealItem delay={300}>
               <div className="flex items-center gap-3 border-l border-[#bdb59a] pl-7 lg:mb-2">
                 <button
                   type="button"
@@ -761,13 +829,13 @@ import {
                   </svg>
                 </button>
               </div>
-            </RevealItem>
-          </div>
+            </RevealItem> */}
+          {/* </div> */}
           {/* =======================================================
               TESTIMONIAL CAROUSEL
           ======================================================= */}
   
-          <RevealItem delay={420}>
+          {/* <RevealItem delay={420}>
             <Carousel
               ref={testimonialCarouselRef}
               gap={20}
@@ -799,7 +867,7 @@ import {
             sm:p-9
           "
                 >
-                  {/* QUOTATION MARK */}
+                 
   
                   <div
                     className="
@@ -815,7 +883,7 @@ import {
                     “
                   </div>
   
-                  {/* QUOTE */}
+                  
   
                   <p
                     className="
@@ -837,11 +905,11 @@ import {
                     “{item.quote}”
                   </p>
   
-                  {/* DIVIDER */}
+                  
   
                   <div className="my-6 ml-10 h-px w-[55px] bg-[#8d8569]" />
   
-                  {/* GUEST */}
+                  
   
                   <div className="ml-10 flex items-center gap-5">
                     <div
@@ -899,18 +967,18 @@ import {
                 </article>
               ))}
             </Carousel>
-          </RevealItem>
+          </RevealItem> */}
   
           {/* =======================================================
               STORIES DIVIDER
           ======================================================= */}
   
-          <RevealItem delay={0}>
-            <div className="mt-14 flex flex-col items-center justify-center">
+          <RevealItem delay={0} className="!mt-2">
+            <div className="mt-0 flex flex-col items-center justify-center">
               {/* SMALL BOTANICAL MARK */}
               <svg
                 viewBox="0 0 40 40"
-                className="mb-[8px] h-[30px] w-[30px] text-[#71883F]"
+                className="mb-1 h-[26px] w-[26px] text-[#71883F]"
                 fill="none"
                 aria-hidden="true"
               >
@@ -933,18 +1001,66 @@ import {
               </svg>
   
               {/* ELEGANT CENTERED RULE + LABEL */}
-              <div className="flex w-full items-center justify-center gap-5 sm:gap-7">
+              <div className="mb-3 flex w-full items-center justify-center gap-4 sm:gap-6">
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
-  
+
                 <span className="whitespace-nowrap font-[Mona_Sans,sans-serif] text-[12px] font-medium tracking-[0.38em] text-[#77715c] sm:text-[10px] sm:tracking-[0.4em]">
-                  MEMORIES MADE AT PACIANO
+                  {postcardsCopy.section_label}
                 </span>
   
                 <span className="h-px w-12 bg-[#a69e82] sm:w-16" />
               </div>
             </div>
           </RevealItem>
-  
+
+          
+          {/* =========================================================
+                POSTCARDS HEADING
+            ========================================================= */}
+            <RevealItem delay={120} className="!mt-0">
+              <h2
+                className="
+                  mx-auto
+                  mt-2
+                  max-w-[950px]
+                  text-center
+                  font-cormorant
+                  text-[43px]
+                  leading-[.95]
+                  tracking-[-.025em]
+                  text-[#17251B]
+                  sm:text-[52px]
+                  lg:text-[60px]
+                "
+              >
+                {postcardsCopy.heading_primary}
+                <br />
+                <span className="italic text-[#789541]">
+                  {postcardsCopy.heading_accent}
+                </span>
+              </h2>  
+              <p
+                  className="
+                      mx-auto
+                      mt-5
+                      max-w-[700px]
+                      px-4
+                      text-center
+                      font-manrope
+                      text-[12px]
+                      leading-[1.8]
+                      text-[#657067]
+                      sm:text-[13px]
+                      lg:text-[14px]
+                    "
+                >
+                  {postcardsCopy.description}
+                </p>         
+              
+            </RevealItem>
+
+
+          
           {/* =======================================================
               VIDEO STORIES CAROUSEL
           ======================================================= */}
@@ -959,23 +1075,23 @@ import {
               tabletCards={2}
               showControls={false}
             >
-              {stories.map((story) => (
-                <article key={story.title} className="group">
-                  {/* IMAGE */}
-  
+              {memoryStories.map((story) => (
+                <article key={story.id} className="group">
                   <div
                     className="
-              relative
-              aspect-[1.45/1]
-              overflow-hidden
-              rounded-[12px]
-              bg-[#d6d0bf]
-            "
+                    relative
+                    aspect-[1.45/1]
+                    overflow-hidden
+                    rounded-[12px]
+                    mt-[8px]
+                    bg-[#d6d0bf]
+                  "
                   >
-                    <img
-                      src={story.image}
-                      alt={story.title}
-                      className="
+                    {story.image ? (
+                      <img
+                        src={story.image}
+                        alt={story.title}
+                        className="
                 h-full
                 w-full
                 object-cover
@@ -984,9 +1100,8 @@ import {
                 ease-out
                 group-hover:scale-105
               "
-                    />
-  
-                    {/* OVERLAY */}
+                      />
+                    ) : null}
   
                     <div
                       className="
@@ -999,11 +1114,17 @@ import {
               "
                     />
   
-                    {/* PLAY */}
-  
                     <button
                       type="button"
                       aria-label={`Play ${story.title}`}
+                      disabled={!story.videoUrl}
+                      onClick={() => {
+                        if (!story.videoUrl) return;
+                        const match = apiVideos.find(
+                          (v) => String(v.id) === story.id,
+                        );
+                        if (match) setActiveVideo(match);
+                      }}
                       className="
                 absolute
                 left-1/2
@@ -1025,13 +1146,12 @@ import {
                 duration-500
                 group-hover:scale-110
                 group-hover:bg-white/15
+                disabled:opacity-40
               "
                     >
                       <span className="ml-1 text-[22px]">▶</span>
                     </button>
                   </div>
-  
-                  {/* TITLE */}
   
                   <h3
                     className="
@@ -1045,28 +1165,46 @@ import {
               sm:text-[23px]
             "
                   >
-                    {story.title}
+                    {story.name}
                   </h3>
-  
-                  {/* DURATION */}
-  
-                  <div
-                    className="
-              mt-3
-              font-[Mona_Sans,sans-serif]
-              text-[10px]
-              font-light
-              tracking-[0.38em]
-              text-[#696b67]
-            "
-                  >
-                    {story.duration}
-                  </div>
                 </article>
               ))}
             </Carousel>
           </RevealItem>
         </div>
+
+        {activeVideo?.video_url ? (
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Guest review video"
+            onClick={() => setActiveVideo(null)}
+          >
+            <div
+              className="relative w-full max-w-4xl rounded-2xl bg-[#0a0a0a] p-2 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="absolute -top-10 right-0 text-sm text-white/90 hover:text-white"
+                onClick={() => setActiveVideo(null)}
+              >
+                Close
+              </button>
+              <video
+                src={activeVideo.video_url}
+                className="max-h-[80vh] w-full rounded-xl"
+                controls
+                autoPlay
+                playsInline
+              />
+              <p className="mt-3 px-2 text-center font-[Mona_Sans,sans-serif] text-sm text-white/90">
+                {activeVideo.reviewer_name}
+              </p>
+            </div>
+          </div>
+        ) : null}
   
         {/* =========================================================
             REFERENCE LANDSCAPE BELOW GUEST STORIES

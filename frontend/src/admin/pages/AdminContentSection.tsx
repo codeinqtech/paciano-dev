@@ -9,7 +9,7 @@ export default function AdminContentSection({ menuId }: Props) {
   const menu = ASSIGNABLE_MENUS.find((m) => m.id === menuId);
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full max-w-[1400px]">
       <h1 className="text-2xl font-bold admin-page-title mb-2">
         {menu?.label ?? "Content"}
       </h1>
