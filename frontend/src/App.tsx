@@ -15,7 +15,7 @@ import AdminContentSection from "@/admin/pages/AdminContentSection";
 import AdminHomepage from "@/admin/pages/AdminHomepage";
 import AdminNavbarMenus from "@/admin/pages/AdminNavbarMenus";
 import AdminFooter from "@/admin/pages/AdminFooter";
-import AdminContactUsSection from "@/admin/pages/AdminContactUsSection";
+import AdminContactUsSection from "@/admin/pages/contact/AdminContactUsSection";
 import AdminGoogleReviews from "@/admin/pages/AdminGoogleReviews";
 import { AdminAboutSitePage } from "@/admin/pages/about/AdminAboutSitePage";
 import { AdminExperiencesPage } from "@/admin/pages/about/AdminExperiencesPage";
