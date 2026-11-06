@@ -12,6 +12,13 @@ import {
   Save,
   Plus,
 } from "@/components/common/icons";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabBar,
+} from "../components/AdminCmsPageLayout";
 
 type TabId =
   | "banner"
@@ -362,57 +369,20 @@ const AdminContactUsSection = () => {
   };
 
   return (
-    <div className="w-full max-w-[1400px] space-y-7">
-
-      {/* Page Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-            <h1 className="text-2xl font-bold admin-page-title">
-                Contact Us
-            </h1>
-
-            <p className="mt-2 text-sm text-[#82776B]">
-                Manage your contact page content and information.
-            </p>
-        </div>
-
-        <span className="rounded-full border border-[#C8BC82]/50 bg-[#C8BC82]/10 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[#817344]">
-          Page Settings
-        </span>
-      </div>
-
-      {/* Main Card */}
-      <div className="overflow-hidden rounded-2xl border border-[#E8DFD0] bg-white">
-
-        {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto border-b border-[#EDE4D8] bg-[#FAF7F2] px-3 pt-3">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex shrink-0 items-center gap-2 rounded-t-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "border-[#E8DFD0] border-b-white bg-white text-[#3D4A22]"
-                    : "border-transparent text-[#6E655C] hover:bg-white/70 hover:text-[#332C26]"
-                }`}
-              >
-                <Icon size={16} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content */}
-        <div className="bg-white p-5 md:p-8">
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Contact Us"
+        subtitle="Manage your contact page content and information."
+        badge="Page Settings"
+      />
+      <AdminCmsPageCard>
+        <AdminCmsTabBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as TabId)}
+        />
+        <AdminCmsCardBody>
           {renderTabContent()}
-
-          {/* Footer */}
           <div className="mt-9 flex justify-end border-t border-[#EDE4D8] pt-5">
             <button
               type="button"
@@ -423,9 +393,9 @@ const AdminContactUsSection = () => {
               Save Changes
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
+    </AdminCmsPageRoot>
   );
 };
 

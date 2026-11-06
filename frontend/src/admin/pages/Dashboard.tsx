@@ -7,6 +7,12 @@ import {
   type MenuId,
 } from "../data/permissions";
 import { apiRequest } from "../../api/client";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+} from "../components/AdminCmsPageLayout";
 
 type DashCounts = Record<string, number>;
 
@@ -50,14 +56,17 @@ export default function Dashboard() {
     .filter((c): c is DashboardCard => c !== null);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold admin-page-title">Dashboard</h1>
-        <p className="text-sm admin-card-muted mt-1">
-          Manage Paciano website sections you have access to.
-        </p>
-      </div>
-      <DashboardCards cards={cards} />
-    </div>
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Dashboard"
+        subtitle="Manage Paciano website sections you have access to."
+        badge="Overview"
+      />
+      <AdminCmsPageCard>
+        <AdminCmsCardBody>
+          <DashboardCards cards={cards} />
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
+    </AdminCmsPageRoot>
   );
 }

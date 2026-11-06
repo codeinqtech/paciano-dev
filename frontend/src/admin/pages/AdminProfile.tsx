@@ -3,6 +3,12 @@ import { Shield, KeyRound, Mail, Phone, User } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { ASSIGNABLE_MENUS } from "../data/permissions";
 import ChangePasswordModal from "../components/ChangePasswordModal";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+} from "../components/AdminCmsPageLayout";
 
 export default function AdminProfile() {
   const { user, isSuperAdmin } = useAuth();
@@ -17,10 +23,15 @@ export default function AdminProfile() {
         .filter(Boolean);
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold admin-page-title mb-8">My Profile</h1>
+    <AdminCmsPageRoot className="max-w-2xl">
+      <AdminCmsPageHeader
+        title="My Profile"
+        subtitle="Your account details and permissions."
+        badge="Account"
+      />
 
-      <div className="admin-card rounded-2xl p-8 space-y-6">
+      <AdminCmsPageCard>
+        <AdminCmsCardBody className="space-y-6">
         <div className="flex items-center gap-5 pb-6 border-b border-[#F0E9DF]">
           <div className="w-16 h-16 rounded-full admin-btn-gold flex items-center justify-center text-[#1e1a17] font-bold text-xl">
             {user.name
@@ -82,12 +93,13 @@ export default function AdminProfile() {
           <KeyRound className="w-4 h-4" />
           Change Password
         </button>
-      </div>
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
 
       <ChangePasswordModal
         open={passwordOpen}
         onClose={() => setPasswordOpen(false)}
       />
-    </div>
+    </AdminCmsPageRoot>
   );
 }
