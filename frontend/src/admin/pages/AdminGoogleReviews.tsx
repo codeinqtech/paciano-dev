@@ -5,6 +5,12 @@ import { apiRequest } from "../../api/client";
 import { GoogleGuestAvatar } from "@/components/GoogleGuestAvatar";
 import { ListPagination } from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+} from "../components/AdminCmsPageLayout";
 
 type PlaceSummary = {
   place_id: string;
@@ -134,9 +140,11 @@ export default function AdminGoogleReviews() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#657067]">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading Google reviews…
-      </div>
+      <AdminCmsPageRoot>
+        <div className="flex items-center gap-2 py-6 text-sm text-[#657067]">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading Google reviews…
+        </div>
+      </AdminCmsPageRoot>
     );
   }
 
@@ -146,13 +154,11 @@ export default function AdminGoogleReviews() {
     stats?.google_rating_count ?? place?.user_rating_count ?? null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#332C26]">
-            Google reviews
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[#6E655C]">
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Google reviews"
+        subtitle={
+          <>
             This table lists{" "}
             <strong className="font-medium text-[#332C26]">
               {storedCount} review{storedCount === 1 ? "" : "s"}
@@ -162,23 +168,28 @@ export default function AdminGoogleReviews() {
             {googleRatingCount != null ? ` (${googleRatingCount} today)` : ""};
             the Places API only returns a small sample on each sync, not every
             rating.
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={syncing}
-          onClick={syncFromGoogle}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5F7138] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {syncing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          Sync from Google
-        </button>
-      </div>
+          </>
+        }
+        badge="Integrations"
+        actions={
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={syncFromGoogle}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5F7138] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {syncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Sync from Google
+          </button>
+        }
+      />
 
+      <AdminCmsPageCard>
+        <AdminCmsCardBody className="space-y-6">
       {!apiConfigured ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <strong className="font-semibold">Google API key not set.</strong> Add{" "}
@@ -308,6 +319,8 @@ export default function AdminGoogleReviews() {
           <ListPagination {...reviewsPagination} itemLabel="reviews" />
         ) : null}
       </div>
-    </div>
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
+    </AdminCmsPageRoot>
   );
 }

@@ -11,6 +11,7 @@ const PARCHMENT = "#eee9dc";
 
 export default function AboutUsPage() {
   const { blocks } = useAboutPageContent();
+  const hero = blocks.hero ?? null;
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function AboutUsPage() {
     <>
       <Navbar scrolled={scrolled} activeNav="about" />
       <main style={{ background: PARCHMENT }}>
-        <AboutUsHero />
+        <AboutUsHero content={hero} />
         <AboutUsInfo />
         <PacianoStory content={blocks.story} />
         <GuestReviews />

@@ -8,9 +8,14 @@ import {
   Field,
   cardGridClass,
   formTwoColClass,
+  formTwoColPairedRowClass,
   inputClass,
   saveCardButtonClass,
 } from "../../components/AdminSectionLayout";
+import {
+  PACIANO_VALUE_ICON_OPTIONS,
+  PacianoValueIcon,
+} from "@/components/common/icons/paciano";
 export function AboutIntroWordLimitHelp({
   paragraph1,
   paragraph2,
@@ -152,7 +157,7 @@ export function AdminAboutIntroEditor() {
 
   return (
       <div className="admin-card rounded-2xl p-6 space-y-1">
-        <div className={formTwoColClass}>
+        <div className={formTwoColPairedRowClass}>
           <Field label="First headline line">
             <input
               className={inputClass}
@@ -172,50 +177,46 @@ export function AdminAboutIntroEditor() {
             />
           </Field>
         </div>
-        <div className={formTwoColClass}>
-          <Field label="Green accent line">
-            <input
-              className={inputClass}
-              value={form.heading_accent}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, heading_accent: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Home tagline (homepage only, under paragraph 1)">
-            <textarea
-              className={`${inputClass} min-h-[88px]`}
-              value={form.home_tagline}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, home_tagline: e.target.value }))
-              }
-            />
-          </Field>
-        </div>
+        <Field label="Green accent line">
+          <input
+            className={inputClass}
+            value={form.heading_accent}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, heading_accent: e.target.value }))
+            }
+          />
+        </Field>
+        <Field label="Home tagline (homepage only, under paragraph 1)">
+          <textarea
+            className={`${inputClass} min-h-[88px]`}
+            value={form.home_tagline}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, home_tagline: e.target.value }))
+            }
+          />
+        </Field>
         <AboutIntroWordLimitHelp
           paragraph1={form.paragraph_1}
           paragraph2={form.paragraph_2}
         />
-        <div className={formTwoColClass}>
-          <Field label="First paragraph (required — home teaser + full text on About page)">
-            <textarea
-              className={`${inputClass} min-h-[100px]`}
-              value={form.paragraph_1}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, paragraph_1: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="Second paragraph (optional — About page only)">
-            <textarea
-              className={`${inputClass} min-h-[100px]`}
-              value={form.paragraph_2}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, paragraph_2: e.target.value }))
-              }
-            />
-          </Field>
-        </div>
+        <Field label="First paragraph (required — home teaser + full text on About page)">
+          <textarea
+            className={`${inputClass} min-h-[100px]`}
+            value={form.paragraph_1}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, paragraph_1: e.target.value }))
+            }
+          />
+        </Field>
+        <Field label="Second paragraph (optional — About page only)">
+          <textarea
+            className={`${inputClass} min-h-[100px]`}
+            value={form.paragraph_2}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, paragraph_2: e.target.value }))
+            }
+          />
+        </Field>
         <p className="mb-4 text-xs text-[#6E655C]">
           The homepage “Discover Our Story” button always links to the About
           page — it is not editable here.
@@ -261,12 +262,158 @@ export function AdminAboutIntroEditor() {
 }
 
 type AboutBlockForm = {
+  eyebrow?: string;
   heading_line_1: string;
   heading_line_2: string;
   heading_accent: string;
   body_text: string;
   image_url: string | null;
 };
+
+export function AdminAboutHeroEditor() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    eyebrow: "",
+    heading_line_1: "",
+    heading_accent: "",
+    body_text: "",
+    image_url: null as string | null,
+  });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiRequest<{
+        data: { blocks: Record<string, AboutBlockForm> };
+      }>("/admin/about/page");
+      const block = res.data?.blocks?.hero;
+      if (block) {
+        setForm({
+          eyebrow: block.eyebrow ?? "",
+          heading_line_1: block.heading_line_1 ?? "",
+          heading_accent: block.heading_accent ?? "",
+          body_text: block.body_text ?? "",
+          image_url: block.image_url ?? null,
+        });
+      }
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Could not load content");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("eyebrow", form.eyebrow);
+      fd.append("heading_line_1", form.heading_line_1);
+      fd.append("heading_line_2", "");
+      fd.append("heading_accent", form.heading_accent);
+      fd.append("body_text", form.body_text);
+      if (photoFile) fd.append("photo", photoFile);
+      const res = await apiUpload<{ data: AboutBlockForm }>(
+        "/admin/about/blocks/hero",
+        fd,
+      );
+      if (res.data) {
+        setForm((f) => ({
+          ...f,
+          ...res.data,
+          eyebrow: res.data!.eyebrow ?? f.eyebrow,
+        }));
+        setPhotoFile(null);
+      }
+      toast.success("Banner saved");
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-[#657067]">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-card rounded-2xl p-6 space-y-1">
+      <p className="text-sm admin-card-muted mb-4">
+        Full-width hero at the top of the About page (background image + headline
+        text).
+      </p>
+      <Field label="Small label headline">
+        <input
+          className={inputClass}
+          value={form.eyebrow}
+          onChange={(e) => setForm((f) => ({ ...f, eyebrow: e.target.value }))}
+        />
+      </Field>
+      <div className={formTwoColPairedRowClass}>
+        <Field label="First headline line">
+          <input
+            className={inputClass}
+            value={form.heading_line_1}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, heading_line_1: e.target.value }))
+            }
+          />
+        </Field>
+        <Field label="Second headline line (green italic)">
+          <input
+            className={inputClass}
+            value={form.heading_accent}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, heading_accent: e.target.value }))
+            }
+          />
+        </Field>
+      </div>
+      <Field label="Description under the leaf divider">
+        <textarea
+          className={`${inputClass} min-h-[120px]`}
+          value={form.body_text}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, body_text: e.target.value }))
+          }
+        />
+      </Field>
+      <AdminImageUpload
+        title="Banner background image"
+        file={photoFile}
+        existingUrl={form.image_url}
+        optional
+        onFileChange={setPhotoFile}
+      />
+      <button
+        type="button"
+        disabled={saving}
+        onClick={save}
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#5F7138] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4d5c2e] disabled:opacity-60"
+      >
+        {saving ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Save className="h-4 w-4" />
+        )}
+        Save banner
+      </button>
+    </div>
+  );
+}
 
 export function AdminAboutBlockEditor({
   sectionKey,
@@ -357,7 +504,7 @@ export function AdminAboutBlockEditor({
         {imageHint ? (
           <p className="text-sm admin-card-muted mb-4">{imageHint}</p>
         ) : null}
-        <div className={formTwoColClass}>
+        <div className={formTwoColPairedRowClass}>
           <Field label="Main heading — first line">
             <input
               className={inputClass}
@@ -406,32 +553,24 @@ export function AdminAboutBlockEditor({
             />
           </Field>
         ) : null}
-        <div
-          className={
-            showImage
-              ? "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
-              : ""
-          }
-        >
-          <Field label="Body paragraph">
-            <textarea
-              className={`${inputClass} min-h-[120px]`}
-              value={form.body_text}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, body_text: e.target.value }))
-              }
-            />
-          </Field>
-          {showImage ? (
-            <AdminImageUpload
-              title="Section photo"
-              file={photoFile}
-              existingUrl={form.image_url}
-              optional
-              onFileChange={setPhotoFile}
-            />
-          ) : null}
-        </div>
+        <Field label="Body paragraph">
+          <textarea
+            className={`${inputClass} min-h-[120px]`}
+            value={form.body_text}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, body_text: e.target.value }))
+            }
+          />
+        </Field>
+        {showImage ? (
+          <AdminImageUpload
+            title="Section photo"
+            file={photoFile}
+            existingUrl={form.image_url}
+            optional
+            onFileChange={setPhotoFile}
+          />
+        ) : null}
         <button
           type="button"
           disabled={saving}
@@ -455,13 +594,6 @@ type AboutValueRow = {
   description: string | null;
   icon_key: string;
 };
-
-const VALUE_ICON_OPTIONS = [
-  { value: "nature", label: "Nature" },
-  { value: "design", label: "Design" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "experiences", label: "Experiences" },
-] as const;
 
 export function AdminAboutValuesEditor() {
   const [loading, setLoading] = useState(true);
@@ -526,16 +658,22 @@ export function AdminAboutValuesEditor() {
   return (
     <>
       <p className="text-sm admin-card-muted mb-4">
-        Four value pillars shown on the About page (icons stay in the design;
-        pick which emblem each item uses).
+        Four pillars on the About page — choose an icon from the Paciano icon
+        library and edit each slogan (title + description).
       </p>
       <div className={cardGridClass}>
         {items.map((item) => (
           <div key={item.id} className="admin-card rounded-2xl p-6">
-            <div className={formTwoColClass}>
-              <Field label="Icon">
+            <Field label="Icon">
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#71803F]/25 bg-[#F5EEE1]/55 text-[#5F7138]"
+                  aria-hidden
+                >
+                  <PacianoValueIcon type={item.icon_key} />
+                </span>
                 <select
-                  className={inputClass}
+                  className={`${inputClass} min-w-0 flex-1`}
                   value={item.icon_key}
                   onChange={(e) =>
                     setItems((list) =>
@@ -547,29 +685,29 @@ export function AdminAboutValuesEditor() {
                     )
                   }
                 >
-                  {VALUE_ICON_OPTIONS.map((opt) => (
+                  {PACIANO_VALUE_ICON_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Title">
-                <input
-                  className={inputClass}
-                  value={item.title}
-                  onChange={(e) =>
-                    setItems((list) =>
-                      list.map((i) =>
-                        i.id === item.id
-                          ? { ...i, title: e.target.value }
-                          : i,
-                      ),
-                    )
-                  }
-                />
-              </Field>
-            </div>
+              </div>
+            </Field>
+            <Field label="Title">
+              <input
+                className={inputClass}
+                value={item.title}
+                onChange={(e) =>
+                  setItems((list) =>
+                    list.map((i) =>
+                      i.id === item.id
+                        ? { ...i, title: e.target.value }
+                        : i,
+                    ),
+                  )
+                }
+              />
+            </Field>
             <Field label="Description">
               <textarea
                 className={`${inputClass} min-h-[88px]`}

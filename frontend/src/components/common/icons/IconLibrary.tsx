@@ -2,16 +2,27 @@
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import * as Icons from "./index";
+import {
+  PACIANO_VALUE_ICON_OPTIONS,
+  PacianoValueIcon,
+} from "./paciano";
 
 type IconCategory = {
   name: string;
   icons: string[];
 };
 
+const lucideIconNames = Object.keys(Icons).filter(
+  (key) => typeof Icons[key as keyof typeof Icons] === "function",
+);
+
 const categories: IconCategory[] = [
   {
     name: "All",
-    icons: Object.keys(Icons),
+    icons: [
+      ...lucideIconNames,
+      ...PACIANO_VALUE_ICON_OPTIONS.map((o) => o.value),
+    ],
   },
   {
     name: "Dashboard",
@@ -41,6 +52,10 @@ const categories: IconCategory[] = [
     name: "Others",
     icons: ["Settings", "LogOut", "Calendar", "Clock", "Check", "XCircle", "AlertCircle", "Link", "Lock", "Unlock", "Star", "Heart", "FileText"],
   },
+  {
+    name: "Paciano (About)",
+    icons: PACIANO_VALUE_ICON_OPTIONS.map((o) => o.value),
+  },
 ];
 
 const IconLibrary = () => {
@@ -61,7 +76,10 @@ const IconLibrary = () => {
   }, [search, activeCategory]);
 
   const copyImport = async (name: string) => {
-    const importText = `import { ${name} } from "@/components/common/icons";`;
+    const isPaciano = PACIANO_VALUE_ICON_OPTIONS.some((o) => o.value === name);
+    const importText = isPaciano
+      ? `import { PacianoValueIcon } from "@/components/common/icons/paciano";\n// <PacianoValueIcon type="${name}" />`
+      : `import { ${name} } from "@/components/common/icons";`;
 
     try {
       await navigator.clipboard.writeText(importText);
@@ -114,7 +132,12 @@ const IconLibrary = () => {
       {/* Icon Grid */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
         {filteredIcons.map((name) => {
-          const Icon = Icons[name as keyof typeof Icons] as LucideIcon;
+          const pacianoOpt = PACIANO_VALUE_ICON_OPTIONS.find(
+            (o) => o.value === name,
+          );
+          const Lucide = !pacianoOpt
+            ? (Icons[name as keyof typeof Icons] as LucideIcon | undefined)
+            : undefined;
 
           return (
             <button
@@ -124,10 +147,16 @@ const IconLibrary = () => {
               title={`Copy ${name} import`}
               className="flex flex-col items-center justify-center gap-2 p-4 border rounded-lg hover:bg-gray-100 hover:border-gray-400 transition"
             >
-              <Icon size={26} strokeWidth={1.8} />
+              {pacianoOpt ? (
+                <span className="text-[#5F7138]">
+                  <PacianoValueIcon type={pacianoOpt.value} />
+                </span>
+              ) : Lucide ? (
+                <Lucide size={26} strokeWidth={1.8} />
+              ) : null}
 
               <span className="text-xs text-center break-all">
-                {name}
+                {pacianoOpt?.label ?? name}
               </span>
 
               <span className="text-[10px] text-gray-500">

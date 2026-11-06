@@ -127,7 +127,7 @@ class HomeSectionsAdminController extends Controller
     {
         $this->ensurePermission($request, 'about');
 
-        if (! in_array($sectionKey, ['story', 'our_place'], true)) {
+        if (! in_array($sectionKey, ['story', 'our_place', 'hero'], true)) {
             abort(404);
         }
 

@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Home, ListOrdered, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { AdminImageUpload } from "../../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../../api/client";
 import {
-  AdminInlineTabs,
-  AdminPageFrame,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabbedCard,
+} from "../../components/AdminCmsPageLayout";
+import {
   Field,
   cardGridClass,
-  formTwoColClass,
+  formTwoColPairedRowClass,
   inputClass,
   saveCardButtonClass,
 } from "../../components/AdminSectionLayout";
@@ -105,7 +108,7 @@ export function AdminExperiencesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#657067]">
+      <div className="flex w-full max-w-[1400px] items-center gap-2 py-6 text-sm text-[#657067]">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading…
       </div>
     );
@@ -114,13 +117,13 @@ export function AdminExperiencesPage() {
   const inner = (
     <>
       {tab === "home" ? (
-        <div className="admin-card rounded-2xl p-6">
+        <div>
           <p className="text-sm admin-card-muted mb-4">
             The small label “Experiences That Stay With You” stays fixed on the
             website. Edit the large heading here; use the “Each experience” tab
             for the five items.
           </p>
-          <div className={formTwoColClass}>
+          <div className={formTwoColPairedRowClass}>
             <Field label="Main heading (first line)">
               <input
                 className={inputClass}
@@ -217,17 +220,22 @@ export function AdminExperiencesPage() {
   );
 
   return (
-    <AdminPageFrame>
-      <h1 className="text-2xl font-bold admin-page-title mb-2">Experiences</h1>
-      <AdminInlineTabs
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Experiences"
+        subtitle="The small label on the website stays fixed. Edit the large heading and the five experience cards here."
+        badge="Page Settings"
+      />
+      <AdminCmsTabbedCard
         tabs={[
-          { id: "home", label: "Section heading" },
-          { id: "items", label: "Each experience" },
+          { id: "home", label: "Section heading", icon: Home },
+          { id: "items", label: "Each experience", icon: ListOrdered },
         ]}
         activeTab={tab}
         onTabChange={(id) => setTab(id as ExperiencesTabId)}
-      />
-      {inner}
-    </AdminPageFrame>
+      >
+        {inner}
+      </AdminCmsTabbedCard>
+    </AdminCmsPageRoot>
   );
 }

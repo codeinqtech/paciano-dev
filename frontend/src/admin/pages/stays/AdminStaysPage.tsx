@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { BedDouble, Home, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { AdminImageUpload } from "../../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../../api/client";
@@ -7,7 +7,7 @@ import {
   Field,
   TabbedPageShell,
   cardGridTwoColClass,
-  formTwoColClass,
+  formTwoColPairedRowClass,
   inputClass,
   saveCardButtonClass,
 } from "../../components/AdminSectionLayout";
@@ -126,7 +126,7 @@ export function AdminStaysPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#657067]">
+      <div className="flex w-full max-w-[1400px] items-center gap-2 py-6 text-sm text-[#657067]">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading…
       </div>
     );
@@ -135,17 +135,18 @@ export function AdminStaysPage() {
   return (
     <TabbedPageShell
       pageTitle="Our Stays"
+      subtitle="Edit the stays section intro on the home page and each stay card."
       wide={tab === "items"}
       tabs={[
-        { id: "home", label: "Home section" },
-        { id: "items", label: "Each stay" },
+        { id: "home", label: "Home section", icon: Home },
+        { id: "items", label: "Each stay", icon: BedDouble },
       ]}
       activeTab={tab}
       onTabChange={(id) => setTab(id as StaysTabId)}
     >
       {tab === "home" ? (
-        <div className="admin-card rounded-2xl p-6">
-          <div className={formTwoColClass}>
+        <div>
+          <div className={formTwoColPairedRowClass}>
             <Field label="Main heading (first line)">
               <input
                 className={inputClass}
@@ -190,7 +191,7 @@ export function AdminStaysPage() {
               <p className="mb-3 text-sm font-medium capitalize text-[#332C26]">
                 {item.slug.replace(/-/g, " ")} stay
               </p>
-              <div className={formTwoColClass}>
+              <div className={formTwoColPairedRowClass}>
                 <Field label="Button name (large text on the home page tabs)">
                   <input
                     className={inputClass}
@@ -224,7 +225,7 @@ export function AdminStaysPage() {
                   />
                 </Field>
               </div>
-              <div className={formTwoColClass}>
+              <div className={formTwoColPairedRowClass}>
                 <Field label="Small line above the photo title">
                   <input
                     className={inputClass}

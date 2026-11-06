@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ExternalLink, Star } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
-import botanicalLeaves from "@/images/testimonial-leaf.png";
+import botanicalLeaves from "@/images/about/about-guest-leaf.png";
 import leafWhisper from "@/images/button-leaf.png";
 import { GoogleGuestAvatar } from "@/components/GoogleGuestAvatar";
 import { useAboutGoogleReviews } from "@/hooks/useAboutGoogleReviews";
