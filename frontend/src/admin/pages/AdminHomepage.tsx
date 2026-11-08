@@ -8,12 +8,17 @@ import {
 } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_MAX_MB,
+  VIDEO_UPLOAD_MAX_BYTES,
+  VIDEO_UPLOAD_MAX_MB,
+} from "../constants/mediaUploadLimits";
 
-const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
-const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 /** Homepage hero allows one active banner slide at a time in admin. */
 const BANNER_MAX_SLIDES = 1;
-const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
 
@@ -122,6 +127,11 @@ export default function AdminHomepage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [reviewSaving, setReviewSaving] = useState(false);
 
+  const { paginatedItems: pagedBanners, paginationProps: bannerPagination } =
+    useClientPagination(banners, { pageSize: 5 });
+  const { paginatedItems: pagedReviews, paginationProps: reviewPagination } =
+    useClientPagination(reviews, { pageSize: 10 });
+
   const loadBanners = useCallback(async () => {
     const res = await apiRequest<{ data: BannerRow[] }>(
       "/admin/home/banner-slides",
@@ -196,12 +206,12 @@ export default function AdminHomepage() {
       return;
     }
     const maxBytes =
-      bannerType === "video" ? BANNER_VIDEO_MAX_BYTES : BANNER_IMAGE_MAX_BYTES;
+      bannerType === "video" ? VIDEO_UPLOAD_MAX_BYTES : IMAGE_UPLOAD_MAX_BYTES;
     if (bannerFile.size > maxBytes) {
       toast.error(
         bannerType === "video"
-          ? `Video must be under ${BANNER_VIDEO_MAX_BYTES / (1024 * 1024)} MB. Compress the file and try again.`
-          : `Image must be under ${BANNER_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`,
+          ? `Video must be ${VIDEO_UPLOAD_MAX_MB} MB or less before upload.`
+          : `Image must be ${IMAGE_UPLOAD_MAX_MB} MB or less before upload.`,
       );
       return;
     }
@@ -335,10 +345,8 @@ export default function AdminHomepage() {
       toast.error("Video file is required");
       return;
     }
-    if (videoFile && videoFile.size > REVIEW_VIDEO_MAX_BYTES) {
-      toast.error(
-        `Video must be under ${REVIEW_VIDEO_MAX_BYTES / (1024 * 1024)} MB.`,
-      );
+    if (videoFile && videoFile.size > VIDEO_UPLOAD_MAX_BYTES) {
+      toast.error(`Video must be ${VIDEO_UPLOAD_MAX_MB} MB or less before upload.`);
       return;
     }
     setReviewSaving(true);
@@ -413,13 +421,13 @@ export default function AdminHomepage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="w-full max-w-[1400px] space-y-6">
       <div>
         <h1 className="text-2xl font-bold admin-page-title">Homepage</h1>
         <p className="text-sm admin-card-muted mt-1">
           Manage banner slides, the location section, and guest review videos.
-          Images are stored as WebP; videos are compressed when ffmpeg is
-          available on the server.
+          Images: max 2 MB upload, saved as WebP. Videos: max 50 MB upload, then
+          compressed with ffmpeg when available on the server.
         </p>
       </div>
 
@@ -493,7 +501,7 @@ export default function AdminHomepage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {banners.map((row) => (
+                    {pagedBanners.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -532,6 +540,9 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {banners.length > 0 ? (
+              <ListPagination {...bannerPagination} itemLabel="slides" />
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -786,7 +797,7 @@ export default function AdminHomepage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reviews.map((row) => (
+                    {pagedReviews.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -828,6 +839,9 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {reviews.length > 0 ? (
+              <ListPagination {...reviewPagination} itemLabel="videos" />
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -897,7 +911,7 @@ export default function AdminHomepage() {
             hint={
               bannerType === "image"
                 ? "PNG/JPG — saved as WebP"
-                : "MP4/MOV up to 500 MB. Videos 100 MB+ are compressed on the server (requires ffmpeg). Large uploads may take several minutes."
+                : `MP4/MOV up to ${VIDEO_UPLOAD_MAX_MB} MB. Compressed on the server when ffmpeg is available.`
             }
             file={bannerFile}
             onFileChange={(f) => {
@@ -1013,7 +1027,7 @@ export default function AdminHomepage() {
               <MediaFileUploadZone
                 variant="video"
                 title="Video file"
-                hint="Up to 500 MB. Files 100 MB+ are compressed on upload when ffmpeg is available."
+                hint={`Up to ${VIDEO_UPLOAD_MAX_MB} MB. Compressed on upload when ffmpeg is available.`}
                 required={!reviewForm.id}
                 optional={!!reviewForm.id}
                 file={videoFile}

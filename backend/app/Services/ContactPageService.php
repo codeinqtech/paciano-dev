@@ -5,24 +5,18 @@ namespace App\Services;
 use App\Models\ContactPageContent;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 use Throwable;
 
 class ContactPageService
 {
+    public function __construct(private HomeMediaService $media) {}
+
+    /** @var array<string, 'image'|'video'> */
     private array $mediaFields = [
-        'banner_image' => [
-            'folder' => 'uploads/contact/images',
-        ],
-        'connect_with_us_image_one' => [
-            'folder' => 'uploads/contact/images',
-        ],
-        'connect_with_us_image_two' => [
-            'folder' => 'uploads/contact/images',
-        ],
-        'until_we_meet_video' => [
-            'folder' => 'media/contact',
-        ],
+        'banner_image' => 'image',
+        'connect_with_us_image_one' => 'image',
+        'connect_with_us_image_two' => 'image',
+        'until_we_meet_video' => 'video',
     ];
 
     public function getContent(): ContactPageContent
@@ -38,32 +32,24 @@ class ContactPageService
         $newFiles = [];
 
         try {
-            foreach ($this->mediaFields as $field => $config) {
-
+            foreach ($this->mediaFields as $field => $kind) {
                 if (
-                    !isset($data[$field]) ||
-                    !$data[$field] instanceof UploadedFile
+                    ! isset($data[$field]) ||
+                    ! $data[$field] instanceof UploadedFile
                 ) {
                     continue;
                 }
 
+                /** @var UploadedFile $file */
                 $file = $data[$field];
 
-                $folder = $config['folder'];
-
-                $directory = public_path($folder);
-
-                File::ensureDirectoryExists($directory);
-
-                $extension = strtolower(
-                    $file->getClientOriginalExtension()
-                );
-
-                $filename = Str::uuid() . '.' . $extension;
-
-                $file->move($directory, $filename);
-
-                $newPath = $folder . '/' . $filename;
+                if ($kind === 'image') {
+                    $stored = $this->media->storeContactPageImage($file);
+                    $newPath = $stored['file_path'];
+                } else {
+                    $stored = $this->media->storeContactPageVideo($file);
+                    $newPath = $stored['file_path'];
+                }
 
                 $newFiles[] = $newPath;
 
@@ -77,8 +63,6 @@ class ContactPageService
             $content->update($data);
 
         } catch (Throwable $exception) {
-
-            // Remove newly uploaded files if database update fails.
             foreach ($newFiles as $path) {
                 File::delete(public_path($path));
             }
@@ -86,7 +70,6 @@ class ContactPageService
             throw $exception;
         }
 
-        // Delete previous files only after successful DB update.
         foreach ($oldFiles as $path) {
             if (
                 str_starts_with($path, 'uploads/contact/images/') ||

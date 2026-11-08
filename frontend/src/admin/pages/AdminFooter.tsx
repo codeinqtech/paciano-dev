@@ -7,6 +7,8 @@ import {
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
 
 type TabId = "brand" | "map" | "social" | "mapRows";
 
@@ -94,6 +96,13 @@ export default function AdminFooter() {
     sort_order: 0,
   });
   const [infoSaving, setInfoSaving] = useState(false);
+
+  const { paginatedItems: pagedSocial, paginationProps: socialPagination } =
+    useClientPagination(social, { pageSize: 10 });
+  const {
+    paginatedItems: pagedLocationInfo,
+    paginationProps: locationPagination,
+  } = useClientPagination(locationInfo, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -261,7 +270,7 @@ export default function AdminFooter() {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full max-w-[1400px] space-y-6">
       <div>
         <h1 className="text-2xl font-bold admin-page-title">Footer content</h1>
         <p className="text-sm admin-card-muted mt-1">
@@ -417,13 +426,16 @@ export default function AdminFooter() {
           </div>
           <div className="admin-card overflow-hidden rounded-2xl">
             <SocialTable
-              rows={social}
+              rows={pagedSocial}
               onEdit={(row) => {
                 setSocialForm({ ...row });
                 setSocialModal(true);
               }}
               onRemove={removeSocial}
             />
+            {social.length > 0 ? (
+              <ListPagination {...socialPagination} itemLabel="links" />
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -466,7 +478,7 @@ export default function AdminFooter() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {locationInfo.map((row) => (
+                {pagedLocationInfo.map((row) => (
                   <tr key={row.id}>
                     <td className="px-6 py-4 text-[#6E655C]">{row.sort_order}</td>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
@@ -501,6 +513,9 @@ export default function AdminFooter() {
                 ))}
               </tbody>
             </table>
+            {locationInfo.length > 0 ? (
+              <ListPagination {...locationPagination} itemLabel="rows" />
+            ) : null}
           </div>
         </section>
       ) : null}

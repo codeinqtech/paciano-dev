@@ -13,7 +13,7 @@ class SiteNavigationMenuSeeder extends Seeder
             ['label' => 'Stay', 'url' => '/stay', 'sort_order' => 10],
             ['label' => 'Experiences', 'url' => '#experiences', 'sort_order' => 20],
             ['label' => 'Dining', 'url' => '#dining', 'sort_order' => 30],
-            ['label' => 'About Us', 'url' => '#about', 'sort_order' => 40],
+            ['label' => 'About Us', 'url' => '/about', 'sort_order' => 40],
             ['label' => 'Contact', 'url' => '/contact', 'sort_order' => 50],
         ];
 

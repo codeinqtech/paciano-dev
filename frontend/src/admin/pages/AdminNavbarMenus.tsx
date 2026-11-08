@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
 
 type MenuRow = {
   id: number;
@@ -33,6 +35,9 @@ export default function AdminNavbarMenus() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  const { paginatedItems: pagedItems, paginationProps: menuPagination } =
+    useClientPagination(items, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,7 +164,7 @@ export default function AdminNavbarMenus() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {items.map((row) => (
+                {pagedItems.map((row) => (
                   <tr key={row.id}>
                     <td className="px-6 py-4 text-[#6E655C]">{row.sort_order}</td>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
@@ -197,6 +202,9 @@ export default function AdminNavbarMenus() {
             </table>
           </div>
         )}
+        {!loading && items.length > 0 ? (
+          <ListPagination {...menuPagination} itemLabel="menu items" />
+        ) : null}
       </div>
 
       <p className="mt-4 text-xs admin-card-muted max-w-2xl">
