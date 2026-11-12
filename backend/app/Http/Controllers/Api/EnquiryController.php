@@ -16,9 +16,10 @@ class EnquiryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:150',
-            'phone' => 'required|string|max:25',
-            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:25',
+            'email' => 'required|email|max:255',
             'message' => 'required|string|max:2000',
+            'preferred_dates' => 'nullable|string|max:255',
         ]);
 
         $enquiry = $this->enquiryService->create($validated);

@@ -6,7 +6,10 @@ class MediaUploadLimits
 {
     public static function imageMaxKb(): int
     {
-        return (int) config('media_upload.image_max_kb', 2048);
+        return (int) env(
+            'IMAGE_MAX_KB',
+            config('media_upload.image_max_kb', 2048)
+        );
     }
 
     public static function videoMaxKb(): int

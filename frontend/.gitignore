@@ -18,3 +18,14 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+/.devcontainer/
+compose.yaml
+Dockerfile*
+*.yml
+*.dockerignore
+.github
+.npmrc
+.editorconfig
+.gitattributes
+CLAUDE.md

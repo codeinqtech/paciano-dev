@@ -91,4 +91,15 @@ class ContactDetailController extends Controller
             'message' => 'Contact detail deleted successfully.',
         ]);
     }
+
+    /* *
+     * Public API: List contact details.
+     */
+    public function indexPublic(): AnonymousResourceCollection
+    {
+        $details = $this->contactDetailService->getAll([
+            'is_active' => true,
+        ]);   
+        return ContactDetailResource::collection($details);
+    }
 }

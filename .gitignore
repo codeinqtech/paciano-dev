@@ -67,7 +67,6 @@ Thumbs.db
 Desktop.ini
 Dockerfile*
 
-
 # =========================
 # Logs
 # =========================
@@ -124,3 +123,6 @@ pnpm-debug.log*
 # Local Laravel public hero videos
 /backend/public/media/hero-videos/*
 !/backend/public/media/hero-videos/.gitkeep
+
+4k_Thetestdata.mp4
+contact-video.mov
