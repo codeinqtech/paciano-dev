@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Support\MediaUploadLimits;
 
 class ContactPageContentResource extends JsonResource
 {
@@ -47,6 +48,7 @@ class ContactPageContentResource extends JsonResource
             // Video section
             'until_we_meet_text' => $this->until_we_meet_text,
             'until_we_meet_video' => $this->mediaUrl($this->until_we_meet_video),
+            'video_max_kb' => MediaUploadLimits::videoMaxKb(),
         ];
     }
 }

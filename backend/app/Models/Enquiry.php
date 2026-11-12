@@ -10,6 +10,7 @@ class Enquiry extends Model
         'name',
         'phone',
         'email',
+        'preferred_dates',
         'message',
         'status',
         'whatsapp_status',

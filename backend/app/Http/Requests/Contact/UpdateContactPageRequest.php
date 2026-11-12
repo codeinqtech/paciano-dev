@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Contact;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\MediaUploadLimits;
 
 class UpdateContactPageRequest extends FormRequest
 {

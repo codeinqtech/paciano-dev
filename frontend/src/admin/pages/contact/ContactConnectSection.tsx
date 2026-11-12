@@ -65,7 +65,7 @@ export default function ContactConnectSection({
 
       <div className="grid gap-5 md:grid-cols-2">
         <AdminImageUpload
-          title="Image One"
+          title="Big Image"
           file={imageOneFile}
           existingUrl={mediaUrls.connect_with_us_image_one}
           optional
@@ -73,7 +73,7 @@ export default function ContactConnectSection({
         />
 
         <AdminImageUpload
-          title="Image Two"
+          title="Small Image"
           file={imageTwoFile}
           existingUrl={mediaUrls.connect_with_us_image_two}
           optional

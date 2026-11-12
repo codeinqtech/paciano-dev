@@ -1,13 +1,59 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import contactVideo from "@/videos/contact-video.MOV";
 import storyImage from "@/images/contact/video-banner.png";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 export default function ContactStory() {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [storyVideo, setStoryVideo] = useState(contactVideo);
+  const [storyText, setStoryText] = useState(
+    "May the memories of your stay in Paciano linger long after you leave, and they stay in your heart."
+  );
 
-  const storyVideo = "/videos/contact-video.MOV";
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchContactVideo = async () => {
+      try {
+        const response = await fetch(
+          `${getApiBaseUrl()}/contact-page`,
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch contact page video.");
+        }
+
+        const result = await response.json();
+        const data = result.data ?? result;
+
+        if (!cancelled) {
+          if (data.until_we_meet_video) {
+            setStoryVideo(data.until_we_meet_video);
+          }
+
+          if (data.until_we_meet_text) {
+            setStoryText(data.until_we_meet_text);
+          }
+        }
+
+      } catch (error) {
+        console.error("Contact video fetch error:", error);
+      }
+    };
+
+    fetchContactVideo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handlePlay = async () => {
     setIsPlaying(true);
@@ -75,23 +121,7 @@ export default function ContactStory() {
     
   " 
       >*/}
-      <div
-        className="
-    relative
-    z-20
-    flex
-    min-h-[390px]
-    flex-col
-    items-center
-    px-6
-    pt-6
-    text-center
-    sm:min-h-[420px]
-    sm:pt-8
-    lg:min-h-[435px]
-    lg:pt-10
-  "
-      >
+      <div className="relative z-20 flex min-h-[390px] flex-col items-center px-6 pt-6 text-center sm:min-h-[420px] sm:pt-8 lg:min-h-[435px] lg:pt-10">
         {/* Leaf */}
         <svg
           viewBox="0 0 32 32"
@@ -176,22 +206,21 @@ export default function ContactStory() {
             mx-auto
             mt-3
             max-w-lg
+            whitespace-pre-line
             font-manrope
             text-[0.88rem]
             leading-relaxed
             text-[#66645c]
             sm:text-[0.9rem]
-            "
+          "
         >
-          Some places don’t just stay in your photographs,
-          <br className="hidden sm:block" />
-          they stay in your heart.
+          {storyText}
         </motion.p>
         {/* Play */}
         <motion.button
           type="button"
-          onClick={handlePlay}
-          aria-label="Watch Our Story"
+          onClick={isPlaying ? handleClose : handlePlay}
+          aria-label={isPlaying ? "Stop video" : "Watch Our Story"}
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
@@ -219,9 +248,24 @@ export default function ContactStory() {
             hover:bg-white
           "
         >
-          <svg viewBox="0 0 24 24" className="ml-1 h-5 w-5 fill-[#102d22]">
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          {isPlaying ? (
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6 stroke-[#102d22]"
+              fill="none"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              className="ml-1 h-5 w-5 fill-[#102d22]"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
         </motion.button>
         <motion.span
           initial={{ opacity: 0, y: 8 }}
@@ -234,7 +278,7 @@ export default function ContactStory() {
           }}
           className="mt-4 text-[10px] font-medium uppercase tracking-[0.3em] text-white"
         >
-          Watch Our Story
+          {isPlaying ? "Stop Our Story" : "Watch Our Story"}
         </motion.span>
       </div>
 
