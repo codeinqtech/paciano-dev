@@ -1,12 +1,30 @@
 import type { ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
-/** Full usable width beside the admin sidebar (up to ~1400px). */
-export const adminPageWidthClass = "w-full max-w-[1400px]";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabBar,
+  AdminCmsTabbedCard,
+  adminPageWidthClass,
+  type AdminCmsTabItem,
+} from "./AdminCmsPageLayout";
+
+export { adminPageWidthClass };
 
 /** Two form fields per row from md breakpoint up. */
 export const formTwoColClass =
   "grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0 items-start";
+
+/**
+ * Use only when pairing two similar controls (e.g. two single-line inputs).
+ * If label length or control height differs (textarea vs input, upload vs text),
+ * stack fields vertically instead — do not use this class for that row.
+ */
+export const formTwoColPairedRowClass =
+  "grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-start";
 
 export function AdminPageFrame({
   children,
@@ -24,6 +42,9 @@ export function AdminPageFrame({
 
 export function TabbedPageShell({
   pageTitle,
+  subtitle,
+  badge = "Page Settings",
+  headerActions,
   tabs,
   activeTab,
   onTabChange,
@@ -32,7 +53,10 @@ export function TabbedPageShell({
   children,
 }: {
   pageTitle: string;
-  tabs: { id: string; label: string }[];
+  subtitle?: ReactNode;
+  badge?: ReactNode;
+  headerActions?: ReactNode;
+  tabs: readonly AdminCmsTabItem[];
   activeTab: string;
   onTabChange: (id: string) => void;
   wide?: boolean;
@@ -40,50 +64,46 @@ export function TabbedPageShell({
   children: ReactNode;
 }) {
   return (
-    <div className={adminPageWidthClass}>
-      <h1 className="text-2xl font-bold admin-page-title mb-2">{pageTitle}</h1>
-      {!hideTabs ? (
-        <div className="flex flex-wrap gap-1 border-b border-[#E8E0D4] mb-8">
-          {tabs.map((tab) => {
-            const active = tab.id === activeTab;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange(tab.id)}
-                className={`px-3 py-2 text-sm font-semibold transition-colors ${
-                  active
-                    ? "border-b-2 border-[#71803F] text-[#332C26]"
-                    : "text-[#657067] hover:text-[#332C26]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title={pageTitle}
+        subtitle={subtitle}
+        badge={badge}
+        actions={headerActions}
+      />
+      {hideTabs ? (
+        <AdminCmsPageCard>
+          <AdminCmsCardBody>{children}</AdminCmsCardBody>
+        </AdminCmsPageCard>
       ) : (
-        <div className="flex gap-2 border-b border-[#E8E0D4] mb-8">
-          <span className="px-3 py-2 text-sm font-semibold border-b-2 border-[#71803F] text-[#332C26]">
-            Home section
-          </span>
-        </div>
+        <AdminCmsTabbedCard
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+        >
+          {children}
+        </AdminCmsTabbedCard>
       )}
-      {children}
-    </div>
+    </AdminCmsPageRoot>
   );
 }
 
 export function SectionShell({
   pageTitle,
+  subtitle,
+  badge,
   children,
 }: {
   pageTitle: string;
+  subtitle?: ReactNode;
+  badge?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <TabbedPageShell
       pageTitle={pageTitle}
+      subtitle={subtitle}
+      badge={badge}
       tabs={[{ id: "home", label: "Home section" }]}
       activeTab="home"
       onTabChange={() => undefined}
@@ -137,26 +157,17 @@ export function AdminInlineTabs({
   activeTab,
   onTabChange,
 }: {
-  tabs: readonly { id: string; label: string }[];
+  tabs: readonly AdminCmsTabItem[];
   activeTab: string;
   onTabChange: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1 border-b border-[#E8E0D4] mb-6">
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          onClick={() => onTabChange(t.id)}
-          className={`px-3 py-2 text-sm font-semibold ${
-            activeTab === t.id
-              ? "border-b-2 border-[#71803F] text-[#332C26]"
-              : "text-[#657067] hover:text-[#332C26]"
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
+    <AdminCmsTabBar
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+    />
   );
 }
+
+export type { AdminCmsTabItem };

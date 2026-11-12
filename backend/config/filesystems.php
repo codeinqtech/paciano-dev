@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Hero banner videos: store next to the Laravel app (../media/hero-videos from backend/)
+ * so staging serves from https://site.com/media/hero-videos/ instead of backend/public/...
+ */
+if (! function_exists('defaultHeroVideoDiskRoot')) {
+    function defaultHeroVideoDiskRoot(): string
+    {
+        return dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'hero-videos';
+    }
+}
+
 return [
 
     /*
@@ -61,10 +72,10 @@ return [
             'report' => false,
         ],
 
-        // Hero banner video storage (defaults: backend/public/media/hero-videos)
+        // Hero banner video storage (defaults: ../media/hero-videos from backend root = site docroot/media)
         'hero_videos' => [
             'driver' => 'local',
-            'root' => env('HERO_VIDEO_PATH') ?: public_path('media/hero-videos'),
+            'root' => env('HERO_VIDEO_PATH') ?: defaultHeroVideoDiskRoot(),
             'url' => env('HERO_VIDEO_URL'),
             'visibility' => 'public',
             'throw' => true,

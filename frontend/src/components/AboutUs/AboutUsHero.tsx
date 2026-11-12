@@ -7,39 +7,47 @@ import {
   useTransform,
 } from "framer-motion";
 
-import bannerAboutImg from "@/images/contact/contact-banner.png";
+import bannerAboutImg from "@/images/about/about-banner.png";
 import contactLeafIcon from "@/images/contact/paciano-leaf-gold-transparent.png";
+import type { AboutContentBlock } from "@/hooks/useAboutPageContent";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 
 const PARCHMENT = "#eee9dc";
 const GOLD = "#D6BE84";
 const OLIVE = "#8faa42";
 
+const DEFAULT_EYEBROW = "THE SOUL OF PACIANO";
+const DEFAULT_HEADLINE_1 = "Where Nature Whispers,";
+const DEFAULT_HEADLINE_ACCENT = "Luxury Lingers.";
+const DEFAULT_BODY =
+  "An intimate escape where refined comfort, natural beauty, and thoughtful hospitality come together in perfect harmony.";
+
 const contentSequence = {
-    hidden: {},
-    visible: {
-      transition: {
-        delayChildren: 0.4,
-        staggerChildren: 0.55,
-      },
+  hidden: {},
+  visible: {
+    transition: {
+      delayChildren: 0.4,
+      staggerChildren: 0.55,
     },
-  };
+  },
+};
 
 const textReveal = {
-    hidden: {
-      opacity: 0,
-      y: 24,
-      filter: "blur(7px)",
+  hidden: {
+    opacity: 0,
+    y: 24,
+    filter: "blur(7px)",
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 1.6,
+      ease: [0.16, 1, 0.3, 1] as const,
     },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: {
-        duration: 1.6,
-        ease: [0.16, 1, 0.3, 1] as const,
-      },
-    },
-  };
+  },
+};
 
 function CreamJoinFromAbove() {
   return (
@@ -61,9 +69,23 @@ function CreamJoinFromAbove() {
   );
 }
 
-export default function AboutUsHero() {
+export default function AboutUsHero({
+  content,
+}: {
+  content?: AboutContentBlock | null;
+}) {
   const ref = useRef<HTMLElement | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const eyebrow = content?.eyebrow?.trim() || DEFAULT_EYEBROW;
+  const headline1 = content?.heading_line_1?.trim() || DEFAULT_HEADLINE_1;
+  const headlineAccent =
+    content?.heading_accent?.trim() || DEFAULT_HEADLINE_ACCENT;
+  const bodyText = content?.body_text?.trim() || DEFAULT_BODY;
+
+  const bannerSrc = content?.image_url
+    ? (resolveMediaUrl(content.image_url) ?? content.image_url)
+    : bannerAboutImg;
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -71,11 +93,7 @@ export default function AboutUsHero() {
   });
 
   const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "5%"]);
-  const imageScale = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [1.04, 1.09]
-  );
+  const imageScale = useTransform(scrollYProgress, [0, 1], [1.04, 1.09]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -95,32 +113,24 @@ export default function AboutUsHero() {
         [@media(orientation:landscape)_and_(max-height:500px)]:py-16
       "
     >
-      {/* CINEMATIC BACKGROUND */}
       <motion.div
         className="absolute inset-0 -z-10 overflow-hidden"
         initial={instant ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        // transition={{ duration: instant ? 0 : 1.4 }}
         transition={{
-            duration: instant ? 0 : 2.2,
-            ease: [0.16, 1, 0.3, 1],
-          }}
+          duration: instant ? 0 : 2.2,
+          ease: [0.16, 1, 0.3, 1],
+        }}
         style={{
           y: reduceMotion ? 0 : imageY,
           scale: reduceMotion ? 1.02 : imageScale,
         }}
       >
         <img
-          src={bannerAboutImg}
+          src={bannerSrc}
           alt="The natural surroundings and architecture of Paciano"
           fetchPriority="high"
-        //   className="
-        //     h-full w-full object-cover
-        //     object-[58%_center]
-        //     sm:object-[54%_center]
-        //     lg:object-center
-        //   "
-        className="h-full w-full object-cover
+          className="h-full w-full object-cover
             object-[60%_center]
             sm:object-[54%_center]
             lg:object-center"
@@ -130,17 +140,11 @@ export default function AboutUsHero() {
         />
       </motion.div>
 
-      {/* WARM CINEMATIC GRADING */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-[1]"
-        // style={{
-        //   background:
-        //     "linear-gradient(180deg, rgba(8,24,19,.42) 0%, rgba(8,24,19,.12) 32%, rgba(5,20,15,.32) 72%, rgba(5,20,15,.56) 100%)",
-        // }}
       />
 
-      {/* RESPONSIVE TEXT LEGIBILITY */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-[2]"
@@ -150,7 +154,6 @@ export default function AboutUsHero() {
         }}
       />
 
-      {/* SYNCHRONIZED CONTENT SEQUENCE */}
       <motion.div
         variants={contentSequence}
         initial="hidden"
@@ -162,7 +165,6 @@ export default function AboutUsHero() {
           [@media(orientation:landscape)_and_(max-height:500px)]:py-2
         "
       >
-        {/* EYEBROW */}
         <motion.div
           variants={textReveal}
           className="
@@ -185,7 +187,7 @@ export default function AboutUsHero() {
             "
             style={{ color: "#F5E2B5" }}
           >
-            THE SOUL OF PACIANO
+            {eyebrow}
           </span>
 
           <span
@@ -196,12 +198,11 @@ export default function AboutUsHero() {
           />
         </motion.div>
 
-        {/* FIRST HEADLINE LINE // text-[clamp(2.25rem,7.3vw,5.25rem)]*/}
         <motion.h1
           variants={textReveal}
           className="
             w-full max-w-[1000px]
-            font-['Cormorant_Garamond']            
+            font-['Cormorant_Garamond']
             text-[clamp(1.8rem,7.3vw,4.25rem)]
             font-medium leading-[0.98]
             tracking-[-0.035em] text-white
@@ -211,10 +212,9 @@ export default function AboutUsHero() {
             textShadow: "0 4px 30px rgba(0,0,0,.35)",
           }}
         >
-          Where Nature Whispers,
+          {headline1}
         </motion.h1>
 
-        {/* SECOND HEADLINE LINE   text-[clamp(2.3rem,7.5vw,5.35rem)]*/}
         <motion.p
           variants={textReveal}
           className="
@@ -230,10 +230,9 @@ export default function AboutUsHero() {
             textShadow: "0 4px 28px rgba(0,0,0,.35)",
           }}
         >
-          Luxury Lingers.
+          {headlineAccent}
         </motion.p>
 
-        {/* GOLD LEAF DIVIDER */}
         <motion.div
           variants={textReveal}
           className="
@@ -264,9 +263,9 @@ export default function AboutUsHero() {
             initial={instant ? false : { opacity: 0, scale: 0.75, rotate: -10 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{
-                duration: instant ? 0 : 1.4,
-                delay: instant ? 0 : 2.0,
-                ease: [0.16, 1, 0.3, 1],
+              duration: instant ? 0 : 1.4,
+              delay: instant ? 0 : 2.0,
+              ease: [0.16, 1, 0.3, 1],
             }}
             className="
               h-7 w-7 shrink-0 object-contain
@@ -291,7 +290,6 @@ export default function AboutUsHero() {
           />
         </motion.div>
 
-        {/* DESCRIPTION — LAST TEXT ELEMENT */}
         <motion.p
           variants={textReveal}
           className="
@@ -307,12 +305,10 @@ export default function AboutUsHero() {
             textShadow: "0 2px 14px rgba(0,0,0,.5)",
           }}
         >
-          An intimate escape where refined comfort, natural beauty, and
-          thoughtful hospitality come together in perfect harmony.
+          {bodyText}
         </motion.p>
       </motion.div>
 
-      {/* SCROLL INDICATOR */}
       <motion.div
         initial={instant ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}

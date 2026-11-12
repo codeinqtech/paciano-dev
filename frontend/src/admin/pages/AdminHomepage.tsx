@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Film, ImageIcon, Plus, Trash2, Pencil, X } from "lucide-react";
+import {
+  Film,
+  ImageIcon,
+  MapPin,
+  Plus,
+  Trash2,
+  Pencil,
+  Video,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   MediaFileUploadZone,
@@ -17,6 +26,12 @@ import {
   VIDEO_UPLOAD_MAX_MB,
 } from "../constants/mediaUploadLimits";
 
+import {
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabbedCard,
+} from "../components/AdminCmsPageLayout";
+
 /** Homepage hero allows one active banner slide at a time in admin. */
 const BANNER_MAX_SLIDES = 1;
 
@@ -24,11 +39,11 @@ import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "banner", label: "Banner" },
-  { id: "location", label: "Our location" },
+const TABS: { id: TabId; label: string; icon: typeof ImageIcon }[] = [
+  { id: "banner", label: "Banner", icon: ImageIcon },
+  { id: "location", label: "Our location", icon: MapPin },
   // { id: "testimonials", label: "Real people. Real moments" },
-  { id: "memories", label: "POSTCARDS FROM PACIANO" },
+  { id: "memories", label: "POSTCARDS FROM PACIANO", icon: Video },
 ];
 
 type PostcardsForm = {
@@ -416,38 +431,26 @@ export default function AdminHomepage() {
 
   if (loading) {
     return (
-      <p className="text-sm admin-card-muted p-6">Loading homepage content…</p>
+      <AdminCmsPageRoot>
+        <p className="text-sm admin-card-muted py-6">
+          Loading homepage content…
+        </p>
+      </AdminCmsPageRoot>
     );
   }
 
   return (
-    <div className="w-full max-w-[1400px] space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold admin-page-title">Homepage</h1>
-        <p className="text-sm admin-card-muted mt-1">
-          Manage banner slides, the location section, and guest review videos.
-          Images: max 2 MB upload, saved as WebP. Videos: max 50 MB upload, then
-          compressed with ffmpeg when available on the server.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 border-b border-[#EDE4D8] pb-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-[#FAF7F2] text-[#3d4a22] border border-[#EDE4D8] border-b-[#FAF7F2] -mb-px"
-                : "text-[#6E655C] hover:text-[#332C26]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Homepage"
+        subtitle="Manage banner slides, the location section, and guest review videos. Images: max 2 MB upload, saved as WebP. Videos: max 50 MB upload, then compressed with ffmpeg when available on the server."
+        badge="Page Settings"
+      />
+      <AdminCmsTabbedCard
+        tabs={TABS}
+        activeTab={tab}
+        onTabChange={(id) => setTab(id as TabId)}
+      >
       {tab === "banner" ? (
         <section className="space-y-4">
           <div
@@ -548,7 +551,7 @@ export default function AdminHomepage() {
       ) : null}
 
       {tab === "location" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6 space-y-4">
+        <section className="space-y-4">
           <h2 className="text-lg font-semibold text-[#332C26]">
             Our location section
           </h2>
@@ -677,7 +680,7 @@ export default function AdminHomepage() {
       ) : null}
 
       {tab === "testimonials" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6">
+        <section>
           <p className="text-sm text-[#332C26]">
             The <strong>Real people. Real moments</strong> carousel uses the
             built-in testimonials on the site. No admin changes are needed for
@@ -845,6 +848,7 @@ export default function AdminHomepage() {
           </div>
         </section>
       ) : null}
+      </AdminCmsTabbedCard>
 
       {bannerModal ? (
         <FormModal
@@ -1043,7 +1047,7 @@ export default function AdminHomepage() {
           </FormSection>
         </FormModal>
       ) : null}
-    </div>
+    </AdminCmsPageRoot>
   );
 }
 

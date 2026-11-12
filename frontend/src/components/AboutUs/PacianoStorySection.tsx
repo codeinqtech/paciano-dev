@@ -1,9 +1,10 @@
 import { useReducedMotion } from "framer-motion";
 import { motion } from "framer-motion";
 
-import storyImage from "@/images/story.png";
-import storyLeafTop from "@/images/button-leaf.png";
+import storyImage from "@/images/about/paciano-story.png";
+import storyLeafTop from "@/images/about/about-leaf.png";
 import leafWhisper from "@/images/button-leaf.png";
+import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 
 interface PacianoStorySectionProps {
   storyTargetId?: string;
@@ -21,7 +22,9 @@ export default function PacianoStorySection({
   image,
   content,
 }: PacianoStorySectionProps) {
-  const storyImageSrc = content?.image_url || image || storyImage;
+  const storyImageSrc = content?.image_url
+    ? (resolveMediaUrl(content.image_url) ?? content.image_url)
+    : image || storyImage;
   const reduceMotion = useReducedMotion();
   const instant = Boolean(reduceMotion);
 

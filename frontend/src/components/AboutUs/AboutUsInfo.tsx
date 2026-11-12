@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useAboutPageContent } from "@/hooks/useAboutPageContent";
+import {
+  PacianoExperienceIcon,
+  PacianoValueIcon,
+} from "@/components/common/icons/paciano";
 
 import aboutNature from "@/images/home/about_left.webp";
 import aboutHospitality from "@/images/home/about_centre.webp";
 import aboutRight from "@/images/home/about_right.webp";
 
-import dooarsLandscape from "@/images/contact/teagarden.png";
+import dooarsLandscape from "@/images/about/dooars.png";
 import leafWhisper from "@/images/button-leaf.png";
 
 import riverside from "@/images/home/riverside-bliss.webp";
@@ -66,359 +70,6 @@ const pacianoValues = [
     icon: "experiences",
   },
 ] as const;
-
-function ValueIcon({ type }: { type: string }) {
-  const common = {
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.15,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    className: "paciano-emblem-drawing",
-  };
-
-  return (
-    <svg
-      {...common}
-      viewBox="0 0 48 48"
-      aria-hidden="true"
-      className="paciano-emblem-drawing h-7 w-7 sm:h-8 sm:w-8"
-    >
-      {type === "nature" && (
-        <>
-          {/* Layered mountain landscape */}
-          <path d="M5 31 L16 15 L22 23 L29 11 L43 31" />
-          <path d="M11 23 L16 15 L20 21" />
-          <path d="M25 18 L29 11 L35 20" />
-          {/* Open river in the foreground */}
-          <path d="M8 34 C14 30 19 38 25 34 S36 31 40 34" />
-          <path d="M15 39 C20 36 26 41 33 38" />
-          <path d="M34 11 L38 8" />
-        </>
-      )}
-
-      {type === "design" && (
-        <>
-          {/* Contemporary resort architecture */}
-          <path d="M6 21 L25 9 L42 18" />
-          <path d="M11 21 V37 H37 V19" />
-          <path d="M16 37 V25 L26 19 L33 23 V37" />
-          <path d="M21 37 V29 H28 V37" />
-          <path d="M8 41 H40" />
-          <path d="M33 13 L37 15" />
-        </>
-      )}
-
-      {type === "hospitality" && (
-        <>
-          {/* Open hands offering a heart */}
-          <path d="M5 29 L12 24 L18 27 L23 31" />
-          <path d="M43 29 L36 24 L30 27 L25 31" />
-          <path d="M12 24 L9 19 L5 22" />
-          <path d="M36 24 L39 19 L43 22" />
-          <path d="M24 27 L18 21 C15 17 20 14 24 19 C28 14 33 17 30 21 Z" />
-          <path d="M12 33 L20 39 H28 L36 33" />
-          <path d="M17 42 H31" />
-        </>
-      )}
-
-      {type === "experiences" && (
-        <>
-          {/* Organic botanical branch */}
-          <path d="M13 41 C19 32 27 23 37 9" />
-          <path d="M18 34 C10 34 7 28 9 23 C16 24 20 28 18 34 Z" />
-          <path d="M24 27 C17 22 19 16 23 12 C29 17 29 22 24 27 Z" />
-          <path d="M29 20 C29 13 35 10 41 12 C40 19 35 23 29 20 Z" />
-          <path d="M14 40 H24" />
-        </>
-      )}
-    </svg>
-  );
-}
-
-function ExperienceIcon({ type }: { type: number }) {
-  const common =
-    "h-[38px] w-[38px] text-[#5F7138] transition-all duration-[1800ms] ease-[cubic-bezier(.22,1,.36,1)]";
-
-  /* ============================================================
-     01 — RIVERSIDE
-  ============================================================ */
-  if (type === 0) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* sun */}
-        <circle
-          cx="32"
-          cy="16"
-          r="4"
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* horizon */}
-        <path
-          d="M13 28C20 25 25 25 32 28C39 31 45 31 51 28"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        {/* river */}
-        <path
-          d="M10 36C17 32 23 32 30 36C37 40 43 40 54 35"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="M13 44C20 41 26 41 33 44C40 47 46 47 51 44"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-
-        {/* tiny shore */}
-        <path
-          d="M18 51C25 49 38 49 46 51"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     02 — TEA GARDEN
-  ============================================================ */
-  if (type === 1) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* elegant central stem */}
-        <path
-          d="M32 53C31 42 32 31 38 13"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        {/* left leaf */}
-        <path
-          d="
-            M32 38
-            C23 36 17 30 17 22
-            C25 23 31 29 32 37
-          "
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* right leaf */}
-        <path
-          d="
-            M35 29
-            C36 21 42 16 49 17
-            C47 24 42 29 35 30
-          "
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* small leaf */}
-        <path
-          d="
-            M31 46
-            C25 44 21 40 20 35
-            C26 36 30 40 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        {/* tiny bud */}
-        <circle cx="40" cy="12" r="1.7" fill="currentColor" />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     03 — CULINARY
-  ============================================================ */
-  if (type === 2) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* plate */}
-        <ellipse
-          cx="32"
-          cy="38"
-          rx="20"
-          ry="7"
-          stroke="currentColor"
-          strokeWidth="1.2"
-        />
-
-        <ellipse
-          cx="32"
-          cy="37"
-          rx="14"
-          ry="4"
-          stroke="currentColor"
-          strokeWidth="0.9"
-        />
-
-        {/* food / botanical garnish */}
-        <path
-          d="M26 35C27 29 31 26 36 24"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="
-            M29 30
-            C25 29 23 26 24 23
-            C28 24 30 26 30 30
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        <path
-          d="
-            M34 27
-            C36 23 40 21 43 22
-            C41 26 38 28 34 28
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        {/* plate base */}
-        <path
-          d="M18 48C26 51 39 51 47 48"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     04 — WELLNESS
-  ============================================================ */
-  if (type === 3) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* water / breathing */}
-        <path
-          d="
-            M15 25
-            C21 19 27 19 32 25
-            C37 31 43 31 49 25
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="
-            M15 34
-            C21 28 27 28 32 34
-            C37 40 43 40 49 34
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        {/* lotus */}
-        <path
-          d="
-            M32 48
-            C27 43 25 38 28 34
-            C31 37 32 41 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-        />
-
-        <path
-          d="
-            M32 48
-            C37 43 39 38 36 34
-            C33 37 32 41 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-        />
-
-        <path
-          d="M23 48H41"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     05 — SUSTAINABLE STAY
-  ============================================================ */
-
-  return (
-    <svg viewBox="0 0 64 64" className={common} fill="none">
-      {/* earth / home */}
-      <path
-        d="
-          M16 34
-          C19 24 26 18 36 17
-          C44 16 50 21 52 28
-          C46 27 41 29 37 34
-          C31 41 24 43 17 41
-        "
-        stroke="currentColor"
-        strokeWidth="1.15"
-        strokeLinecap="round"
-      />
-
-      {/* leaf */}
-      <path
-        d="M31 49C31 40 34 31 42 24"
-        stroke="currentColor"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="
-          M33 38
-          C27 36 24 32 24 27
-          C30 28 34 32 34 37
-        "
-        stroke="currentColor"
-        strokeWidth="1"
-      />
-
-      <path
-        d="
-          M37 31
-          C39 26 43 23 48 24
-          C46 29 42 32 37 33
-        "
-        stroke="currentColor"
-        strokeWidth="1"
-      />
-
-      {/* tiny seed */}
-      <circle cx="22" cy="19" r="1.5" fill="currentColor" />
-    </svg>
-  );
-}
 
 /* ==========================================================================
    LARGE SHADOW OF LEAVES
@@ -3073,7 +2724,7 @@ export default function AboutUsInfo() {
                     rounded-full border border-[#788653]/20
                     "
                   />
-                  <ValueIcon type={value.icon} />
+                  <PacianoValueIcon type={value.icon} />
                 </div>
 
                 {/* Value heading and description */}
@@ -3389,7 +3040,7 @@ export default function AboutUsInfo() {
                 ease-[cubic-bezier(.22,1,.36,1)]
               "
               >
-                <ExperienceIcon type={index} />
+                <PacianoExperienceIcon type={index} />
 
                 {/* tiny orbit */}
                 {/* <span

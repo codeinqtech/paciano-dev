@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { Images, Loader2, Save, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { AdminImageUpload } from "../../components/MediaFileUploadZone";
 import { ListPagination } from "../../components/ListPagination";
@@ -9,7 +9,7 @@ import {
   Field,
   TabbedPageShell,
   cardGridClass,
-  formTwoColClass,
+  formTwoColPairedRowClass,
   inputClass,
   saveCardButtonClass,
 } from "../../components/AdminSectionLayout";
@@ -114,7 +114,7 @@ export function AdminDiningPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#657067]">
+      <div className="flex w-full max-w-[1400px] items-center gap-2 py-6 text-sm text-[#657067]">
         <Loader2 className="h-4 w-4 animate-spin" /> Loading…
       </div>
     );
@@ -123,17 +123,18 @@ export function AdminDiningPage() {
   return (
     <TabbedPageShell
       pageTitle="Dining at Paciano"
+      subtitle="Edit the dining section headline on the home page and each carousel slide."
       wide={tab === "slides"}
       tabs={[
-        { id: "home", label: "Home section" },
-        { id: "slides", label: "Carousel slides" },
+        { id: "home", label: "Home section", icon: UtensilsCrossed },
+        { id: "slides", label: "Carousel slides", icon: Images },
       ]}
       activeTab={tab}
       onTabChange={(id) => setTab(id as DiningTabId)}
     >
       {tab === "home" ? (
-        <div className="admin-card rounded-2xl p-6">
-          <div className={formTwoColClass}>
+        <div>
+          <div className={formTwoColPairedRowClass}>
             <Field label="First headline line">
               <input
                 className={inputClass}
@@ -153,26 +154,24 @@ export function AdminDiningPage() {
               />
             </Field>
           </div>
-          <div className={formTwoColClass}>
-            <Field label="Green accent line">
-              <input
-                className={inputClass}
-                value={form.heading_accent}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, heading_accent: e.target.value }))
-                }
-              />
-            </Field>
-            <Field label="Description">
-              <textarea
-                className={`${inputClass} min-h-[88px]`}
-                value={form.description}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, description: e.target.value }))
-                }
-              />
-            </Field>
-          </div>
+          <Field label="Green accent line">
+            <input
+              className={inputClass}
+              value={form.heading_accent}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, heading_accent: e.target.value }))
+              }
+            />
+          </Field>
+          <Field label="Description">
+            <textarea
+              className={`${inputClass} min-h-[88px]`}
+              value={form.description}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
+            />
+          </Field>
           <button
             type="button"
             disabled={sectionSaving}

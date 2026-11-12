@@ -1,50 +1,76 @@
 import { useState } from "react";
 import {
+  BookOpen,
+  Info,
+  LayoutTemplate,
+  MapPin,
+  Tags,
+} from "lucide-react";
+import {
   AdminAboutBlockEditor,
+  AdminAboutHeroEditor,
   AdminAboutIntroEditor,
   AdminAboutValuesEditor,
-} from "./aboutAdminEditors";
+} from "./AdminAboutEditors";
 import {
-  AdminInlineTabs,
-  AdminPageFrame,
-} from "../../components/AdminSectionLayout";
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabbedCard,
+} from "../../components/AdminCmsPageLayout";
 
-type AboutSiteTabId = "about_paciano" | "our_place" | "story" | "values";
+type AboutSiteTabId =
+  | "page_banner"
+  | "about_paciano"
+  | "our_place"
+  | "story"
+  | "values";
 
 export function AdminAboutSitePage() {
-  const [tab, setTab] = useState<AboutSiteTabId>("about_paciano");
+  const [tab, setTab] = useState<AboutSiteTabId>("page_banner");
 
-  const tabs: { id: AboutSiteTabId; label: string }[] = [
-    { id: "about_paciano", label: "About Paciano" },
-    { id: "our_place", label: "Our Place" },
-    { id: "story", label: "The Paciano Story" },
-    { id: "values", label: "Values" },
+  const tabs: {
+    id: AboutSiteTabId;
+    label: string;
+    icon: typeof LayoutTemplate;
+  }[] = [
+    { id: "page_banner", label: "Page banner", icon: LayoutTemplate },
+    { id: "about_paciano", label: "About Paciano", icon: Info },
+    { id: "our_place", label: "Our Place", icon: MapPin },
+    { id: "story", label: "The Paciano Story", icon: BookOpen },
+    { id: "values", label: "Icons and slogans", icon: Tags },
   ];
 
   return (
-    <AdminPageFrame>
-      <h1 className="text-2xl font-bold admin-page-title mb-2">About page</h1>
-      <p className="text-sm text-[#6E655C] mb-4 max-w-3xl">
-        Edit About page sections here.{" "}
-        <strong>Experiences</strong> is under its own submenu.
-      </p>
-      <AdminInlineTabs
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="About page"
+        subtitle={
+          <>
+            Edit About page sections here.{" "}
+            <strong>Experiences</strong> is under its own submenu.
+          </>
+        }
+        badge="Page Settings"
+      />
+      <AdminCmsTabbedCard
         tabs={tabs}
         activeTab={tab}
         onTabChange={(id) => setTab(id as AboutSiteTabId)}
-      />
-      {tab === "about_paciano" ? <AdminAboutIntroEditor /> : null}
-      {tab === "our_place" ? (
-        <AdminAboutBlockEditor
-          sectionKey="our_place"
-          showImage={false}
-          imageHint="The wide background landscape stays fixed in the design. Edit text only."
-        />
-      ) : null}
-      {tab === "story" ? (
-        <AdminAboutBlockEditor sectionKey="story" showImage />
-      ) : null}
-      {tab === "values" ? <AdminAboutValuesEditor /> : null}
-    </AdminPageFrame>
+      >
+        {tab === "page_banner" ? <AdminAboutHeroEditor /> : null}
+        {tab === "about_paciano" ? <AdminAboutIntroEditor /> : null}
+        {tab === "our_place" ? (
+          <AdminAboutBlockEditor
+            sectionKey="our_place"
+            showImage={false}
+            imageHint="The wide background landscape stays fixed in the design. Edit text only."
+          />
+        ) : null}
+        {tab === "story" ? (
+          <AdminAboutBlockEditor sectionKey="story" showImage />
+        ) : null}
+        {tab === "values" ? <AdminAboutValuesEditor /> : null}
+      </AdminCmsTabbedCard>
+    </AdminCmsPageRoot>
   );
 }
