@@ -56,10 +56,13 @@ const AdminContactUsSection = () => {
           heading_highlight: data.heading_highlight ?? "",
           connect_with_us: data.connect_with_us ?? "",
           connect_with_us_supporting_text:
-            data.connect_with_us_supporting_text ?? "",
+          data.connect_with_us_supporting_text ?? "",
           subtitle_one: data.subtitle_one ?? "",
           subtitle_two: data.subtitle_two ?? "",
           send_us_message_text: data.send_us_message_text ?? "",
+          whatsapp_number:
+            (data as ContactPageData & { whatsapp_number?: string | null })
+              .whatsapp_number ?? "",
           until_we_meet_text: data.until_we_meet_text ?? "",
         };
 
@@ -114,6 +117,7 @@ const AdminContactUsSection = () => {
       contactTextFields.forEach((field) => {
         payload.append(field, formData[field]);
       });
+      
 
       (Object.keys(imageFiles) as ContactImageField[]).forEach((field) => {
         const file = imageFiles[field];
@@ -123,7 +127,7 @@ const AdminContactUsSection = () => {
       if (videoFile) {
         payload.append("until_we_meet_video", videoFile);
       }
-
+      
       const updatedData: ContactPageData =
         await updateContactPage(payload);
 

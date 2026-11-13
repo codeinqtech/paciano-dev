@@ -52,6 +52,9 @@ class UpdateContactPageRequest extends FormRequest
             'send_us_message_text' => [
                 'sometimes', 'nullable', 'string', 'max:20000',
             ],
+            'whatsapp_number' => [
+                'sometimes', 'nullable', 'string', 'max:20',
+            ],
 
             'until_we_meet_text' => [
                 'sometimes', 'nullable', 'string', 'max:20000',

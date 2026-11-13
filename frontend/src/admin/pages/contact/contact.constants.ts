@@ -48,6 +48,7 @@ export const contactTextFields: (keyof ContactFormData)[] = [
   "subtitle_one",
   "subtitle_two",
   "send_us_message_text",
+  "whatsapp_number",
   "until_we_meet_text",
 ];
 

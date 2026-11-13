@@ -31,9 +31,14 @@ class ContactPageController extends Controller
     public function update(
         UpdateContactPageRequest $request
     ): JsonResponse {
+        \Log::info('Contact Page Update Request', [
+        'whatsapp_number' => $request->input('whatsapp_number'),
+        'validated_data' => $request->validated(),
+    ]);
         $content = $this->contactPageService->update(
             $request->validated()
         );
+       
 
         return response()->json([
             'success' => true,
