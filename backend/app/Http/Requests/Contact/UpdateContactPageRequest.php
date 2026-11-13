@@ -2,25 +2,16 @@
 
 namespace App\Http\Requests\Contact;
 
-use App\Support\MediaUploadLimits;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\MediaUploadLimits;
 
 class UpdateContactPageRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // Add Admin authorization middleware
+        return true; // Admin authorization middleware will handle access.
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $imgMax = MediaUploadLimits::imageMaxKb();
@@ -28,8 +19,11 @@ class UpdateContactPageRequest extends FormRequest
 
         return [
             'banner_image' => [
-                'sometimes', 'nullable', 'image',
-                'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
+                'sometimes',
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
             ],
 
             'heading_one' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -37,6 +31,7 @@ class UpdateContactPageRequest extends FormRequest
             'heading_highlight' => ['sometimes', 'nullable', 'string', 'max:255'],
 
             'connect_with_us' => ['sometimes', 'nullable', 'string', 'max:5000'],
+
             'connect_with_us_supporting_text' => [
                 'sometimes', 'nullable', 'string', 'max:20000',
             ],
@@ -45,6 +40,7 @@ class UpdateContactPageRequest extends FormRequest
                 'sometimes', 'nullable', 'image',
                 'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
             ],
+
             'connect_with_us_image_two' => [
                 'sometimes', 'nullable', 'image',
                 'mimes:jpg,jpeg,png,webp', 'max:'.$imgMax,
@@ -56,13 +52,17 @@ class UpdateContactPageRequest extends FormRequest
             'send_us_message_text' => [
                 'sometimes', 'nullable', 'string', 'max:20000',
             ],
+
             'until_we_meet_text' => [
                 'sometimes', 'nullable', 'string', 'max:20000',
             ],
 
             'until_we_meet_video' => [
-                'sometimes', 'nullable', 'file',
-                'mimes:mp4,webm,mov', 'max:'.$vidMax,
+                'sometimes',
+                'nullable',
+                'file',
+                'mimes:mp4,webm,mov',
+                'max:51200',
             ],
         ];
     }

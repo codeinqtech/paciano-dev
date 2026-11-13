@@ -27,6 +27,7 @@ Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 // Public API routes
 Route::get('contact-page', [ContactPageController::class, 'show']);
 Route::post('/enquiries', [EnquiryController::class, 'store']);
+Route::get('/contact-details', [ContactDetailController::class, 'indexPublic']);
 
 // Temporary testing route
 Route::post('/whatsapp/test', [WhatsAppTestController::class, 'send']);

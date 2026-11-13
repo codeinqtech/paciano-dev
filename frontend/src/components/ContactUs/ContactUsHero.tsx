@@ -1,66 +1,100 @@
-import { useEffect, useRef } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import {
   animate,
   motion,
   useMotionValue,
-  useScroll,
-  useTransform,
 } from "framer-motion";
+
 import bannerImg from "@/images/contact/contact-banner.png";
 import contactLeafIcon from "@/images/contact/paciano-leaf-gold-transparent.png";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
-const FOREST = "#0E2D20";
-const GOLD = "#C8A76A";
+interface ContactHeroContent {
+  banner_image: string | null;
+  heading_one: string | null;
+  heading_two: string | null;
+  heading_highlight: string | null;
+  subtitle_one: string | null;
+  subtitle_two: string | null;
+}
+
 const PARCHMENT = "#eee9dc";
 
 function CreamJoinFromAbove() {
-    return (
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[58px] w-full sm:h-[68px] lg:h-[76px]"
-        aria-hidden
+  return (
+    <div
+      className="pointer-events-none absolute bottom-0 left-0 z-20 h-[58px] w-full sm:h-[68px] lg:h-[76px]"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 1440 76"
+        preserveAspectRatio="none"
+        className="h-full w-full"
       >
-        <svg
-          viewBox="0 0 1440 76"
-          preserveAspectRatio="none"
-          className="h-full w-full"
-        >
-          <path
-            d="
-              M0,76
-              L0,44
-              C120,62 210,18 360,28
-              C510,38 620,68 780,52
-              C940,36 1080,14 1260,32
-              C1380,44 1440,38 1440,48
-              L1440,76
-              Z
-            "
-            fill={PARCHMENT}
-          />
-        </svg>
-      </div>
-    );
+        <path
+          d="
+            M0,76
+            L0,44
+            C120,62 210,18 360,28
+            C510,38 620,68 780,52
+            C940,36 1080,14 1260,32
+            C1380,44 1440,38 1440,48
+            L1440,76
+            Z
+          "
+          fill={PARCHMENT}
+        />
+      </svg>
+    </div>
+  );
 }
 
 function ContactHero() {
+  const [content, setContent] = useState<ContactHeroContent | null>(null);
+
   const ref = useRef<HTMLElement | null>(null);
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
+  // ==========================================
+  // FETCH CONTACT PAGE CONTENT
+  // ==========================================
 
-  const y = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", "8%"]
-  );
+  useEffect(() => {
+    let cancelled = false;
 
-  const scale = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [1.03, 1.06]
-  );
+    const fetchContactPage = async () => {
+      try {
+        const response = await fetch(
+          `${getApiBaseUrl()}/contact-page`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch contact page content.");
+        }
+
+        const result = await response.json();
+
+        // Laravel Resource response: { data: {...} }
+        const data = result.data ?? result;
+
+        if (!cancelled) {
+          setContent(data);
+        }
+      } catch (error) {
+        console.error("Contact Hero API Error:", error);
+      }
+    };
+
+    fetchContactPage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ==========================================
+  // CINEMATIC BACKGROUND ANIMATION
+  // ==========================================
 
   const cinematicX = useMotionValue(0);
   const cinematicY = useMotionValue(0);
@@ -107,6 +141,10 @@ function ContactHero() {
     };
   }, [cinematicX, cinematicY, cinematicScale]);
 
+  // ==========================================
+  // HERO SECTION
+  // ==========================================
+
   return (
     <section
       ref={ref}
@@ -120,10 +158,9 @@ function ContactHero() {
         overflow-hidden
       "
     >
-
-      {/* =====================================================
+      {/* ==========================================
           HERO IMAGE
-      ====================================================== */}
+      ========================================== */}
 
       <motion.div
         className="absolute inset-0 h-full w-full"
@@ -134,7 +171,7 @@ function ContactHero() {
         }}
       >
         <img
-          src={bannerImg}
+          src={content?.banner_image || bannerImg}
           alt="Paciano Dooars"
           className="
             h-full
@@ -149,74 +186,47 @@ function ContactHero() {
               "brightness(1.05) saturate(1.08) contrast(1.04)",
           }}
         />
-      </motion.div>  
+      </motion.div>
 
-      {/* =====================================================
+      {/* ==========================================
           TOP CINEMATIC GRADE
-      ====================================================== */}
+      ========================================== */}
 
       <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[2]
-        "
+        className="pointer-events-none absolute inset-0 z-[2]"
         style={{
           background:
             "linear-gradient(180deg, rgba(8,24,19,0.40) 0%, rgba(8,24,19,0.04) 24%, rgba(8,24,19,0.02) 55%, rgba(5,20,15,0.48) 100%)",
         }}
       />
 
-
-      {/* =====================================================
+      {/* ==========================================
           WARM GOLDEN ATMOSPHERE
-      ====================================================== */}
+      ========================================== */}
 
       <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[3]
-        "
+        className="pointer-events-none absolute inset-0 z-[3]"
         style={{
           background:
             "radial-gradient(circle at 17% 30%, rgba(255,196,86,0.18) 0%, rgba(255,178,72,0.08) 18%, transparent 42%)",
         }}
       />
 
-
-      {/* =====================================================
+      {/* ==========================================
           CENTER CINEMATIC COPY SHADOW
-
-          IMPORTANT:
-          This is NOT a black box.
-
-          It softly darkens only the area behind
-          the typography.
-      ====================================================== */}
+      ========================================== */}
 
       <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[4]
-        "
+        className="pointer-events-none absolute inset-0 z-[4]"
         style={{
           background:
             "radial-gradient(ellipse 43% 32% at 50% 51%, rgba(4,17,13,0.58) 0%, rgba(4,17,13,0.42) 30%, rgba(4,17,13,0.20) 55%, transparent 78%)",
         }}
       />
 
-
-      {/* =====================================================
+      {/* ==========================================
           SUBTLE CENTER LOWER SHADOW
-
-          Gives the text the same cinematic depth
-          as the reference.
-      ====================================================== */}
+      ========================================== */}
 
       <div
         className="
@@ -232,33 +242,25 @@ function ContactHero() {
           blur-[80px]
         "
         style={{
-          background:
-            "rgba(3,17,12,0.18)",
+          background: "rgba(3,17,12,0.18)",
         }}
       />
 
-
-      {/* =====================================================
+      {/* ==========================================
           RIGHT EDGE VIGNETTE
-      ====================================================== */}
+      ========================================== */}
 
       <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[4]
-        "
+        className="pointer-events-none absolute inset-0 z-[4]"
         style={{
           background:
             "linear-gradient(90deg, rgba(5,20,15,0.08) 0%, transparent 25%, transparent 72%, rgba(5,20,15,0.28) 100%)",
         }}
       />
 
-
-      {/* =====================================================
+      {/* ==========================================
           HERO CONTENT
-      ====================================================== */}
+      ========================================== */}
 
       <div
         className="
@@ -280,29 +282,30 @@ function ContactHero() {
         "
       >
         {/* SOFT CINEMATIC SHADOW BEHIND COPY */}
-        <div
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-1/2
-          -z-10
-          h-[420px]
-          w-[820px]
-          -translate-x-1/2
-          -translate-y-1/2
-          rounded-full
-        "
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.40) 32%, rgba(0,0,0,0.20) 58%, transparent 82%)",
-          filter: "blur(32px)",
-        }}
-      />
 
-        {/* =================================================
+        <div
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-1/2
+            -z-10
+            h-[420px]
+            w-[820px]
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+          "
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0.40) 32%, rgba(0,0,0,0.20) 58%, transparent 82%)",
+            filter: "blur(32px)",
+          }}
+        />
+
+        {/* ==========================================
             EYEBROW
-        ================================================= */}
+        ========================================== */}
 
         <motion.div
           initial={{
@@ -338,20 +341,17 @@ function ContactHero() {
             color: "rgba(245,226,181,0.96)",
           }}
         >
-
-          {/* LEFT EYEBROW LINE */}
+          {/* LEFT LINE */}
 
           <span
-            className="
-              h-px
-              w-12
-              sm:w-16
-            "
+            className="h-px w-12 sm:w-16"
             style={{
               background:
                 "linear-gradient(90deg, transparent, rgba(218,190,132,0.9))",
             }}
           />
+
+          {/* EYEBROW TEXT */}
 
           <span
             className="
@@ -367,29 +367,23 @@ function ContactHero() {
             Get In Touch
           </span>
 
-          {/* RIGHT EYEBROW LINE */}
+          {/* RIGHT LINE */}
 
           <span
-            className="
-              h-px
-              w-12
-              sm:w-16
-            "
+            className="h-px w-12 sm:w-16"
             style={{
               background:
                 "linear-gradient(90deg, rgba(218,190,132,0.9), transparent)",
             }}
           />
-
         </motion.div>
 
-
-        {/* =================================================
+        {/* ==========================================
             MAIN HEADING
-        ================================================= */}
+        ========================================== */}
 
         <motion.h1
-           initial={{
+          initial={{
             opacity: 0,
             y: 42,
             filter: "blur(8px)",
@@ -405,7 +399,7 @@ function ContactHero() {
             ease: [0.16, 1, 0.3, 1],
           }}
           className="
-            relative            
+            relative
             leading-[0.88]
             tracking-[-0.025em]
             text-white
@@ -417,21 +411,18 @@ function ContactHero() {
             md:text-[60px]
             lg:text-[68px]
             xl:text-[76px]
-
             max-w-[760px]
             mx-auto
           "
-          style={{           
+          style={{
             textShadow:
               "0 4px 30px rgba(0,0,0,0.30), 0 1px 8px rgba(0,0,0,0.18)",
           }}
         >
-
-          Let’s Begin
-
+          {content?.heading_one || "Let’s Begin"}
           <br />
 
-          <motion.div
+          <motion.span
             initial={{
               opacity: 0,
               y: 28,
@@ -447,160 +438,171 @@ function ContactHero() {
               delay: 2.25,
               ease: [0.16, 1, 0.3, 1],
             }}
-          >
-          <span
-            className="italic 
-            text-[44px]
-            sm:text-[52px]
-            md:text-[60px]
-            lg:text-[68px]
-            xl:text-[76px]
-            max-w-[760px]"
+            className="
+              inline-block
+              italic
+              text-[44px]
+              sm:text-[52px]
+              md:text-[60px]
+              lg:text-[68px]
+              xl:text-[76px]
+              max-w-[760px]
+            "
             style={{
               color: "#8faa42",
-              textShadow:
-                "0 4px 30px rgba(0,0,0,0.35)",
+              textShadow: "0 4px 30px rgba(0,0,0,0.35)",
             }}
           >
-            Your Paciano Story.
-          </span>
-          </motion.div>
-
+            {content?.heading_two || "Your Paciano Story."}
+          </motion.span>
         </motion.h1>
 
+        {/* ==========================================
+            LOWER DIVIDER + GOLD LEAF
+        ========================================== */}
 
-       
+        <div className="my-7 flex items-center justify-center gap-7 sm:my-8 sm:gap-8">
+          {/* LEFT LINE */}
 
-          {/* =====================================================
-              LOWER DIVIDER + GOLD LEAF
-          ====================================================== */}
-          <div className="my-7 flex items-center justify-center gap-7 sm:my-8 sm:gap-8">
+          <motion.div
+            initial={{
+              opacity: 0,
+              scaleX: 0,
+            }}
+            animate={{
+              opacity: 1,
+              scaleX: 1,
+            }}
+            transition={{
+              duration: 2.8,
+              delay: 4.15,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="h-px w-16 origin-right sm:w-28 lg:w-36"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(211,177,108,0.9))",
+            }}
+          />
 
-            {/* Left line */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                scaleX: 0,
-              }}
-              animate={{
-                opacity: 1,
-                scaleX: 1,
-              }}
-              transition={{
-                duration: 2.8,
-                delay: 4.15,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="h-px w-16 origin-right sm:w-28 lg:w-36"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent, rgba(211,177,108,0.9))",
-              }}
-            />
+          {/* GOLD LEAF */}
 
-            {/* GOLD LEAF */}
-            <motion.img
-              src={contactLeafIcon}
-              alt=""
-              aria-hidden="true"
-              initial={{
-                opacity: 0,
-                scale: 0.7,
-                rotate: -8,
-                y: 5,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                rotate: 0,
-                y: 0,
-              }}
-              transition={{
-                duration: 2.9,
-                delay: 4.25,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="
-                h-[30px]
-                w-[30px]
-                shrink-0
-                object-contain
-                sm:h-[48px]
-                sm:w-[48px]
-              "
-              style={{
-                filter:
-                  "drop-shadow(0 2px 5px rgba(0,0,0,0.25))",
-              }}
-            />
+          <motion.img
+            src={contactLeafIcon}
+            alt=""
+            aria-hidden="true"
+            initial={{
+              opacity: 0,
+              scale: 0.7,
+              rotate: -8,
+              y: 5,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              rotate: 0,
+              y: 0,
+            }}
+            transition={{
+              duration: 2.9,
+              delay: 4.25,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="
+              h-[30px]
+              w-[30px]
+              shrink-0
+              object-contain
+              sm:h-[48px]
+              sm:w-[48px]
+            "
+            style={{
+              filter:
+                "drop-shadow(0 2px 5px rgba(0,0,0,0.25))",
+            }}
+          />
 
-            {/* Right line */}
-            <motion.div
-                initial={{
-                  opacity: 0,
-                  scaleX: 0,
-                }}
-                animate={{
-                  opacity: 1,
-                  scaleX: 1,
-                }}
-                transition={{
-                  duration: 2.8,
-                  delay: 4.15,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-              className="h-px w-16 origin-left sm:w-28 lg:w-36"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(211,177,108,0.9), transparent)",
-              }}
-            />
+          {/* RIGHT LINE */}
 
-          </div>
+          <motion.div
+            initial={{
+              opacity: 0,
+              scaleX: 0,
+            }}
+            animate={{
+              opacity: 1,
+              scaleX: 1,
+            }}
+            transition={{
+              duration: 2.8,
+              delay: 4.15,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="h-px w-16 origin-left sm:w-28 lg:w-36"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(211,177,108,0.9), transparent)",
+            }}
+          />
+        </div>
 
-
-        {/* =================================================
+        
+        {/* ==========================================
             SUPPORTING COPY
-        ================================================= */}
+        ========================================== */}
 
-        <motion.p
-         initial={{
-          opacity: 0,
-          y: 20,
-          filter: "blur(5px)",
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          filter: "blur(0px)",
-        }}
-        transition={{
-          duration: 2.2,
-          delay: 5.4,
-          ease: [0.16, 1, 0.3, 1],
-        }}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+            filter: "blur(5px)",
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+          }}
+          transition={{
+            duration: 2.2,
+            delay: 5.4,
+            ease: [0.16, 1, 0.3, 1],
+          }}
           className="
             mt-3
+            flex
+            w-full
             max-w-[570px]
-            font-cormorant
-            text-[1.15rem]
-            font-light
-            italic
-            leading-relaxed
-            text-white/90
+            flex-col
+            items-center
+            gap-2
+            px-2
+            text-center
             sm:mt-4
-            sm:text-[19px]
+            sm:gap-3
           "
         >
-          Tell us how you imagine your time at Paciano.
-          <br />
-          We&apos;re here to make it truly yours.
-        </motion.p>
+          {content?.heading_highlight && (
+            <p className="
+              font-cormorant
+              text-[1.1rem]
+              font-light
+              italic
+              leading-relaxed
+              text-white/90
+              sm:text-[19px]
+            ">
+              {content.heading_highlight}
+            </p>
+          )}
+
+          
+        </motion.div>
 
       </div>
-      {/* =====================================================
+
+      {/* ==========================================
           SCROLL INDICATOR
-      ====================================================== */}
+      ========================================== */}
 
       <motion.div
         initial={{
@@ -625,7 +627,6 @@ function ContactHero() {
           sm:bottom-9
         "
       >
-
         <span
           className="
             mb-3
@@ -658,14 +659,15 @@ function ContactHero() {
               "linear-gradient(to bottom, rgba(214,183,117,0.95), transparent)",
           }}
         />
-
       </motion.div>
 
+      {/* ==========================================
+          BOTTOM CREAM SHAPE
+      ========================================== */}
 
       <CreamJoinFromAbove />
-
     </section>
-     
-    );
+  );
 }
+
 export default ContactHero;
