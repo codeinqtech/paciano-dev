@@ -5,10 +5,6 @@ import riversideRoom from "@/images/river-side-room.png";
 import riversideBalcony from "@/images/river-side-room.png";
 import riversideDetail from "@/images/river-view.png";
 
-import gardenRoom from "@/images/garden-view.png";
-import gardenView from "@/images/garden-room.png";
-import gardenBalcony from "@/images/room2.png";
-
 import familyRoom from "@/images/family-room.png";
 import familyRoomTwo from "@/images/room1.png";
 import familyView from "@/images/home-room-1.webp";
@@ -37,13 +33,12 @@ type Stay = {
     icon: AmenityIconType;
   }[];
 };
-const stays: Stay[] = [
-  {
+const staysBySlug: Record<string, Stay> = {
+  riverside: {
     id: "riverside",
-    // name: "Riverside Suite",
-    name: "Premium Suites",
+    name: "Deluxe Rooms",
     buttonDescriptor: "RIVER & MOUNTAINS",
-    photoLabel: "RIVERSIDE SUITE",
+    photoLabel: "DELUXE ROOMS",
     title: "Wake to Tranquility",
     description:
       "Wake to the gentle rhythm of the river, framed by mountains and softened by the quiet of nature.",
@@ -74,80 +69,10 @@ const stays: Stay[] = [
     ],
   },
 
-  {
-    id: "garden",
-    // name: "Garden Residence",
-    name: "Standard Suites",
-    buttonDescriptor: "GARDENS & GREENS",
-    photoLabel: "GARDEN RESIDENCE",
-    title: "Wake Among Greenery",
-    description:
-      "A peaceful retreat overlooking Paciano's gardens, where quiet mornings unfold beneath open skies and surrounding greenery.",
-
-    images: [gardenRoom, gardenView, gardenBalcony],
-
-    amenities: [
-      {
-        label: "King Bed",
-        icon: "bed",
-      },
-      {
-        label: "Garden Outlook",
-        icon: "view",
-      },
-      {
-        label: "Private Sitting Area",
-        icon: "balcony",
-      },
-      {
-        label: "Luxury Bathroom",
-        icon: "bath",
-      },
-      {
-        label: "Complimentary Wi-Fi",
-        icon: "wifi",
-      },
-    ],
-  },
-
-  {
-    id: "valley",
-    // name: "Valley Retreat",
-    name: "Couple Suites",
-    buttonDescriptor: "HILLS & HORIZONS",
-    photoLabel: "VALLEY RETREAT",
-    title: "Closer to the Wild",
-    description:
-      "A quiet escape where mountain views stretch beyond the room and every morning begins a little slower.",
-    images: [riversideRoom, riversideDetail, riversideBalcony],
-    amenities: [
-      {
-        label: "King Bed",
-        icon: "bed",
-      },
-      {
-        label: "Private Balcony",
-        icon: "balcony",
-      },
-      {
-        label: "Valley View",
-        icon: "view",
-      },
-      {
-        label: "Luxury Bathroom",
-        icon: "bath",
-      },
-      {
-        label: "Complimentary Wi-Fi",
-        icon: "wifi",
-      },
-    ],
-  },
-
-  {
+  family: {
     id: "family",
     name: "Family Sanctuary",
-    buttonDescriptor: "TOGETHER IN NATURE",
+    buttonDescriptor: "RIVER & MOUNTAINS",
     photoLabel: "FAMILY SANCTUARY",
     title: "Space to Be Together",
     description:
@@ -178,7 +103,9 @@ const stays: Stay[] = [
       },
     ],
   },
-];
+};
+
+const stays: Stay[] = [staysBySlug.riverside, staysBySlug.family];
 
 // ============================================================
 // AMENITY ICON
@@ -284,27 +211,35 @@ export default function Accommodation() {
     if (!ready || !staysCms?.items?.length) {
       return stays;
     }
-    return stays.map((stay) => {
-      const row = staysCms.items.find((i) => i.slug === stay.id);
-      if (!row) {
-        return stay;
-      }
-      const images = [...stay.images];
-      if (row.photo_1_url) images[0] = row.photo_1_url;
-      if (row.photo_2_url) images[1] = row.photo_2_url;
-      if (row.photo_3_url) images[2] = row.photo_3_url;
-      return {
-        ...stay,
-        name: row.menu_label?.trim() || stay.name,
-        buttonDescriptor:
-          row.button_descriptor?.trim() || stay.buttonDescriptor,
-        photoLabel: row.photo_label?.trim() || stay.photoLabel,
-        title: row.title || stay.title,
-        description: row.description ?? stay.description,
-        images,
-      };
-    });
+    return staysCms.items
+      .map((row) => {
+        const stay = staysBySlug[row.slug];
+        if (!stay) {
+          return null;
+        }
+        const images = [...stay.images];
+        if (row.photo_1_url) images[0] = row.photo_1_url;
+        if (row.photo_2_url) images[1] = row.photo_2_url;
+        if (row.photo_3_url) images[2] = row.photo_3_url;
+        return {
+          ...stay,
+          name: row.menu_label?.trim() || stay.name,
+          buttonDescriptor:
+            row.button_descriptor?.trim() || stay.buttonDescriptor,
+          photoLabel: row.photo_label?.trim() || stay.photoLabel,
+          title: row.title || stay.title,
+          description: row.description ?? stay.description,
+          images,
+        };
+      })
+      .filter((s): s is Stay => s !== null);
   }, [ready, staysCms]);
+
+  useEffect(() => {
+    if (activeStay >= displayStays.length && displayStays.length > 0) {
+      setActiveStay(0);
+    }
+  }, [activeStay, displayStays.length]);
 
   const staysHeadingMain =
     ready && staysCms?.section?.heading_main
@@ -750,14 +685,15 @@ export default function Accommodation() {
             `}
         >
           {/* ====================================================
-                  CAPSULE
-                  SAME WIDTH AS IMAGE BELOW
+                  CAPSULE — compact, centred above full-width image
               ==================================================== */}
 
           <div
             className="
       relative
+      mx-auto
       w-full
+      max-w-[min(100%,820px)]
       min-h-0
       flex
       items-center
@@ -772,9 +708,10 @@ export default function Accommodation() {
       overflow-hidden
       sm:rounded-[40px]
       sm:px-4
-      lg:min-h-[96px]
-      lg:rounded-[60px]
-      lg:px-0
+      lg:min-h-[86px]
+      lg:max-w-[min(100%,760px)]
+      lg:rounded-[52px]
+      lg:px-2
       lg:py-0
       lg:overflow-visible
     "
@@ -808,14 +745,16 @@ export default function Accommodation() {
     items-stretch
     gap-4
     overflow-visible
-    lg:min-h-[94px]
+    lg:min-h-[84px]
     lg:flex-row
+    lg:items-center
+    lg:justify-between
     lg:gap-0
-    lg:pl-[27px]
+    lg:px-4
   "
             >
-              {/* Four stay navigation items */}
-              <div className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 md:grid-cols-4 lg:flex-1 lg:grid-cols-[1fr_1fr_1fr_1.08fr] lg:gap-y-0">
+              {/* Two stay navigation items */}
+              <div className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 lg:flex lg:w-auto lg:flex-none lg:items-center lg:justify-center lg:gap-5 lg:gap-y-0 xl:gap-6">
                 {displayStays.map((item, index) => {
                   const active = index === activeStay;
 
@@ -860,18 +799,21 @@ export default function Accommodation() {
                           transition-all
                           duration-500
                           disabled:pointer-events-none
-                          sm:gap-4
+                          sm:gap-3
                           sm:px-2
-                          lg:gap-5
-                          lg:px-5
+                          lg:w-auto
+                          lg:shrink-0
+                          lg:gap-3
+                          lg:px-2
                         "
                       >
                         <span
                           className={`
                             flex
                             items-center
-                            gap-4
-                           
+                            gap-3
+                            sm:gap-3.5
+                            lg:gap-3
                           `}
                         >
                           {/* Icon */}
@@ -919,7 +861,7 @@ export default function Accommodation() {
                             `}
                             />
 
-                            {index === 0 && (
+                            {item.id === "riverside" && (
                               <svg
                                 viewBox="0 0 44 34"
                                 className="relative z-10 h-[27px] w-[34px]"
@@ -945,7 +887,7 @@ export default function Accommodation() {
                               </svg>
                             )}
 
-                            {index === 1 && (
+                            {item.id === "family" && (
                               <svg
                                 viewBox="0 0 44 34"
                                 className="relative z-10 h-[29px] w-[31px] origin-bottom transition-transform duration-700 group-hover:-rotate-3"
@@ -966,65 +908,6 @@ export default function Accommodation() {
                                   stroke="currentColor"
                                   strokeWidth="1.1"
                                   opacity=".75"
-                                />
-                              </svg>
-                            )}
-
-                            {index === 2 && (
-                              <svg
-                                viewBox="0 0 44 34"
-                                className="relative z-10 h-[28px] w-[35px] transition-transform duration-700 group-hover:-translate-y-0.5"
-                                fill="none"
-                              >
-                                <path
-                                  d="M2 27 L13 14 L19 21 L28 7 L42 27"
-                                  stroke="currentColor"
-                                  strokeWidth="1.1"
-                                />
-                                <path
-                                  d="M20 27 L28 17 L36 27"
-                                  stroke="currentColor"
-                                  strokeWidth=".8"
-                                  opacity=".42"
-                                />
-                                <path
-                                  d="M2 28 H42"
-                                  stroke="currentColor"
-                                  strokeWidth=".8"
-                                  opacity=".45"
-                                />
-                              </svg>
-                            )}
-
-                            {index === 3 && (
-                              <svg
-                                viewBox="0 0 44 34"
-                                className="relative z-10 h-[29px] w-[34px]"
-                                fill="none"
-                              >
-                                <circle
-                                  cx="15"
-                                  cy="9"
-                                  r="3"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <circle
-                                  cx="29"
-                                  cy="9"
-                                  r="3"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <path
-                                  d="M7 29 C7 21 11 17 15 17 C20 17 22 21 22 29"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <path
-                                  d="M22 29 C22 21 24 17 29 17 C34 17 38 21 38 29"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
                                 />
                               </svg>
                             )}
@@ -1181,11 +1064,12 @@ export default function Accommodation() {
                   transition-all
                   duration-[1100ms]
                   ease-[cubic-bezier(0.16,1,0.3,1)]
-                  lg:min-h-[116px]
-                  lg:w-[260px]
+                  lg:min-h-[84px]
+                  lg:w-[220px]
                   lg:rounded-none
                   lg:border-0
                   lg:bg-transparent
+                  lg:shrink-0
                   ${
                     visible
                       ? "opacity-100 translate-x-0 blur-0"
