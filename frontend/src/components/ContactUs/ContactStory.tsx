@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-// import contactVideo from "@/videos/contact-video.MOV";
 import storyImage from "@/images/contact/video-banner.png";
 import { getApiBaseUrl } from "@/lib/apiBase";
+
+/** Served from `public/videos/` (large file is not bundled at build time). */
+const contactVideoFallback = `${
+  import.meta.env.BASE_URL
+}videos/contact-video.MOV`.replace(/\/{2,}/g, "/");
 
 export default function ContactStory() {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [storyVideo, setStoryVideo] = useState();
+  const [storyVideo, setStoryVideo] = useState(contactVideoFallback);
   const [storyText, setStoryText] = useState(
     "May the memories of your stay in Paciano linger long after you leave, and they stay in your heart."
   );
