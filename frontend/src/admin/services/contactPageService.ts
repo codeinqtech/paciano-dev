@@ -41,6 +41,7 @@ export const updateContactPage = async (
 
   formData.append("_method", "PUT");
 
+  console.log("Updating contact page with formData:", formData);
   const response = await api.post<ContactPageApiResponse>(
     "/admin/contact-page",
     formData

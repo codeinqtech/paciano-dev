@@ -22,6 +22,7 @@ export interface ContactFormData {
   subtitle_one: string;
   subtitle_two: string;
   send_us_message_text: string;
+  whatsapp_number: string;
   until_we_meet_text: string;
 }
 

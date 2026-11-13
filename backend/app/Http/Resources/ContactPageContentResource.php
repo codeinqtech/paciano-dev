@@ -44,6 +44,7 @@ class ContactPageContentResource extends JsonResource
 
             // Message section
             'send_us_message_text' => $this->send_us_message_text,
+            'whatsapp_number' => $this->whatsapp_number,
 
             // Video section
             'until_we_meet_text' => $this->until_we_meet_text,
