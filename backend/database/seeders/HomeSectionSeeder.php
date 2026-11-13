@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\HomeAboutSection;
+use App\Models\AboutIntro;
+use App\Models\AboutExperienceItem;
+use App\Models\AboutExperienceSection;
 use App\Models\HomeDiningSection;
 use App\Models\HomeDiningSlide;
-use App\Models\HomeExperienceItem;
-use App\Models\HomeExperienceSection;
 use App\Models\HomeStayItem;
 use App\Models\HomeStaysSection;
 use Illuminate\Database\Seeder;
@@ -15,18 +15,19 @@ class HomeSectionSeeder extends Seeder
 {
     public function run(): void
     {
-        HomeAboutSection::query()->updateOrCreate(
+        AboutIntro::query()->updateOrCreate(
             ['id' => 1],
             [
                 'heading_line_1' => 'Inspired By',
                 'heading_line_2' => 'Nature.',
                 'heading_accent' => 'Created For You.',
                 'paragraph_1' => 'Paciano is more than a resort — it\'s a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments.',
-                'paragraph_2' => 'A place to retreat. A place to reconnect. A place that stays with you long after you leave.',
+                'home_tagline' => 'A place to retreat. A place to reconnect. A place that stays with you long after you leave.',
+                'paragraph_2' => 'Nestled in serene landscapes of Dooars, our retreat is thoughtfully designed for those who seek a deeper connection with nature, meaningful experiences and time that truly belongs to themselves.',
             ],
         );
 
-        HomeExperienceSection::query()->updateOrCreate(
+        AboutExperienceSection::query()->updateOrCreate(
             ['id' => 1],
             [
                 'heading_main' => 'Moments Crafted by Nature,',
@@ -43,7 +44,7 @@ class HomeSectionSeeder extends Seeder
         ];
 
         foreach ($experiences as $exp) {
-            HomeExperienceItem::query()->updateOrCreate(
+            AboutExperienceItem::query()->updateOrCreate(
                 ['title' => $exp['title']],
                 [
                     'description' => $exp['description'],
@@ -65,43 +66,54 @@ class HomeSectionSeeder extends Seeder
         $stays = [
             [
                 'slug' => 'riverside',
-                'menu_label' => 'Riverside',
+                'menu_label' => 'Deluxe Rooms',
+                'button_descriptor' => 'RIVER & MOUNTAINS',
+                'photo_label' => 'DELUXE ROOMS',
                 'title' => 'Wake to Tranquility',
                 'description' => 'Wake to the gentle rhythm of the river, framed by mountains and softened by the quiet of nature.',
                 'sort_order' => 10,
+                'is_active' => true,
             ],
             [
                 'slug' => 'garden',
-                'menu_label' => 'Garden',
+                'menu_label' => 'Standard Suites',
+                'button_descriptor' => 'GARDENS & GREENS',
+                'photo_label' => 'GARDEN RESIDENCE',
                 'title' => 'Wake Among Greenery',
                 'description' => 'A peaceful retreat overlooking Paciano\'s gardens, where quiet mornings unfold beneath open skies and surrounding greenery.',
                 'sort_order' => 20,
+                'is_active' => false,
             ],
             [
                 'slug' => 'valley',
-                'menu_label' => 'Valley',
+                'menu_label' => 'Couple Suites',
+                'button_descriptor' => 'HILLS & HORIZONS',
+                'photo_label' => 'VALLEY RETREAT',
                 'title' => 'Closer to the Wild',
                 'description' => 'A quiet escape where mountain views stretch beyond the room and every morning begins a little slower.',
                 'sort_order' => 30,
+                'is_active' => false,
             ],
             [
                 'slug' => 'family',
-                'menu_label' => 'Family',
+                'menu_label' => 'Family Sanctuary',
+                'button_descriptor' => 'RIVER & MOUNTAINS',
+                'photo_label' => 'FAMILY SANCTUARY',
                 'title' => 'Space to Be Together',
                 'description' => 'Thoughtfully arranged for families, with generous space to slow down, reconnect and enjoy the landscape together.',
-                'sort_order' => 40,
+                'sort_order' => 20,
+                'is_active' => true,
             ],
         ];
 
         foreach ($stays as $stay) {
+            $isActive = $stay['is_active'];
+            unset($stay['is_active']);
             HomeStayItem::query()->updateOrCreate(
                 ['slug' => $stay['slug']],
                 [
-                    'menu_label' => $stay['menu_label'],
-                    'title' => $stay['title'],
-                    'description' => $stay['description'],
-                    'sort_order' => $stay['sort_order'],
-                    'is_active' => true,
+                    ...$stay,
+                    'is_active' => $isActive,
                 ],
             );
         }

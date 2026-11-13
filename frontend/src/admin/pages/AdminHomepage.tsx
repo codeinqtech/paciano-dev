@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Film, ImageIcon, Plus, Trash2, Pencil, X } from "lucide-react";
+import {
+  Film,
+  ImageIcon,
+  MapPin,
+  Plus,
+  Trash2,
+  Pencil,
+  Video,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   MediaFileUploadZone,
@@ -8,23 +17,41 @@ import {
 } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  IMAGE_UPLOAD_MAX_BYTES,
+  IMAGE_UPLOAD_MAX_MB,
+  VIDEO_UPLOAD_MAX_BYTES,
+  VIDEO_UPLOAD_MAX_MB,
+} from "../constants/mediaUploadLimits";
 
-const BANNER_IMAGE_MAX_BYTES = 50 * 1024 * 1024;
-const BANNER_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+import {
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabbedCard,
+} from "../components/AdminCmsPageLayout";
+
 /** Homepage hero allows one active banner slide at a time in admin. */
 const BANNER_MAX_SLIDES = 1;
-const REVIEW_VIDEO_MAX_BYTES = 500 * 1024 * 1024;
 
 import type { HomeFeatureLabel } from "@/hooks/useHomeContent";
 
 type TabId = "banner" | "location" | "testimonials" | "memories";
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "banner", label: "Banner" },
-  { id: "location", label: "Our location" },
-  { id: "testimonials", label: "Real people. Real moments" },
-  { id: "memories", label: "Memories made at Paciano" },
+const TABS: { id: TabId; label: string; icon: typeof ImageIcon }[] = [
+  { id: "banner", label: "Banner", icon: ImageIcon },
+  { id: "location", label: "Our location", icon: MapPin },
+  // { id: "testimonials", label: "Real people. Real moments" },
+  { id: "memories", label: "POSTCARDS FROM PACIANO", icon: Video },
 ];
+
+type PostcardsForm = {
+  section_label: string;
+  heading_primary: string;
+  heading_accent: string;
+  description: string;
+};
 
 type BannerRow = {
   id: number;
@@ -89,6 +116,14 @@ export default function AdminHomepage() {
   const [landscapeFile, setLandscapeFile] = useState<File | null>(null);
   const [locationSaving, setLocationSaving] = useState(false);
 
+  const [postcardsForm, setPostcardsForm] = useState<PostcardsForm>({
+    section_label: "",
+    heading_primary: "",
+    heading_accent: "",
+    description: "",
+  });
+  const [postcardsSaving, setPostcardsSaving] = useState(false);
+
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState<{
@@ -106,6 +141,11 @@ export default function AdminHomepage() {
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [reviewSaving, setReviewSaving] = useState(false);
+
+  const { paginatedItems: pagedBanners, paginationProps: bannerPagination } =
+    useClientPagination(banners, { pageSize: 5 });
+  const { paginatedItems: pagedReviews, paginationProps: reviewPagination } =
+    useClientPagination(reviews, { pageSize: 10 });
 
   const loadBanners = useCallback(async () => {
     const res = await apiRequest<{ data: BannerRow[] }>(
@@ -139,17 +179,37 @@ export default function AdminHomepage() {
     setReviews(res.data ?? []);
   }, []);
 
+  const loadPostcards = useCallback(async () => {
+    const res = await apiRequest<{ data: PostcardsForm }>(
+      "/admin/home/postcards-section",
+    );
+    const d = res.data;
+    if (d) {
+      setPostcardsForm({
+        section_label: d.section_label ?? "",
+        heading_primary: d.heading_primary ?? "",
+        heading_accent: d.heading_accent ?? "",
+        description: d.description ?? "",
+      });
+    }
+  }, []);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([loadBanners(), loadLocation(), loadReviews()]);
+      await Promise.all([
+        loadBanners(),
+        loadLocation(),
+        loadPostcards(),
+        loadReviews(),
+      ]);
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Could not load homepage content");
     } finally {
       setLoading(false);
     }
-  }, [loadBanners, loadLocation, loadReviews]);
+  }, [loadBanners, loadLocation, loadPostcards, loadReviews]);
 
   useEffect(() => {
     loadAll();
@@ -161,12 +221,12 @@ export default function AdminHomepage() {
       return;
     }
     const maxBytes =
-      bannerType === "video" ? BANNER_VIDEO_MAX_BYTES : BANNER_IMAGE_MAX_BYTES;
+      bannerType === "video" ? VIDEO_UPLOAD_MAX_BYTES : IMAGE_UPLOAD_MAX_BYTES;
     if (bannerFile.size > maxBytes) {
       toast.error(
         bannerType === "video"
-          ? `Video must be under ${BANNER_VIDEO_MAX_BYTES / (1024 * 1024)} MB. Compress the file and try again.`
-          : `Image must be under ${BANNER_IMAGE_MAX_BYTES / (1024 * 1024)} MB.`,
+          ? `Video must be ${VIDEO_UPLOAD_MAX_MB} MB or less before upload.`
+          : `Image must be ${IMAGE_UPLOAD_MAX_MB} MB or less before upload.`,
       );
       return;
     }
@@ -215,6 +275,28 @@ export default function AdminHomepage() {
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Delete failed");
+    }
+  };
+
+  const savePostcards = async () => {
+    setPostcardsSaving(true);
+    try {
+      await apiRequest("/admin/home/postcards-section", {
+        method: "PUT",
+        body: JSON.stringify({
+          section_label: postcardsForm.section_label.trim(),
+          heading_primary: postcardsForm.heading_primary.trim(),
+          heading_accent: postcardsForm.heading_accent.trim(),
+          description: postcardsForm.description.trim(),
+        }),
+      });
+      toast.success("Postcards section saved");
+      await loadPostcards();
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Save failed");
+    } finally {
+      setPostcardsSaving(false);
     }
   };
 
@@ -270,25 +352,23 @@ export default function AdminHomepage() {
   };
 
   const saveReview = async () => {
-    if (!reviewForm.reviewer_name.trim() || !reviewForm.location.trim()) {
-      toast.error("Reviewer name and location are required");
+    if (!reviewForm.reviewer_name.trim()) {
+      toast.error("Reviewer name is required");
       return;
     }
     if (!reviewForm.id && !videoFile) {
       toast.error("Video file is required");
       return;
     }
-    if (videoFile && videoFile.size > REVIEW_VIDEO_MAX_BYTES) {
-      toast.error(
-        `Video must be under ${REVIEW_VIDEO_MAX_BYTES / (1024 * 1024)} MB.`,
-      );
+    if (videoFile && videoFile.size > VIDEO_UPLOAD_MAX_BYTES) {
+      toast.error(`Video must be ${VIDEO_UPLOAD_MAX_MB} MB or less before upload.`);
       return;
     }
     setReviewSaving(true);
     try {
       const fd = new FormData();
       fd.append("reviewer_name", reviewForm.reviewer_name.trim());
-      fd.append("location", reviewForm.location.trim());
+      fd.append("location", "");
       if (reviewForm.display_title.trim()) {
         fd.append("display_title", reviewForm.display_title.trim());
       }
@@ -351,38 +431,26 @@ export default function AdminHomepage() {
 
   if (loading) {
     return (
-      <p className="text-sm admin-card-muted p-6">Loading homepage content…</p>
+      <AdminCmsPageRoot>
+        <p className="text-sm admin-card-muted py-6">
+          Loading homepage content…
+        </p>
+      </AdminCmsPageRoot>
     );
   }
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold admin-page-title">Homepage</h1>
-        <p className="text-sm admin-card-muted mt-1">
-          Manage banner slides, the location section, and guest review videos.
-          Images are stored as WebP; videos are compressed when ffmpeg is
-          available on the server.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 border-b border-[#EDE4D8] pb-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-[#FAF7F2] text-[#3d4a22] border border-[#EDE4D8] border-b-[#FAF7F2] -mb-px"
-                : "text-[#6E655C] hover:text-[#332C26]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Homepage"
+        subtitle="Manage banner slides, the location section, and guest review videos. Images: max 2 MB upload, saved as WebP. Videos: max 50 MB upload, then compressed with ffmpeg when available on the server."
+        badge="Page Settings"
+      />
+      <AdminCmsTabbedCard
+        tabs={TABS}
+        activeTab={tab}
+        onTabChange={(id) => setTab(id as TabId)}
+      >
       {tab === "banner" ? (
         <section className="space-y-4">
           <div
@@ -394,7 +462,7 @@ export default function AdminHomepage() {
               The homepage hero can show only one banner slide (image or video)
               from the CMS. To replace it, remove the current slide first, then
               use <span className="font-medium text-[#332C26]">Add slide</span>.
-              Until the existing slide is removed, Add slide stays hidden.
+              {/* Until the existing slide is removed, Add slide stays hidden. */}
             </p>
           </div>
 
@@ -436,7 +504,7 @@ export default function AdminHomepage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {banners.map((row) => (
+                    {pagedBanners.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -475,18 +543,23 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {banners.length > 0 ? (
+              <ListPagination {...bannerPagination} itemLabel="slides" />
+            ) : null}
           </div>
         </section>
       ) : null}
 
       {tab === "location" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6 space-y-4">
+        <section className="space-y-4">
           <h2 className="text-lg font-semibold text-[#332C26]">
             Our location section
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">
-              <span className="text-xs font-medium text-[#6E655C]">Eyebrow</span>
+              <span className="text-xs font-medium text-[#6E655C]">
+                Small line above the main heading
+              </span>
               <input
                 className="admin-input mt-1 w-full rounded-xl px-4 py-2.5"
                 value={locationForm.eyebrow}
@@ -542,7 +615,7 @@ export default function AdminHomepage() {
             </label>
           </div>
           <div>
-            <p className="text-xs font-medium text-[#6E655C] mb-2">
+            {/* <p className="text-xs font-medium text-[#6E655C] mb-2">
               Feature labels (4 icons)
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -579,7 +652,7 @@ export default function AdminHomepage() {
                   />
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6E655C]">
@@ -607,7 +680,7 @@ export default function AdminHomepage() {
       ) : null}
 
       {tab === "testimonials" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6">
+        <section>
           <p className="text-sm text-[#332C26]">
             The <strong>Real people. Real moments</strong> carousel uses the
             built-in testimonials on the site. No admin changes are needed for
@@ -618,6 +691,87 @@ export default function AdminHomepage() {
 
       {tab === "memories" ? (
         <section className="space-y-4">
+          <div className="admin-card rounded-2xl p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-[#332C26]">
+              Homepage heading and text
+            </h2>
+            <p className="text-sm text-[#6E655C] -mt-2">
+              These fields control the title and description above the video
+              cards on the home page.
+            </p>
+            <label className="block">
+              <span className="text-xs font-medium text-[#6E655C]">
+                Small line above the main heading
+              </span>
+              <input
+                className="admin-input mt-1 w-full rounded-xl px-4 py-2.5"
+                placeholder="e.g. POSTCARDS FROM PACIANO"
+                value={postcardsForm.section_label}
+                onChange={(e) =>
+                  setPostcardsForm((f) => ({
+                    ...f,
+                    section_label: e.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-medium text-[#6E655C]">
+                  Main heading — first line
+                </span>
+                <input
+                  className="admin-input mt-1 w-full rounded-xl px-4 py-2.5"
+                  value={postcardsForm.heading_primary}
+                  onChange={(e) =>
+                    setPostcardsForm((f) => ({
+                      ...f,
+                      heading_primary: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-[#6E655C]">
+                  Main heading — green italic line
+                </span>
+                <input
+                  className="admin-input mt-1 w-full rounded-xl px-4 py-2.5"
+                  value={postcardsForm.heading_accent}
+                  onChange={(e) =>
+                    setPostcardsForm((f) => ({
+                      ...f,
+                      heading_accent: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="text-xs font-medium text-[#6E655C]">
+                Description under the heading
+              </span>
+              <textarea
+                className="admin-input mt-1 w-full min-h-[100px] rounded-xl px-4 py-3 text-sm"
+                value={postcardsForm.description}
+                onChange={(e) =>
+                  setPostcardsForm((f) => ({
+                    ...f,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </label>
+            <button
+              type="button"
+              disabled={postcardsSaving}
+              onClick={savePostcards}
+              className="rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
+            >
+              {postcardsSaving ? "Saving…" : "Save heading and text"}
+            </button>
+          </div>
+
           <div className="flex justify-end">
             <button
               type="button"
@@ -631,8 +785,8 @@ export default function AdminHomepage() {
           <div className="admin-card overflow-hidden rounded-2xl">
             {reviews.length === 0 ? (
               <p className="p-6 text-sm admin-card-muted">
-                No review videos yet. Upload a thumbnail, video, reviewer name,
-                and location.
+                No review videos yet. Add a cover image and video for each
+                story.
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -641,13 +795,12 @@ export default function AdminHomepage() {
                     <tr>
                       <th className="px-4 py-3">Thumb</th>
                       <th className="px-4 py-3">Reviewer</th>
-                      <th className="px-4 py-3">Location</th>
                       <th className="px-4 py-3">Order</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {reviews.map((row) => (
+                    {pagedReviews.map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-[#EDE4D8]/60 last:border-0"
@@ -664,7 +817,6 @@ export default function AdminHomepage() {
                           )}
                         </td>
                         <td className="px-4 py-3">{row.reviewer_name}</td>
-                        <td className="px-4 py-3">{row.location}</td>
                         <td className="px-4 py-3">{row.sort_order}</td>
                         <td className="px-4 py-3 text-right space-x-2">
                           <button
@@ -690,9 +842,13 @@ export default function AdminHomepage() {
                 </table>
               </div>
             )}
+            {reviews.length > 0 ? (
+              <ListPagination {...reviewPagination} itemLabel="videos" />
+            ) : null}
           </div>
         </section>
       ) : null}
+      </AdminCmsTabbedCard>
 
       {bannerModal ? (
         <FormModal
@@ -759,7 +915,7 @@ export default function AdminHomepage() {
             hint={
               bannerType === "image"
                 ? "PNG/JPG — saved as WebP"
-                : "MP4/MOV up to 500 MB. Videos 100 MB+ are compressed on the server (requires ffmpeg). Large uploads may take several minutes."
+                : `MP4/MOV up to ${VIDEO_UPLOAD_MAX_MB} MB. Compressed on the server when ffmpeg is available.`
             }
             file={bannerFile}
             onFileChange={(f) => {
@@ -809,39 +965,24 @@ export default function AdminHomepage() {
           wide
         >
           <p className="text-xs text-[#6E655C] -mt-2 mb-1">
-            Shown on the homepage under{" "}
-            <span className="font-medium text-[#332C26]">
-              Memories made at Paciano
-            </span>
-            . Upload a cover image and the clip guests will play in a popup.
+            Add a cover image and video clip for the home page carousel. Only
+            the reviewer name appears under each card on the site.
           </p>
 
-          <FormSection title="Shown on the site">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Reviewer name *">
-                <input
-                  className="admin-input w-full rounded-xl px-4 py-2.5"
-                  placeholder="e.g. Amar Banerjee"
-                  value={reviewForm.reviewer_name}
-                  onChange={(e) =>
-                    setReviewForm((f) => ({
-                      ...f,
-                      reviewer_name: e.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Location *">
-                <input
-                  className="admin-input w-full rounded-xl px-4 py-2.5"
-                  placeholder="e.g. Siliguri, India"
-                  value={reviewForm.location}
-                  onChange={(e) =>
-                    setReviewForm((f) => ({ ...f, location: e.target.value }))
-                  }
-                />
-              </Field>
-            </div>
+          <FormSection title="Video details">
+            <Field label="Reviewer name *">
+              <input
+                className="admin-input w-full rounded-xl px-4 py-2.5"
+                placeholder="e.g. Amar Banerjee"
+                value={reviewForm.reviewer_name}
+                onChange={(e) =>
+                  setReviewForm((f) => ({
+                    ...f,
+                    reviewer_name: e.target.value,
+                  }))
+                }
+              />
+            </Field>
             <Field label="Optional card title (defaults to reviewer name)">
               <input
                 className="admin-input w-full rounded-xl px-4 py-2.5"
@@ -890,7 +1031,7 @@ export default function AdminHomepage() {
               <MediaFileUploadZone
                 variant="video"
                 title="Video file"
-                hint="Up to 500 MB. Files 100 MB+ are compressed on upload when ffmpeg is available."
+                hint={`Up to ${VIDEO_UPLOAD_MAX_MB} MB. Compressed on upload when ffmpeg is available.`}
                 required={!reviewForm.id}
                 optional={!!reviewForm.id}
                 file={videoFile}
@@ -906,7 +1047,7 @@ export default function AdminHomepage() {
           </FormSection>
         </FormModal>
       ) : null}
-    </div>
+    </AdminCmsPageRoot>
   );
 }
 

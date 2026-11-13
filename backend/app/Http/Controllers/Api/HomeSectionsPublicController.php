@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\HomeAboutSection;
+use App\Models\AboutExperienceItem;
+use App\Models\AboutExperienceSection;
+use App\Models\AboutIntro;
 use App\Models\HomeDiningSection;
 use App\Models\HomeDiningSlide;
-use App\Models\HomeExperienceItem;
-use App\Models\HomeExperienceSection;
 use App\Models\HomeStayItem;
 use App\Models\HomeStaysSection;
 use Illuminate\Database\QueryException;
@@ -26,14 +26,14 @@ class HomeSectionsPublicController extends Controller
 
     public function about()
     {
-        if (! $this->hasTable('home_about_sections')) {
+        if (! $this->hasTable('about_intro') && ! $this->hasTable('home_about_sections')) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
         try {
             return response()->json([
                 'success' => true,
-                'data' => HomeAboutSection::singleton()->toPublicArray(),
+                'data' => AboutIntro::singleton()->toPublicArray(),
             ]);
         } catch (QueryException) {
             return response()->json(['success' => true, 'data' => null]);
@@ -42,18 +42,18 @@ class HomeSectionsPublicController extends Controller
 
     public function experiences()
     {
-        if (! $this->hasTable('home_experience_sections')) {
+        if (! $this->hasTable('about_experience_sections') && ! $this->hasTable('home_experience_sections')) {
             return response()->json(['success' => true, 'data' => ['section' => null, 'items' => []]]);
         }
 
         try {
-            $section = HomeExperienceSection::singleton()->toPublicArray();
-            $items = HomeExperienceItem::query()
+            $section = AboutExperienceSection::singleton()->toPublicArray();
+            $items = AboutExperienceItem::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()
-                ->map(fn (HomeExperienceItem $i) => $i->toPublicArray())
+                ->map(fn (AboutExperienceItem $i) => $i->toPublicArray())
                 ->values();
 
             return response()->json([

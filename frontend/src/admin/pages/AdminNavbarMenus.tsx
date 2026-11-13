@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Menu, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+} from "../components/AdminCmsPageLayout";
 
 type MenuRow = {
   id: number;
@@ -33,6 +41,9 @@ export default function AdminNavbarMenus() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  const { paginatedItems: pagedItems, paginationProps: menuPagination } =
+    useClientPagination(items, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,26 +131,26 @@ export default function AdminNavbarMenus() {
   };
 
   return (
-    <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold admin-page-title">Navbar menus</h1>
-          <p className="text-sm admin-card-muted mt-1">
-            Add, edit, or remove links shown in the site header. Deleted items
-            are hidden (is_active = 0).
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold"
-        >
-          <Plus className="h-4 w-4" />
-          Add menu
-        </button>
-      </div>
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Navbar menus"
+        subtitle="Add, edit, or remove links shown in the site header. Deleted items are hidden (is_active = 0)."
+        badge="Site structure"
+        actions={
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold"
+          >
+            <Plus className="h-4 w-4" />
+            Add menu
+          </button>
+        }
+      />
 
-      <div className="admin-card overflow-hidden rounded-2xl">
+      <AdminCmsPageCard>
+        <AdminCmsCardBody className="p-0 md:p-0">
+      <div className="overflow-hidden">
         {loading ? (
           <p className="p-6 text-sm admin-card-muted">Loading…</p>
         ) : items.length === 0 ? (
@@ -159,7 +170,7 @@ export default function AdminNavbarMenus() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {items.map((row) => (
+                {pagedItems.map((row) => (
                   <tr key={row.id}>
                     <td className="px-6 py-4 text-[#6E655C]">{row.sort_order}</td>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
@@ -197,15 +208,23 @@ export default function AdminNavbarMenus() {
             </table>
           </div>
         )}
+        {!loading && items.length > 0 ? (
+          <ListPagination {...menuPagination} itemLabel="menu items" />
+        ) : null}
       </div>
 
-      <p className="mt-4 text-xs admin-card-muted max-w-2xl">
-        URL examples: <code className="text-[#5A6B32]">/stay</code>,{" "}
-        <code className="text-[#5A6B32]">/contact</code>, home sections{" "}
-        <code className="text-[#5A6B32]">#dining</code>, or full{" "}
-        <code className="text-[#5A6B32]">https://…</code>. Lower sort order
-        appears first.
+      <p className="border-t border-[#EDE4D8] px-5 py-4 text-xs admin-card-muted md:px-8">
+        <span className="inline-flex items-center gap-1.5">
+          <Menu className="h-3.5 w-3.5 shrink-0 text-[#8A8177]" />
+          URL examples: <code className="text-[#5A6B32]">/stay</code>,{" "}
+          <code className="text-[#5A6B32]">/contact</code>, home sections{" "}
+          <code className="text-[#5A6B32]">#dining</code>, or full{" "}
+          <code className="text-[#5A6B32]">https://…</code>. Lower sort order
+          appears first.
+        </span>
       </p>
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
 
       {modalOpen ? (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/45 p-4">
@@ -289,6 +308,6 @@ export default function AdminNavbarMenus() {
           </div>
         </div>
       ) : null}
-    </div>
+    </AdminCmsPageRoot>
   );
 }

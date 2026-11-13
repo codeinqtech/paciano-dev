@@ -5,10 +5,6 @@ import riversideRoom from "@/images/river-side-room.png";
 import riversideBalcony from "@/images/river-side-room.png";
 import riversideDetail from "@/images/river-view.png";
 
-import gardenRoom from "@/images/garden-view.png";
-import gardenView from "@/images/garden-room.png";
-import gardenBalcony from "@/images/room2.png";
-
 import familyRoom from "@/images/family-room.png";
 import familyRoomTwo from "@/images/room1.png";
 import familyView from "@/images/home-room-1.webp";
@@ -25,7 +21,8 @@ type AmenityIconType = "bed" | "balcony" | "view" | "bath" | "wifi";
 type Stay = {
   id: string;
   name: string;
-  eyebrow: string;
+  buttonDescriptor: string;
+  photoLabel: string;
   title: string;
   description: string;
 
@@ -36,12 +33,12 @@ type Stay = {
     icon: AmenityIconType;
   }[];
 };
-const stays: Stay[] = [
-  {
+const staysBySlug: Record<string, Stay> = {
+  riverside: {
     id: "riverside",
-    // name: "Riverside Suite",
-    name: "Premium Suites",
-    eyebrow: "RIVERSIDE SUITE",
+    name: "Deluxe Rooms",
+    buttonDescriptor: "RIVER & MOUNTAINS",
+    photoLabel: "DELUXE ROOMS",
     title: "Wake to Tranquility",
     description:
       "Wake to the gentle rhythm of the river, framed by mountains and softened by the quiet of nature.",
@@ -72,78 +69,11 @@ const stays: Stay[] = [
     ],
   },
 
-  {
-    id: "garden",
-    // name: "Garden Residence",
-    name: "Standard Suites",
-    eyebrow: "GARDEN RESIDENCE",
-    title: "Wake Among Greenery",
-    description:
-      "A peaceful retreat overlooking Paciano's gardens, where quiet mornings unfold beneath open skies and surrounding greenery.",
-
-    images: [gardenRoom, gardenView, gardenBalcony],
-
-    amenities: [
-      {
-        label: "King Bed",
-        icon: "bed",
-      },
-      {
-        label: "Garden Outlook",
-        icon: "view",
-      },
-      {
-        label: "Private Sitting Area",
-        icon: "balcony",
-      },
-      {
-        label: "Luxury Bathroom",
-        icon: "bath",
-      },
-      {
-        label: "Complimentary Wi-Fi",
-        icon: "wifi",
-      },
-    ],
-  },
-
-  {
-    id: "valley",
-    // name: "Valley Retreat",
-    name: "Couple Suites",
-    eyebrow: "VALLEY RETREAT",
-    title: "Closer to the Wild",
-    description:
-      "A quiet escape where mountain views stretch beyond the room and every morning begins a little slower.",
-    images: [riversideRoom, riversideDetail, riversideBalcony],
-    amenities: [
-      {
-        label: "King Bed",
-        icon: "bed",
-      },
-      {
-        label: "Private Balcony",
-        icon: "balcony",
-      },
-      {
-        label: "Valley View",
-        icon: "view",
-      },
-      {
-        label: "Luxury Bathroom",
-        icon: "bath",
-      },
-      {
-        label: "Complimentary Wi-Fi",
-        icon: "wifi",
-      },
-    ],
-  },
-
-  {
+  family: {
     id: "family",
     name: "Family Sanctuary",
-    eyebrow: "FAMILY SANCTUARY",
+    buttonDescriptor: "RIVER & MOUNTAINS",
+    photoLabel: "FAMILY SANCTUARY",
     title: "Space to Be Together",
     description:
       "Thoughtfully arranged for families, with generous space to slow down, reconnect and enjoy the landscape together.",
@@ -173,7 +103,9 @@ const stays: Stay[] = [
       },
     ],
   },
-];
+};
+
+const stays: Stay[] = [staysBySlug.riverside, staysBySlug.family];
 
 // ============================================================
 // AMENITY ICON
@@ -279,24 +211,35 @@ export default function Accommodation() {
     if (!ready || !staysCms?.items?.length) {
       return stays;
     }
-    return stays.map((stay) => {
-      const row = staysCms.items.find((i) => i.slug === stay.id);
-      if (!row) {
-        return stay;
-      }
-      const images = [...stay.images];
-      if (row.photo_1_url) images[0] = row.photo_1_url;
-      if (row.photo_2_url) images[1] = row.photo_2_url;
-      if (row.photo_3_url) images[2] = row.photo_3_url;
-      return {
-        ...stay,
-        name: row.menu_label?.trim() || stay.name,
-        title: row.title || stay.title,
-        description: row.description ?? stay.description,
-        images,
-      };
-    });
+    return staysCms.items
+      .map((row) => {
+        const stay = staysBySlug[row.slug];
+        if (!stay) {
+          return null;
+        }
+        const images = [...stay.images];
+        if (row.photo_1_url) images[0] = row.photo_1_url;
+        if (row.photo_2_url) images[1] = row.photo_2_url;
+        if (row.photo_3_url) images[2] = row.photo_3_url;
+        return {
+          ...stay,
+          name: row.menu_label?.trim() || stay.name,
+          buttonDescriptor:
+            row.button_descriptor?.trim() || stay.buttonDescriptor,
+          photoLabel: row.photo_label?.trim() || stay.photoLabel,
+          title: row.title || stay.title,
+          description: row.description ?? stay.description,
+          images,
+        };
+      })
+      .filter((s): s is Stay => s !== null);
   }, [ready, staysCms]);
+
+  useEffect(() => {
+    if (activeStay >= displayStays.length && displayStays.length > 0) {
+      setActiveStay(0);
+    }
+  }, [activeStay, displayStays.length]);
 
   const staysHeadingMain =
     ready && staysCms?.section?.heading_main
@@ -742,37 +685,36 @@ export default function Accommodation() {
             `}
         >
           {/* ====================================================
-                  CAPSULE
-                  SAME WIDTH AS IMAGE BELOW
+                  CAPSULE — compact, centred above full-width image
               ==================================================== */}
 
           <div
             className="
-              relative
-              mx-auto
-              w-full
-              max-w-[min(100%,820px)]
-              min-h-0
-              flex
-              items-center
-              rounded-[28px]
-              border
-              border-[#C9C8BC]/75
-              bg-[#F7F3E9]/90
-              px-3
-              py-4
-              shadow-[0_12px_40px_rgba(65,73,55,0.065)]
-              backdrop-blur-[8px]
-              overflow-visible
-              sm:rounded-[40px]
-              sm:px-4
-              lg:min-h-[86px]
-              lg:max-w-[min(100%,760px)]
-              lg:rounded-[52px]
-              lg:px-2
-              lg:py-0
-              lg:overflow-visible
-            "
+      relative
+      mx-auto
+      w-full
+      max-w-[min(100%,820px)]
+      min-h-0
+      flex
+      items-center
+      rounded-[28px]
+      border
+      border-[#C9C8BC]/75
+      bg-[#F7F3E9]/90
+      px-3
+      py-4
+      shadow-[0_12px_40px_rgba(65,73,55,0.065)]
+      backdrop-blur-[8px]
+      overflow-hidden
+      sm:rounded-[40px]
+      sm:px-4
+      lg:min-h-[86px]
+      lg:max-w-[min(100%,760px)]
+      lg:rounded-[52px]
+      lg:px-2
+      lg:py-0
+      lg:overflow-visible
+    "
           >
             {/* very subtle inner border */}
 
@@ -795,61 +737,43 @@ export default function Accommodation() {
 
             <div
               className="
-                relative
-                z-20
-                flex
-                w-full
-                flex-col
-                items-stretch
-                gap-4
-                overflow-visible
-                lg:min-h-[84px]
-                lg:flex-row
-                lg:items-center
-                lg:justify-between
-                lg:gap-0
-                lg:px-4
-                [@media(orientation:landscape)_and_(max-height:500px)]:flex-row
-                [@media(orientation:landscape)_and_(max-height:500px)]:items-center
-                [@media(orientation:landscape)_and_(max-height:500px)]:justify-between
-                [@media(orientation:landscape)_and_(max-height:500px)]:gap-2
-              "
+    relative
+    z-20
+    flex
+    w-full
+    flex-col
+    items-stretch
+    gap-4
+    overflow-visible
+    lg:min-h-[84px]
+    lg:flex-row
+    lg:items-center
+    lg:justify-between
+    lg:gap-0
+    lg:px-4
+  "
             >
               {/* Two stay navigation items */}
-              <div
-                className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 [@media(orientation:landscape)_and_(max-height:500px)]:flex
-                [@media(orientation:landscape)_and_(max-height:500px)]:w-auto
-                [@media(orientation:landscape)_and_(max-height:500px)]:flex-1
-                [@media(orientation:landscape)_and_(max-height:500px)]:items-center
-                [@media(orientation:landscape)_and_(max-height:500px)]:justify-evenly
-                [@media(orientation:landscape)_and_(max-height:500px)]:gap-1lg:flex lg:w-auto lg:flex-none lg:items-center lg:justify-center lg:gap-5 lg:gap-y-0 xl:gap-6"
-              >
+              <div className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 lg:flex lg:w-auto lg:flex-none lg:items-center lg:justify-center lg:gap-5 lg:gap-y-0 xl:gap-6">
                 {displayStays.map((item, index) => {
                   const active = index === activeStay;
-
-                  const descriptors = [
-                    "RIVER & MOUNTAINS",
-                    "GARDENS & GREENS",
-                    "HILLS & HORIZONS",
-                    "TOGETHER IN NATURE",
-                  ];
 
                   return (
                     <div
                       key={item.id}
                       className={`
-                        relative
-                        min-w-0
-                        transition-all
-                        duration-[1000ms]
-                        ease-[cubic-bezier(0.16,1,0.3,1)]
-                        ${
-                          visible
-                            ? "opacity-100 translate-y-0 blur-0"
-                            : "opacity-0 translate-y-6 blur-[2px]"
-                        }
-                      
-                      `}
+      relative
+      min-w-0
+      transition-all
+      duration-[1000ms]
+      ease-[cubic-bezier(0.16,1,0.3,1)]
+      ${
+        visible
+          ? "opacity-100 translate-y-0 blur-0"
+          : "opacity-0 translate-y-6 blur-[2px]"
+      }
+     
+    `}
                       style={{
                         transitionDelay: visible
                           ? `${180 + index * 100}ms`
@@ -875,18 +799,21 @@ export default function Accommodation() {
                           transition-all
                           duration-500
                           disabled:pointer-events-none
-                          sm:gap-4
+                          sm:gap-3
                           sm:px-2
-                          lg:gap-5
-                          lg:px-5
+                          lg:w-auto
+                          lg:shrink-0
+                          lg:gap-3
+                          lg:px-2
                         "
                       >
                         <span
                           className={`
                             flex
                             items-center
-                            gap-4
-                           
+                            gap-3
+                            sm:gap-3.5
+                            lg:gap-3
                           `}
                         >
                           {/* Icon */}
@@ -934,7 +861,7 @@ export default function Accommodation() {
                             `}
                             />
 
-                            {index === 0 && (
+                            {item.id === "riverside" && (
                               <svg
                                 viewBox="0 0 44 34"
                                 className="relative z-10 h-[27px] w-[34px]"
@@ -960,7 +887,7 @@ export default function Accommodation() {
                               </svg>
                             )}
 
-                            {index === 1 && (
+                            {item.id === "family" && (
                               <svg
                                 viewBox="0 0 44 34"
                                 className="relative z-10 h-[29px] w-[31px] origin-bottom transition-transform duration-700 group-hover:-rotate-3"
@@ -981,65 +908,6 @@ export default function Accommodation() {
                                   stroke="currentColor"
                                   strokeWidth="1.1"
                                   opacity=".75"
-                                />
-                              </svg>
-                            )}
-
-                            {index === 2 && (
-                              <svg
-                                viewBox="0 0 44 34"
-                                className="relative z-10 h-[28px] w-[35px] transition-transform duration-700 group-hover:-translate-y-0.5"
-                                fill="none"
-                              >
-                                <path
-                                  d="M2 27 L13 14 L19 21 L28 7 L42 27"
-                                  stroke="currentColor"
-                                  strokeWidth="1.1"
-                                />
-                                <path
-                                  d="M20 27 L28 17 L36 27"
-                                  stroke="currentColor"
-                                  strokeWidth=".8"
-                                  opacity=".42"
-                                />
-                                <path
-                                  d="M2 28 H42"
-                                  stroke="currentColor"
-                                  strokeWidth=".8"
-                                  opacity=".45"
-                                />
-                              </svg>
-                            )}
-
-                            {index === 3 && (
-                              <svg
-                                viewBox="0 0 44 34"
-                                className="relative z-10 h-[29px] w-[34px]"
-                                fill="none"
-                              >
-                                <circle
-                                  cx="15"
-                                  cy="9"
-                                  r="3"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <circle
-                                  cx="29"
-                                  cy="9"
-                                  r="3"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <path
-                                  d="M7 29 C7 21 11 17 15 17 C20 17 22 21 22 29"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
-                                />
-                                <path
-                                  d="M22 29 C22 21 24 17 29 17 C34 17 38 21 38 29"
-                                  stroke="currentColor"
-                                  strokeWidth="1"
                                 />
                               </svg>
                             )}
@@ -1090,7 +958,7 @@ export default function Accommodation() {
                               }
                             `}
                             >
-                              {descriptors[index]}
+                              {item.buttonDescriptor}
                             </span>
                           </span>
 
@@ -1196,11 +1064,12 @@ export default function Accommodation() {
                   transition-all
                   duration-[1100ms]
                   ease-[cubic-bezier(0.16,1,0.3,1)]
-                  lg:min-h-[116px]
-                  lg:w-[260px]
+                  lg:min-h-[84px]
+                  lg:w-[220px]
                   lg:rounded-none
                   lg:border-0
                   lg:bg-transparent
+                  lg:shrink-0
                   ${
                     visible
                       ? "opacity-100 translate-x-0 blur-0"
@@ -1208,7 +1077,6 @@ export default function Accommodation() {
                   }
                   sm:min-h-[88px]
                   sm:w-[275px]
-                  sm:mx-auto
                 `}
                 style={{
                   transitionDelay: visible ? "620ms" : "0ms",
@@ -1220,34 +1088,14 @@ export default function Accommodation() {
                   src={leafCta}
                   alt=""
                   aria-hidden="true"
-                  // className="
-                  //   pointer-events-none
-                  //   absolute
-                  //   right-[-58px]
-                  //   top-1/2
-                  //   z-0
-                  //   hidden
-                  //   h-[112px]
-                  //   w-auto
-                  //   max-w-none
-                  //   -translate-y-1/2
-                  //   object-contain
-                  //   opacity-80
-                  //   transition-all
-                  //   duration-[900ms]
-                  //   ease-[cubic-bezier(0.16,1,0.3,1)]
-                  //   group-hover:translate-x-[7px]
-                  //   group-hover:rotate-[1.5deg]
-                  //   group-hover:opacity-100
-                  //   lg:block
-                  // "
                   className="
                     pointer-events-none
                     absolute
-                    right-[14px]
+                    right-[-58px]
                     top-1/2
                     z-0
-                    h-[72px]
+                    hidden
+                    h-[112px]
                     w-auto
                     max-w-none
                     -translate-y-1/2
@@ -1259,12 +1107,7 @@ export default function Accommodation() {
                     group-hover:translate-x-[7px]
                     group-hover:rotate-[1.5deg]
                     group-hover:opacity-100
-
-                    sm:right-[-12px]
-                    sm:h-[88px]
-
-                    lg:right-[-58px]
-                    lg:h-[98px]
+                    lg:block
                   "
                 />
 
@@ -1398,9 +1241,9 @@ export default function Accommodation() {
               relative
               overflow-hidden
               h-[470px]
-              sm:h-[560px]
-              lg:h-[680px]
-              xl:h-[700px]
+                sm:h-[560px]
+                lg:h-[680px]
+                xl:h-[700px]
               rounded-[20px]
               sm:rounded-[26px]
               bg-[#303A32]
@@ -1566,7 +1409,7 @@ export default function Accommodation() {
                   text-white/80
                 "
                 >
-                  {stay.eyebrow}
+                  {stay.photoLabel}
                 </p>
 
                 <h3

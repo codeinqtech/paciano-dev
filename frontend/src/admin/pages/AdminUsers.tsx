@@ -4,6 +4,14 @@ import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
 import type { AuthUser } from "../../context/AuthContext";
 import { ASSIGNABLE_MENUS, ROLES, type MenuId } from "../data/permissions";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  AdminCmsCardBody,
+  AdminCmsPageCard,
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+} from "../components/AdminCmsPageLayout";
 
 type UserForm = {
   id?: number;
@@ -34,6 +42,9 @@ export default function AdminUsers() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<UserForm>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  const { paginatedItems: pagedUsers, paginationProps: usersPagination } =
+    useClientPagination(users, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -149,25 +160,26 @@ export default function AdminUsers() {
   };
 
   return (
-    <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold admin-page-title">Users</h1>
-          <p className="text-sm admin-card-muted mt-1">
-            Create admins and choose which menus each can access.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold"
-        >
-          <UserPlus className="h-4 w-4" />
-          New user
-        </button>
-      </div>
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Users"
+        subtitle="Create admins and choose which menus each can access."
+        badge="Administration"
+        actions={
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold"
+          >
+            <UserPlus className="h-4 w-4" />
+            New user
+          </button>
+        }
+      />
 
-      <div className="admin-card overflow-hidden rounded-2xl">
+      <AdminCmsPageCard>
+        <AdminCmsCardBody className="p-0 md:p-0">
+      <div className="overflow-hidden">
         {loading ? (
           <p className="p-6 text-sm admin-card-muted">Loading…</p>
         ) : (
@@ -184,7 +196,7 @@ export default function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {users.map((user) => (
+                {pagedUsers.map((user) => (
                   <tr key={user.id}>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
                       {user.name}
@@ -231,7 +243,12 @@ export default function AdminUsers() {
             </table>
           </div>
         )}
+        {!loading && users.length > 0 ? (
+          <ListPagination {...usersPagination} itemLabel="users" />
+        ) : null}
       </div>
+        </AdminCmsCardBody>
+      </AdminCmsPageCard>
 
       {modalOpen ? (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/45 p-4">
@@ -348,6 +365,6 @@ export default function AdminUsers() {
           </div>
         </div>
       ) : null}
-    </div>
+    </AdminCmsPageRoot>
   );
 }

@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import { PacianoExperienceIcon } from "@/components/common/icons/paciano";
+import { truncateWords } from "@/utils/aboutWords";
 import storyImage from "@/images/story.png";
 import aboutNature from "@/images/home/about_left.webp";
 import aboutHospitality from "@/images/home/about_centre.webp";
@@ -57,293 +60,6 @@ const experiences = [
     image: sustainable,
   },
 ];
-
-function ExperienceIcon({ type }: { type: number }) {
-  const common =
-    "h-[54px] w-[54px] text-[#5F7138] transition-all duration-[1200ms] ease-[cubic-bezier(.22,1,.36,1)]";
-
-  /* ============================================================
-     01 — RIVERSIDE
-  ============================================================ */
-  if (type === 0) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* sun */}
-        <circle
-          cx="32"
-          cy="16"
-          r="4"
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* horizon */}
-        <path
-          d="M13 28C20 25 25 25 32 28C39 31 45 31 51 28"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        {/* river */}
-        <path
-          d="M10 36C17 32 23 32 30 36C37 40 43 40 54 35"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="M13 44C20 41 26 41 33 44C40 47 46 47 51 44"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-
-        {/* tiny shore */}
-        <path
-          d="M18 51C25 49 38 49 46 51"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     02 — TEA GARDEN
-  ============================================================ */
-  if (type === 1) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* elegant central stem */}
-        <path
-          d="M32 53C31 42 32 31 38 13"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-        />
-
-        {/* left leaf */}
-        <path
-          d="
-            M32 38
-            C23 36 17 30 17 22
-            C25 23 31 29 32 37
-          "
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* right leaf */}
-        <path
-          d="
-            M35 29
-            C36 21 42 16 49 17
-            C47 24 42 29 35 30
-          "
-          stroke="currentColor"
-          strokeWidth="1.25"
-        />
-
-        {/* small leaf */}
-        <path
-          d="
-            M31 46
-            C25 44 21 40 20 35
-            C26 36 30 40 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        {/* tiny bud */}
-        <circle cx="40" cy="12" r="1.7" fill="currentColor" />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     03 — CULINARY
-  ============================================================ */
-  if (type === 2) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* plate */}
-        <ellipse
-          cx="32"
-          cy="38"
-          rx="20"
-          ry="7"
-          stroke="currentColor"
-          strokeWidth="1.2"
-        />
-
-        <ellipse
-          cx="32"
-          cy="37"
-          rx="14"
-          ry="4"
-          stroke="currentColor"
-          strokeWidth="0.9"
-        />
-
-        {/* food / botanical garnish */}
-        <path
-          d="M26 35C27 29 31 26 36 24"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="
-            M29 30
-            C25 29 23 26 24 23
-            C28 24 30 26 30 30
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        <path
-          d="
-            M34 27
-            C36 23 40 21 43 22
-            C41 26 38 28 34 28
-          "
-          stroke="currentColor"
-          strokeWidth="1"
-        />
-
-        {/* plate base */}
-        <path
-          d="M18 48C26 51 39 51 47 48"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     04 — WELLNESS
-  ============================================================ */
-  if (type === 3) {
-    return (
-      <svg viewBox="0 0 64 64" className={common} fill="none">
-        {/* water / breathing */}
-        <path
-          d="
-            M15 25
-            C21 19 27 19 32 25
-            C37 31 43 31 49 25
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="
-            M15 34
-            C21 28 27 28 32 34
-            C37 40 43 40 49 34
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-
-        {/* lotus */}
-        <path
-          d="
-            M32 48
-            C27 43 25 38 28 34
-            C31 37 32 41 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-        />
-
-        <path
-          d="
-            M32 48
-            C37 43 39 38 36 34
-            C33 37 32 41 32 45
-          "
-          stroke="currentColor"
-          strokeWidth="1.1"
-        />
-
-        <path
-          d="M23 48H41"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  /* ============================================================
-     05 — SUSTAINABLE STAY
-  ============================================================ */
-
-  return (
-    <svg viewBox="0 0 64 64" className={common} fill="none">
-      {/* earth / home */}
-      <path
-        d="
-          M16 34
-          C19 24 26 18 36 17
-          C44 16 50 21 52 28
-          C46 27 41 29 37 34
-          C31 41 24 43 17 41
-        "
-        stroke="currentColor"
-        strokeWidth="1.15"
-        strokeLinecap="round"
-      />
-
-      {/* leaf */}
-      <path
-        d="M31 49C31 40 34 31 42 24"
-        stroke="currentColor"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="
-          M33 38
-          C27 36 24 32 24 27
-          C30 28 34 32 34 37
-        "
-        stroke="currentColor"
-        strokeWidth="1"
-      />
-
-      <path
-        d="
-          M37 31
-          C39 26 43 23 48 24
-          C46 29 42 32 37 33
-        "
-        stroke="currentColor"
-        strokeWidth="1"
-      />
-
-      {/* tiny seed */}
-      <circle cx="22" cy="19" r="1.5" fill="currentColor" />
-    </svg>
-  );
-}
-/* ==========================================================================
-   BOTANICAL LEAF
-   ========================================================================== */
 
 function BotanicalLeaf({
   className = "",
@@ -1321,8 +1037,20 @@ export default function AboutUs() {
             DESCRIPTION
         ==================================================== */}
 
-            <p
-              className="
+            {(() => {
+              const p1 =
+                (ready && aboutCms?.paragraph_1) ||
+                "Paciano is more than a resort — it's a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments.";
+              const teaserWords = aboutCms?.home_teaser_words ?? 42;
+              const { text: homeP1, truncated } = truncateWords(p1, teaserWords);
+              const tagline =
+                (ready &&
+                  aboutCms?.home_tagline) ||
+                "A place to retreat. A place to reconnect. A place that stays with you long after you leave.";
+              return (
+                <>
+                  <p
+                    className="
             paciano-reveal
             paciano-delay-2
 
@@ -1338,12 +1066,19 @@ export default function AboutUs() {
 
             sm:text-[15px]
           "
-            >
-              {(ready && aboutCms?.paragraph_1) ||
-                "Paciano is more than a resort — it's a sanctuary where nature, comfort and genuine hospitality come together to create unforgettable moments."}{" "}
-            </p>
-            <p
-              className="
+                  >
+                    {homeP1}{" "}
+                    {truncated ? (
+                      <Link
+                        to="/about"
+                        className="font-semibold text-[#5F7138] underline-offset-2 hover:underline"
+                      >
+                        View more
+                      </Link>
+                    ) : null}
+                  </p>
+                  <p
+                    className="
             paciano-reveal
             paciano-delay-2
 
@@ -1359,10 +1094,12 @@ export default function AboutUs() {
 
             sm:text-[14px]
           "
-            >
-              {(ready && aboutCms?.paragraph_2) ||
-                "A place to retreat. A place to reconnect. A place that stays with you long after you leave."}
-            </p>
+                  >
+                    {tagline}
+                  </p>
+                </>
+              );
+            })()}
 
             {/* ============================================================
     PACIANO — DISCOVER OUR STORY
@@ -1373,8 +1110,8 @@ export default function AboutUs() {
     DISCOVER OUR STORY — LUXURY CTA
 ============================================================ */}
 
-            <button
-              type="button"
+            <Link
+              to="/about"
               className="
     group
     relative
@@ -1675,7 +1412,7 @@ export default function AboutUs() {
       group-hover:opacity-80
     "
               />
-            </button>
+            </Link>
           </div>
 
           {/* ======================================================
@@ -2648,46 +2385,73 @@ export default function AboutUs() {
         <div
           ref={experienceRef}
           className="
-    paciano-experiences
-    relative
+            paciano-experiences
+            relative
+            mt-[55px]
+            grid
+            grid-cols-2
+            items-stretch
+            gap-x-[14px]
+            gap-y-[35px]
 
-    mt-[55px]
+            sm:grid-cols-3
 
-    grid
-    grid-cols-2
-    gap-x-[14px]
-    gap-y-[35px]
+            lg:grid-cols-5
+            lg:gap-x-[18px]
+            lg:gap-y-0
 
-    sm:grid-cols-3
+            xl:px-[10px]
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:grid-cols-6
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:gap-x-5
+            [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:gap-y-10
 
-    lg:grid-cols-5
-    lg:gap-x-[18px]
-    lg:gap-y-0
-
-    xl:px-[10px]
-  "
+            [@media(orientation:landscape)_and_(pointer:coarse)]:grid-cols-6
+            [@media(orientation:landscape)_and_(pointer:coarse)]:gap-x-[18px]
+            [@media(orientation:landscape)_and_(pointer:coarse)]:gap-y-[35px]
+          "
         >
           {displayExperiences.map((experience, index) => (
             <article
               key={experience.title}
               className={`
-  paciano-experience
-  paciano-experience-${index + 1}
+                paciano-experience
+                paciano-experience-${index + 1}
+                group
+                relative
+                min-w-0
+                flex
+                flex-col
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-span-2
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!transform-none
+                [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:[--experience-y:0px]
+                ${
+                  index === 3
+                    ? `
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-start-2
+                  [@media(orientation:landscape)_and_(pointer:coarse)]:!col-start-2
+                `
+                    : ""
+                }
+                ${
+                  index === 4
+                    ? `
+                    [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:col-start-4
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!col-start-4
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!mx-0
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!w-full
+                    [@media(orientation:landscape)_and_(pointer:coarse)]:!max-w-none
+                  `
+                    : ""
+                }
+                [@media(orientation:landscape)_and_(pointer:coarse)]:!col-span-2
+                [@media(orientation:landscape)_and_(pointer:coarse)]:[--experience-y:0px]
+                [@media(orientation:landscape)_and_(pointer:coarse)]:!transform-none
 
-  group
-  relative
-
-  ${experienceVisible ? "paciano-experience-visible" : ""}
-`}
+                ${experienceVisible ? "paciano-experience-visible" : ""}
+              `}
               style={
                 {
                   "--experience-delay": `${index * 450}ms`,
-                  "--experience-y":
-                    index === 1 || index === 3
-                      ? "22px"
-                      : index === 2
-                        ? "35px"
-                        : "0px",
                 } as React.CSSProperties
               }
             >
@@ -2726,7 +2490,10 @@ export default function AboutUs() {
           ease-[cubic-bezier(.22,1,.36,1)]
         "
               >
-                <ExperienceIcon type={index} />
+                <PacianoExperienceIcon
+                  type={index}
+                  className="h-[54px] w-[54px] text-[#5F7138] transition-all duration-[1200ms] ease-[cubic-bezier(.22,1,.36,1)]"
+                />
 
                 {/* tiny orbit */}
                 {/* <span
@@ -2765,28 +2532,34 @@ export default function AboutUs() {
 
               <div
                 className="
-          relative
-          z-10
+                  relative
+                  z-10
+                  mt-[18px]
+                  text-center
 
-          mt-[18px]
+                  min-h-[125px]
+                  min-[380px]:min-h-[115px]
 
-          text-center
-        "
+                  sm:min-h-0
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!min-h-[145px]
+                "
               >
                 <h4
                   className="
-    paciano-experience-title
-    font-cormorant
-    text-[28px]
-    font-medium
-    leading-[1.05]
-    tracking-[-0.015em]
-    text-[#17251B]
-    transition-all
-    duration-[1000ms]
-    ease-[cubic-bezier(.22,1,.36,1)]
-    group-hover:text-[#617638]
-  "
+                    paciano-experience-title
+                    font-cormorant
+                    text-[23px]
+                    sm:text-[24px]
+                    md:text-[28px]
+                    font-medium
+                    leading-[1.05]
+                    tracking-[-0.015em]
+                    text-[#17251B]
+                    transition-all
+                    duration-[1000ms]
+                    ease-[cubic-bezier(.22,1,.36,1)]
+                    group-hover:text-[#617638]
+                  "
                 >
                   {experience.title}
                 </h4>
@@ -2818,35 +2591,32 @@ export default function AboutUs() {
 
               <div
                 className="
-    paciano-experience-image
-    group/image
-    relative
-    mt-[23px]
+                  paciano-experience-image
+                  group/image
+                  relative
+                  mt-[23px]
+                  [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:900px)]:!mt-[18px]
+                  w-full
+                  shrink-0
 
-    h-[270px]
-    sm:h-[275px]
-    lg:h-[285px]
-    xl:h-[295px]
+                  h-[220px]
+                  min-[380px]:h-[245px]
+                  sm:h-[275px]
+                  lg:h-[285px]
+                  xl:h-[295px]
+                  [@media(orientation:landscape)_and_(pointer:coarse)]:!h-[245px]
 
-    overflow-hidden
-
-    rounded-[70px_70px_28px_28px]
-
-    bg-[#E7DFCF]
-
-    shadow-[0_24px_60px_rgba(45,48,35,.12)]
-
-    animate-paciano-card-float
-
-    transition-shadow
-    duration-[1200ms]
-
-    hover:shadow-[0_32px_75px_rgba(45,48,35,.17)]
-
-    will-change-transform
-
-    motion-reduce:animate-none
-  "
+                  overflow-hidden
+                  rounded-[70px_70px_28px_28px]
+                  bg-[#E7DFCF]
+                  shadow-[0_24px_60px_rgba(45,48,35,.12)]
+                  animate-paciano-card-float
+                  transition-shadow
+                  duration-[1200ms]
+                  hover:shadow-[0_32px_75px_rgba(45,48,35,.17)]
+                  will-change-transform
+                  motion-reduce:animate-none
+                "
               >
                 {/* soft botanical border */}
 
@@ -3757,6 +3527,123 @@ export default function AboutUs() {
   animation-duration: 7s;
   border-top-color: rgba(113, 128, 63, 0.85);
 }
+
+            /* Desktop stagger: preserve the original design */
+            .paciano-experience-2,
+            .paciano-experience-4 {
+              --experience-y: 22px;
+            }
+
+            .paciano-experience-3 {
+              --experience-y: 35px;
+            }
+
+            /* MOBILE ONLY — align experience cards in consistent rows */
+            @media (max-width: 639px) and (orientation: portrait) {
+              .paciano-experiences {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: start;
+                column-gap: 14px;
+                row-gap: 35px;
+              }
+
+              .paciano-experience {
+                --experience-y: 0px;
+
+                display: grid;
+                grid-template-rows: 72px 165px 245px 35px;
+                align-content: start;
+                align-items: start;
+                min-width: 0;
+                min-height: 0;
+                transform: none;
+              }
+
+              .paciano-experience-visible {
+                animation-name: pacianoExperienceRevealMobile;
+                animation-duration: 3.2s;
+                animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+                animation-fill-mode: both;
+                animation-delay: var(--experience-delay, 0ms);
+              }
+
+              @keyframes pacianoExperienceRevealMobile {
+                from {
+                  opacity: 0;
+                  transform: none;
+                }
+
+                to {
+                  opacity: 1;
+                  transform: none;
+                }
+              }
+
+              .paciano-experience-icon {
+                grid-row: 1;
+                margin: 0 auto;
+              }
+
+              .paciano-experience > div:nth-child(2) {
+                grid-row: 2;
+                min-height: 0;
+                height: 165px;
+                margin-top: 18px;
+                align-self: start;
+              }
+
+              .paciano-experience-image {
+                grid-row: 3;
+                width: 100%;
+                height: 245px;
+                min-height: 0;
+                margin-top: 0;
+                align-self: start;
+              }
+
+              .paciano-experience-botanical {
+                grid-row: 4;
+                margin-top: 17px;
+                justify-self: center;
+              }
+
+              .paciano-experience-5 {
+                grid-column: 1 / -1;
+                grid-template-rows: 72px 165px 245px 35px;
+                width: 100%;
+                max-width: 240px;
+                justify-self: center;
+              }
+            }
+
+            @media (max-width: 379px) and (orientation: portrait) {
+              .paciano-experience {
+                grid-template-rows: 72px 180px 220px 35px;
+              }
+
+              .paciano-experience > div:nth-child(2) {
+                height: 180px;
+              }
+
+              .paciano-experience-image {
+                height: 220px;
+              }
+
+              .paciano-experience-5 {
+                grid-template-rows: 72px 180px 220px 35px;
+              }
+            }
+
+            @media (min-width: 1024px) {
+              .paciano-experience-2,
+              .paciano-experience-4 {
+                --experience-y: 22px;
+              }
+
+              .paciano-experience-3 {
+                --experience-y: 35px;
+              }
+            }
 
   `}
       </style>

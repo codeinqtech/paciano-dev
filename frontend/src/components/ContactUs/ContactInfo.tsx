@@ -1,10 +1,18 @@
+import { useEffect, useState } from "react";
 import {
-    Mail,
-    Phone,
-    Sparkles,
-  } from "lucide-react";
+  Mail,
+  Phone,
+  Sparkles,
+  MapPin,
+  Globe,
+  Building2,
+  CalendarDays,
+} from "lucide-react";
+import IconResolver from "@/components/common/icons/IconResolver";
 
 import { motion } from "framer-motion";
+import { getApiBaseUrl } from "@/lib/apiBase";
+
 import convImg1 from "@/images/contact/about-bigimg.png";
 import convOverlap from "@/images/contact/teagarden.png";
 import contactBottomLeaf from "@/images/contact/contact-bottom-leaf.png";
@@ -13,31 +21,115 @@ const FOREST = "#0E2D20";
 const GOLD = "#C8A76A";
 const PARCHMENT = "#eee9dc";
 
+
+interface ContactInfoContent {
+  connect_with_us: string | null;
+  connect_with_us_supporting_text: string | null;
+  connect_with_us_image_one: string | null;
+  connect_with_us_image_two: string | null;
+  subtitle_one: string | null;
+  subtitle_two: string | null;
+}
+
+interface ContactDetail {
+  id: number;
+  type: string;
+  label: string;
+  value: string;
+  icon: string | null;
+  sort_order: number;
+  is_active: boolean | number;
+}
+
+
+const getContactHref = (type: string, value: string) => {
+  const normalizedType = type.toLowerCase();
+
+  if (
+    normalizedType.includes("phone") ||
+    normalizedType.includes("mobile") ||
+    normalizedType.includes("reservation")
+  ) {
+    return `tel:${value.replace(/[^\d+]/g, "")}`;
+  }
+
+  if (
+    normalizedType.includes("email") ||
+    normalizedType.includes("mail")
+  ) {
+    return `mailto:${value}`;
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  return "#";
+};
+
 function ContactInfo() {    
 
-  const contacts = [
-    {
-      label: "Reservation",
-      value: "+91 98765 43210",
-      href: "tel:+919876543210",
-      icon: <Phone className="h-[18px] w-[18px]" strokeWidth={1.4} />,
-      // note: "STAYS, AVAILABILITY & BOOKINGS",
-    },
-    {
-      label: "Experiences",
-      value: "experiences@paciano.in",
-      href: "mailto:experiences@paciano.in",
-      icon: <Sparkles className="h-[17px] w-[17px]" strokeWidth={1.4} />,
-      // note: "CURATED EXPERIENCES & ACTIVITIES",
-    },
-    {
-      label: "General Enquiries",
-      value: "hello@paciano.in",
-      href: "mailto:hello@paciano.in",
-      icon: <Mail className="h-[18px] w-[18px]" strokeWidth={1.4} />,
-      // note: "PARTNERSHIPS, MEDIA & OTHER QUERIES",
-    },
-  ];
+  const [content, setContent] = useState<ContactInfoContent | null>(null);
+  const [contacts, setContacts] = useState<ContactDetail[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchContactData = async () => {
+      try {
+        // Contact Page API
+        const pageResponse = await fetch(
+          `${getApiBaseUrl()}/contact-page`
+        );
+
+        if (!pageResponse.ok) {
+          throw new Error("Failed to fetch contact page content.");
+        }
+
+        const pageResult = await pageResponse.json();
+        const pageData = pageResult.data ?? pageResult;
+
+        if (!cancelled) {
+          setContent(pageData);
+        }
+
+        // Contact Details API
+        const detailsResponse = await fetch(
+          `${getApiBaseUrl()}/contact-details`
+        );
+
+        if (!detailsResponse.ok) {
+          throw new Error("Failed to fetch contact details.");
+        }
+
+        const detailsResult = await detailsResponse.json();
+        const detailsData = detailsResult.data ?? detailsResult;
+
+        if (!cancelled) {
+          setContacts(
+            (Array.isArray(detailsData) ? detailsData : [])
+              .filter((item: ContactDetail) => Boolean(item.is_active))
+              .sort(
+                (a: ContactDetail, b: ContactDetail) =>
+                  a.sort_order - b.sort_order
+              )
+          );
+        }
+      } catch (error) {
+        console.error("Contact Info API Error:", error);
+      }
+    };
+
+    fetchContactData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("Contact Info Content:", content);   
+  }, [content]);
   
     return (
       <section      
@@ -48,6 +140,418 @@ function ContactInfo() {
           text-[#10261b]
         "
       >   
+      
+        {/* =========================================================
+            MOBILE — RECTANGULAR EDITORIAL IMAGE COMPOSITION
+            Portrait + Landscape
+        ========================================================= */}
+
+        {/* <div className="relative block overflow-hidden py-8 lg:hidden"> */}
+        
+        {/* =========================================================
+            MOBILE + TABLET IMAGE COMPOSITION
+        ========================================================= */}
+
+        <div className="
+          relative
+          z-10
+          hidden
+          overflow-hidden
+          px-5
+          pb-12
+          pt-8
+          [@media(any-pointer:coarse)]:block
+          sm:px-8
+          md:px-12
+          lg:px-16
+        ">
+
+          <div className="
+            relative
+            mx-auto
+            w-full
+            max-w-[1050px]
+
+            h-[clamp(390px,105vw,560px)]
+
+            [@media(orientation:landscape)_and_(max-height:650px)]:h-[min(58vw,480px)]
+            [@media(orientation:landscape)_and_(max-height:650px)]:min-h-[280px]
+          ">
+
+            {/* LARGE RECTANGULAR IMAGE */}
+
+            <motion.div
+              initial={{ opacity: 0, y: 22, scale: 1.02 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{
+                duration: 1.6,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                absolute
+                right-0
+                top-0
+                h-[88%]
+                w-[94%]
+                overflow-hidden
+                rounded-[24px]
+                border
+                border-[#C8A76A]/55
+                bg-[#DED7C8]
+                shadow-[0_28px_65px_rgba(35,42,30,0.18)]
+
+                sm:rounded-[30px]
+                md:h-[90%]
+                md:w-[92%]
+
+                [@media(orientation:landscape)_and_(max-height:650px)]:h-full
+                [@media(orientation:landscape)_and_(max-height:650px)]:w-[90%]
+              "
+            >
+
+              <motion.img
+                src={content?.connect_with_us_image_one || convImg1}
+                alt="Paciano landscape"
+                className="h-full w-full object-cover object-center"
+                initial={{ scale: 1.07 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{
+                  duration: 2.8,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              />
+
+              <div className="
+                pointer-events-none
+                absolute inset-0
+                bg-gradient-to-t
+                from-[#102719]/20
+                via-transparent
+                to-[#FFF8E9]/5
+              "/>
+
+            </motion.div>
+
+
+            {/* SMALL OVERLAPPING IMAGE */}
+
+            <motion.div
+              initial={{ opacity: 0, x: -22, y: 18 }}
+              whileInView={{ opacity: 1, x: 0, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{
+                duration: 1.4,
+                delay: 0.45,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                absolute
+                bottom-[1%]
+                left-0
+                z-20
+                w-[37%]
+                max-w-[190px]
+
+                sm:w-[31%]
+                sm:max-w-[205px]
+
+                md:w-[25%]
+                md:max-w-[225px]
+
+                [@media(orientation:landscape)_and_(max-height:650px)]:bottom-[5%]
+                [@media(orientation:landscape)_and_(max-height:650px)]:left-[2%]
+                [@media(orientation:landscape)_and_(max-height:650px)]:w-[19%]
+                [@media(orientation:landscape)_and_(max-height:650px)]:max-w-[175px]
+              "
+            >
+
+              <div className="
+                absolute -inset-[5px]
+                rounded-[22px]
+                border border-[#C8A76A]/65
+              "/>
+
+              <div className="
+                relative
+                overflow-hidden
+                rounded-[19px]
+                border-[6px]
+                border-[#eee9dc]
+                bg-[#eee9dc]
+                shadow-[0_20px_45px_rgba(35,42,30,0.22)]
+              ">
+
+                <img
+                  src={content?.connect_with_us_image_two || convOverlap}
+                  alt="Nature surrounding Paciano"
+                  className="aspect-[4/5] w-full object-cover"
+                />
+
+              </div>
+
+              <p className="
+                mt-3 ml-1
+                font-manrope
+                text-[7px]
+                uppercase
+                tracking-[0.3em]
+                text-[#68753F]
+              ">
+                A moment in nature
+              </p>
+
+            </motion.div>
+
+          </div>
+        </div>
+
+   
+        
+
+          {/* =========================================================
+              MOBILE STORY — BELOW THE PHOTOGRAPHS
+              Centre aligned for portrait and landscape
+          ========================================================= */}
+
+          <div
+            className="
+            relative
+            z-20
+            mx-auto
+            hidden
+            w-full
+            px-[7%]
+            pb-16
+            pt-9
+            text-center
+            [@media(any-pointer:coarse)]:block
+        
+            [@media(orientation:landscape)_and_(max-height:600px)]:max-w-[760px]
+            [@media(orientation:landscape)_and_(max-height:600px)]:px-8
+            [@media(orientation:landscape)_and_(max-height:600px)]:pt-7
+          "
+          >
+         
+
+            {/* Eyebrow */}
+
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 1.1,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="mb-5 flex items-center justify-center gap-3"
+            >
+
+              <svg
+                viewBox="0 0 32 32"
+                className="h-5 w-5 shrink-0 text-[#71863d]"
+                fill="none"
+              >
+                <path
+                  d="M16 27C16 19 18 12 23 5"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+                <path
+                  d="M17 19C10 17 7 12 8 7C14 8 18 13 18 18"
+                  fill="currentColor"
+                  opacity=".8"
+                />
+                <path
+                  d="M19 14C20 8 25 5 29 7C27 12 24 15 19 16"
+                  fill="currentColor"
+                  opacity=".5"
+                />
+              </svg>
+
+              <span
+                className="
+                  font-manrope
+                  text-[9px]
+                  font-semibold
+                  uppercase
+                  tracking-[0.32em]
+                  text-[#68753f]
+                "
+              >
+                Connect With Us
+              </span>
+
+              <span className="h-px w-9 bg-[#c8a76a]/70" />
+
+            </motion.div>
+
+
+            {/* Heading */}
+
+            <motion.h2
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 1.3,
+                delay: 0.12,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                mx-auto
+                font-cormorant
+                text-[45px]
+                font-normal
+                leading-[0.91]
+                tracking-[-0.04em]
+                text-[#10261b]
+
+                min-[390px]:text-[49px]
+                sm:text-[57px]
+
+                [@media(orientation:landscape)_and_(max-height:600px)]:text-[43px]
+              "
+            >
+              {content?.connect_with_us || "A Conversation"}
+              <br />
+              <span className="italic text-[#78943f]">
+                {content?.connect_with_us_supporting_text || "Before Your Stay"}
+              </span>
+            </motion.h2>
+
+
+            {/* Description */}
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{
+                duration: 1.2,
+                delay: 0.3,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                mx-auto
+                mt-6
+                max-w-[560px]
+                space-y-4
+                font-manrope
+                text-[13px]
+                leading-[1.85]
+                text-[#657067]
+
+                min-[390px]:text-[14px]
+
+                [@media(orientation:landscape)_and_(max-height:600px)]:max-w-[650px]
+                [@media(orientation:landscape)_and_(max-height:600px)]:text-[13px]
+              "
+            >
+
+              <p>
+                Whether you&apos;re planning a quiet retreat, a family
+                celebration, a corporate banquet, or a curated
+                experience — we&apos;re here to craft an experience
+                around what matters to you.
+              </p>
+
+              <p>
+                Reach out and let&apos;s create something meaningful
+                together, surrounded by the forests, rivers and
+                stories of Paciano.
+              </p>
+
+            </motion.div>
+            
+            {/* MOBILE — CENTRED LUXURY CONTACT DETAILS */}
+
+            <div className="mx-auto mt-10 w-full max-w-[440px]">
+
+              {contacts.map((contact, index) => (
+                <motion.a
+                  key={contact.id}
+                  href={getContactHref(contact.type, contact.value)}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{
+                    duration: 1.1,
+                    delay: index * 0.2,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="
+                    group
+                    flex
+                    flex-col
+                    items-center
+                    py-6
+                    text-center
+                  "
+                >
+                  {/* Icon */}
+                  <div
+                    className="
+                      mb-3
+                      text-[#a47c35]
+                      transition-transform
+                      duration-700
+                      group-hover:-translate-y-1
+                    "
+                  >
+                    <IconResolver
+                      name={contact.icon}
+                      size={18}
+                      strokeWidth={1.4}
+                    />
+                  </div>
+
+                  {/* Contact Label */}
+                  <span
+                    className="
+                      font-manrope
+                      text-[9px]
+                      font-semibold
+                      uppercase
+                      tracking-[0.32em]
+                      text-[#718043]
+                    "
+                  >
+                    {contact.label}
+                  </span>
+
+                  {/* Contact Value */}
+                  <span
+                    className="
+                      mt-2
+                      break-all
+                      font-cormorant
+                      text-[24px]
+                      leading-tight
+                      text-[#173025]
+                      transition-colors
+                      duration-500
+                      group-hover:text-[#78943f]
+                      min-[400px]:text-[26px]
+                    "
+                  >
+                    {contact.value}
+                  </span>
+                </motion.a>
+              ))}
+
+              {/* Fine finishing line */}
+
+              <div className="mx-auto mt-1 h-px w-12 bg-[#c8a76a]/50" />
+
+            </div>
+
+
+          </div>
+
+
+
         {/* =========================================================
             DESKTOP / TABLET CINEMATIC COMPOSITION
         ========================================================== */}
@@ -58,7 +562,8 @@ function ContactInfo() {
             z-10
             hidden
             min-h-[760px]
-            lg:block
+            // lg:block
+            [@media(any-pointer:coarse)]:!hidden
             overflow-hidden
           "
         >
@@ -92,7 +597,7 @@ function ContactInfo() {
           
 
           <motion.img
-            src={convImg1}
+            src={content?.connect_with_us_image_one || convImg1}
             alt=""
             className="
               h-full
@@ -229,7 +734,7 @@ function ContactInfo() {
                 }}
                 >
                   <motion.img
-                    src={convImg1}
+                    src={content?.connect_with_us_image_one || convImg1}
                     alt="Paciano landscape"
                     className="
                       h-full
@@ -709,18 +1214,12 @@ function ContactInfo() {
                   xl:text-[72px]
                 "
               >
-               A Conversation
-  
+               {content?.connect_with_us || ""}
                 <br />
-  
-                <span
-                  className="
-                    italic
-                    text-[#78943f]
-                  "
-                >
-                  Before Your Stay
+                <span className="italic text-[#78943f]">
+                  {content?.connect_with_us_supporting_text || "Before Your Stay"}
                 </span>
+
               </motion.h2>
   
               {/* copy */} 
@@ -744,9 +1243,8 @@ function ContactInfo() {
                 text-[#657067]
                 "
             >
-               Whether you&apos;re planning a quiet retreat, a family celebration, a corporate banquet, or a
-               curated experience — we&apos;re here to
-                 craft an experience around what matters to you. 
+               {content?.subtitle_one ||
+  "Whether you're planning a quiet retreat, a family celebration, a corporate banquet, or a curated experience — we're here to craft an experience around what matters to you."} 
               </motion.p>
 
               <motion.p
@@ -779,7 +1277,7 @@ function ContactInfo() {
               {contacts.map((c, i) => (
                 <motion.a
                   key={c.label}
-                  href={c.href}
+                  href={getContactHref(c.type, c.value)}
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
@@ -804,7 +1302,11 @@ function ContactInfo() {
                       group-hover:text-[#c8a76a]
                     "
                   >
-                    {c.icon}
+                    <IconResolver
+                      name={c.icon}
+                      size={18}
+                      strokeWidth={1.4}
+                    />
                   </div>
     
                   <div>

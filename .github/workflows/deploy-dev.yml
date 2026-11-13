@@ -117,7 +117,7 @@ jobs:
 
             composer install --no-dev --optimize-autoloader
 
-            php artisan migrate --force
+            php artisan migrate
 
             php artisan config:clear
             php artisan cache:clear
@@ -126,5 +126,6 @@ jobs:
 
             mkdir -p public/uploads/banner/images public/uploads/banner/videos
             mkdir -p public/uploads/home public/uploads/reviews
-            mkdir -p public/media/hero-videos
-            chmod -R 775 public/uploads public/media 2>/dev/null || true
+            # Hero videos: site docroot /media/hero-videos (same origin as frontend), not backend/public/...
+            mkdir -p ../media/hero-videos
+            chmod -R 775 public/uploads ../media/hero-videos 2>/dev/null || true

@@ -13,6 +13,7 @@ import {
 
 import footerLeaf from "@/images/location-left-leaves.png";
 import { toAppPath } from "@/lib/appBase";
+import { requestPacianoBookingPlanner } from "@/lib/pacianoBooking";
 
 const exploreLinks = [
   "Home",
@@ -322,9 +323,20 @@ function FooterLink({
 type FooterProps = {
   /** Pull footer over the contact location panorama with a raised 3D lip */
   contactOverlap?: boolean;
+  /** Home: map card overlaps the top of the footer on mobile */
+  homeLocationMapOverlap?: boolean;
 };
 
-export default function Footer({ contactOverlap = false }: FooterProps) {
+export default function Footer({
+  contactOverlap = false,
+  homeLocationMapOverlap = false,
+}: FooterProps) {
+  const overlapClass = contactOverlap
+    ? "z-40 -mt-6 rounded-none shadow-[0_-32px_70px_rgba(0,0,0,0.55),0_-10px_28px_rgba(0,0,0,0.35)] sm:-mt-8 lg:-mt-10"
+    : homeLocationMapOverlap
+      ? "z-20 -mt-[52px] max-md:z-40 max-md:-mt-[7.5rem] max-md:pt-[6.5rem]"
+      : "z-20 -mt-[52px]";
+
   return (
     <>
       <footer
@@ -333,7 +345,7 @@ export default function Footer({ contactOverlap = false }: FooterProps) {
         overflow-hidden
         bg-[#09160F]
         text-[#F4EFE4]
-        ${contactOverlap ? "z-40 -mt-6 rounded-none shadow-[0_-32px_70px_rgba(0,0,0,0.55),0_-10px_28px_rgba(0,0,0,0.35)] sm:-mt-8 lg:-mt-10" : "z-20 -mt-[52px]"}
+        ${overlapClass}
       `}
       >
         {contactOverlap ? (
@@ -1682,7 +1694,11 @@ export default function Footer({ contactOverlap = false }: FooterProps) {
           ========================================================= */}
 
             <motion.a
-              href="#"
+              href="#book"
+              onClick={(e) => {
+                e.preventDefault();
+                requestPacianoBookingPlanner();
+              }}
               initial={{
                 opacity: 0,
                 x: 20,

@@ -77,7 +77,7 @@ function HomePageInner() {
         {/* <DiningSection /> */}
         <GuestStories />
         <Location />
-        <Footer />
+        <Footer homeLocationMapOverlap />
       </main>
     </>
   );

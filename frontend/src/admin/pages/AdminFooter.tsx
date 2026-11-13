@@ -4,9 +4,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { LayoutGrid, ListTree, MapPin, Pencil, Plus, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
+import { ListPagination } from "../components/ListPagination";
+import { useClientPagination } from "../hooks/useClientPagination";
+import {
+  AdminCmsPageHeader,
+  AdminCmsPageRoot,
+  AdminCmsTabbedCard,
+} from "../components/AdminCmsPageLayout";
 
 type TabId = "brand" | "map" | "social" | "mapRows";
 
@@ -41,11 +48,11 @@ type LocationInfoRow = {
   sort_order: number;
 };
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "brand", label: "Brand text" },
-  { id: "map", label: "Map card" },
-  { id: "social", label: "Social media" },
-  { id: "mapRows", label: "Map info rows" },
+const TABS: { id: TabId; label: string; icon: typeof LayoutGrid }[] = [
+  { id: "brand", label: "Brand text", icon: LayoutGrid },
+  { id: "map", label: "Map card", icon: MapPin },
+  { id: "social", label: "Social media", icon: Share2 },
+  { id: "mapRows", label: "Map info rows", icon: ListTree },
 ];
 
 const emptySettings = (): Settings => ({
@@ -94,6 +101,13 @@ export default function AdminFooter() {
     sort_order: 0,
   });
   const [infoSaving, setInfoSaving] = useState(false);
+
+  const { paginatedItems: pagedSocial, paginationProps: socialPagination } =
+    useClientPagination(social, { pageSize: 10 });
+  const {
+    paginatedItems: pagedLocationInfo,
+    paginationProps: locationPagination,
+  } = useClientPagination(locationInfo, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -256,39 +270,26 @@ export default function AdminFooter() {
 
   if (loading) {
     return (
-      <p className="text-sm admin-card-muted p-6">Loading footer content…</p>
+      <AdminCmsPageRoot>
+        <p className="text-sm admin-card-muted py-6">Loading footer content…</p>
+      </AdminCmsPageRoot>
     );
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold admin-page-title">Footer content</h1>
-        <p className="text-sm admin-card-muted mt-1">
-          Map card appears on the home location section and on the contact page
-          (free OpenStreetMap pin from coordinates or address).
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 border-b border-[#EDE4D8] pb-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-[#FAF7F2] text-[#3d4a22] border border-[#EDE4D8] border-b-[#FAF7F2] -mb-px"
-                : "text-[#6E655C] hover:text-[#332C26]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
+    <AdminCmsPageRoot>
+      <AdminCmsPageHeader
+        title="Footer content"
+        subtitle="Map card appears on the home location section and on the contact page (free OpenStreetMap pin from coordinates or address)."
+        badge="Page Settings"
+      />
+      <AdminCmsTabbedCard
+        tabs={TABS}
+        activeTab={tab}
+        onTabChange={(id) => setTab(id as TabId)}
+      >
       {tab === "brand" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6 space-y-4">
+        <section className="space-y-4">
           <h2 className="text-lg font-semibold text-[#332C26]">
             Footer left paragraph
           </h2>
@@ -304,7 +305,7 @@ export default function AdminFooter() {
       ) : null}
 
       {tab === "map" ? (
-        <section className="admin-card rounded-2xl rounded-tl-none p-6 space-y-4">
+        <section className="space-y-4">
           <h2 className="text-lg font-semibold text-[#332C26]">
             Floating map card
           </h2>
@@ -417,13 +418,16 @@ export default function AdminFooter() {
           </div>
           <div className="admin-card overflow-hidden rounded-2xl">
             <SocialTable
-              rows={social}
+              rows={pagedSocial}
               onEdit={(row) => {
                 setSocialForm({ ...row });
                 setSocialModal(true);
               }}
               onRemove={removeSocial}
             />
+            {social.length > 0 ? (
+              <ListPagination {...socialPagination} itemLabel="links" />
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -466,7 +470,7 @@ export default function AdminFooter() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EDE4D8]">
-                {locationInfo.map((row) => (
+                {pagedLocationInfo.map((row) => (
                   <tr key={row.id}>
                     <td className="px-6 py-4 text-[#6E655C]">{row.sort_order}</td>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
@@ -501,9 +505,13 @@ export default function AdminFooter() {
                 ))}
               </tbody>
             </table>
+            {locationInfo.length > 0 ? (
+              <ListPagination {...locationPagination} itemLabel="rows" />
+            ) : null}
           </div>
         </section>
       ) : null}
+      </AdminCmsTabbedCard>
 
       {socialModal ? (
         <Modal
@@ -601,7 +609,7 @@ export default function AdminFooter() {
           </Field>
         </Modal>
       ) : null}
-    </div>
+    </AdminCmsPageRoot>
   );
 }
 

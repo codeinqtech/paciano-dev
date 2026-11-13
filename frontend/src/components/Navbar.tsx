@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import pacianoLogo from "@/images/paciano-logo.png";
 import bookingImage from "@/images/paciano-booking.png";
@@ -7,10 +7,16 @@ import {
   type NavLinkItem,
 } from "@/hooks/useNavigationMenus";
 import { toAppPath } from "@/lib/appBase";
+import {
+  getPacianoBookingPrefs,
+  openPacianoBooking,
+  PACIANO_BOOKING_PLANNER_EVENT,
+  savePacianoBookingPrefs,
+} from "@/lib/pacianoBooking";
 
 interface NavbarProps {
   scrolled?: boolean;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
 }
 
 export default function Navbar({
@@ -20,13 +26,22 @@ export default function Navbar({
   const navLinks = useNavigationMenus();
   const [menuOpen, setMenuOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-
-  const [checkIn, setCheckIn] = useState("2026-10-14");
-  const [checkOut, setCheckOut] = useState("2026-10-17");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [pets, setPets] = useState(0);
+
+  const openBookingPlanner = useCallback(() => {
+    const p = getPacianoBookingPrefs();
+    setCheckIn(p.checkin);
+    setCheckOut(p.checkout);
+    setAdults(p.adults);
+    setChildren(p.children);
+    setRooms(p.rooms);
+    setBookingOpen(true);
+  }, []);
 
   const handleCheckAvailability = () => {
     if (!checkIn || !checkOut) {
@@ -39,16 +54,24 @@ export default function Navbar({
       return;
     }
 
-    console.log({
-      checkIn,
-      checkOut,
+    const prefs = {
+      checkin: checkIn,
+      checkout: checkOut,
       adults,
       children,
       rooms,
-      pets,
-    });
-    // Later we can connect this to your actual booking system.
+    };
+    savePacianoBookingPrefs(prefs);
+    openPacianoBooking(prefs);
+    setBookingOpen(false);
   };
+
+  useEffect(() => {
+    const onPlanner = () => openBookingPlanner();
+    window.addEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+    return () =>
+      window.removeEventListener(PACIANO_BOOKING_PLANNER_EVENT, onPlanner);
+  }, [openBookingPlanner]);
 
   // Prevent body scroll when mobile menu is open
   // useEffect(() => {
@@ -208,7 +231,7 @@ export default function Navbar({
               {/* CTA BUTTON */}
               <button
                 type="button"
-                onClick={() => setBookingOpen(!bookingOpen)}
+                onClick={() => openBookingPlanner()}
                 className="
                   group
                   relative
@@ -340,9 +363,6 @@ export default function Navbar({
         </div>
       </header>
 
-      {/* =========================================================
-            PACIANO — LUXURY BOOKING MODAL
-        ========================================================= */}
       <BookingModal
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
@@ -369,7 +389,7 @@ export default function Navbar({
         navLinks={navLinks}
         onBooking={() => {
           setMenuOpen(false);
-          setBookingOpen(true);
+          openBookingPlanner();
         }}
       />
     </>
@@ -3019,10 +3039,12 @@ function DateField({
 
 function isDynamicNavActive(
   label: string,
-  activeNav: "home" | "contact" | "stay",
+  activeNav: "home" | "contact" | "stay" | "about",
 ): boolean {
-  if (label === "Contact") return activeNav === "contact";
-  if (label === "Stay") return activeNav === "stay";
+  const key = label.trim().toLowerCase();
+  if (key === "contact") return activeNav === "contact";
+  if (key === "stay") return activeNav === "stay";
+  if (key === "about us" || key === "about") return activeNav === "about";
   return false;
 }
 
@@ -3102,7 +3124,7 @@ function MobileMenu({
   open: boolean;
   onClose: () => void;
   onBooking: () => void;
-  activeNav?: "home" | "contact" | "stay";
+  activeNav?: "home" | "contact" | "stay" | "about";
   navLinks: NavLinkItem[];
 }) {
   return (

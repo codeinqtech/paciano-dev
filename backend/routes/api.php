@@ -6,17 +6,39 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HomeAdminController;
 use App\Http\Controllers\Api\HomePublicController;
 use App\Http\Controllers\Api\HomeSectionsAdminController;
+use App\Http\Controllers\Api\GoogleReviewAdminController;
+use App\Http\Controllers\Api\GoogleProfilePhotoController;
+use App\Http\Controllers\Api\AboutPagePublicController;
+use App\Http\Controllers\Api\GoogleReviewPublicController;
 use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
 use App\Http\Controllers\Api\SiteNavigationMenuController;
+use App\Http\Controllers\Admin\ContactPageController;
+use App\Http\Controllers\Admin\ContactDetailController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Api\EnquiryController;
+use App\Http\Controllers\Api\WhatsAppTestController;
+
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
 Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
+// Public API routes
+Route::get('contact-page', [ContactPageController::class, 'show']);
+Route::post('/enquiries', [EnquiryController::class, 'store']);
+Route::get('/contact-details', [ContactDetailController::class, 'indexPublic']);
+
+// Temporary testing route
+Route::post('/whatsapp/test', [WhatsAppTestController::class, 'send']);
+Route::get('about/google-reviews', [GoogleReviewPublicController::class, 'aboutReviews']);
+Route::get('about/page', [AboutPagePublicController::class, 'show']);
+Route::get('google-profile-photo', [GoogleProfilePhotoController::class, 'show']);
+
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
     Route::get('location', [HomePublicController::class, 'location']);
+    Route::get('postcards-section', [HomePublicController::class, 'postcardsSection']);
     Route::get('review-videos', [HomePublicController::class, 'reviewVideos']);
 
     Route::get('sections/about', [HomeSectionsPublicController::class, 'about']);
@@ -69,13 +91,24 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('home/location', [HomeAdminController::class, 'locationShow']);
         Route::post('home/location', [HomeAdminController::class, 'locationUpdate']);
 
+        Route::get('home/postcards-section', [HomeAdminController::class, 'postcardsShow']);
+        Route::put('home/postcards-section', [HomeAdminController::class, 'postcardsUpdate']);
+
         Route::get('home/review-videos', [HomeAdminController::class, 'reviewIndex']);
         Route::post('home/review-videos', [HomeAdminController::class, 'reviewStore']);
         Route::post('home/review-videos/{id}', [HomeAdminController::class, 'reviewUpdate']);
         Route::delete('home/review-videos/{id}', [HomeAdminController::class, 'reviewDestroy']);
 
+        Route::get('google-reviews', [GoogleReviewAdminController::class, 'index']);
+        Route::post('google-reviews/sync', [GoogleReviewAdminController::class, 'sync']);
+        Route::patch('google-reviews/{id}', [GoogleReviewAdminController::class, 'updateApproval']);
+
         Route::get('home/sections/about', [HomeSectionsAdminController::class, 'aboutShow']);
         Route::post('home/sections/about', [HomeSectionsAdminController::class, 'aboutUpdate']);
+
+        Route::get('about/page', [HomeSectionsAdminController::class, 'aboutPageAdmin']);
+        Route::post('about/blocks/{sectionKey}', [HomeSectionsAdminController::class, 'aboutBlockUpdate']);
+        Route::post('about/values/{id}', [HomeSectionsAdminController::class, 'aboutValueUpdate']);
 
         Route::get('home/sections/experiences', [HomeSectionsAdminController::class, 'experiencesShow']);
         Route::post('home/sections/experiences/intro', [HomeSectionsAdminController::class, 'experiencesSectionUpdate']);
@@ -88,5 +121,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('home/sections/dining', [HomeSectionsAdminController::class, 'diningShow']);
         Route::post('home/sections/dining/intro', [HomeSectionsAdminController::class, 'diningSectionUpdate']);
         Route::post('home/sections/dining/slides/{id}', [HomeSectionsAdminController::class, 'diningSlideUpdate']);
+
+        Route::get('contact-page', [ContactPageController::class, 'show']);
+        Route::put('contact-page', [ContactPageController::class, 'update']);
+
+        // Contact Details
+        Route::apiResource('contact-details', ContactDetailController::class);
     });
 });

@@ -536,6 +536,7 @@ const LocationSection: React.FC = () => {
       w-full
       overflow-visible
       bg-[#F3EBDD]
+      max-md:pt-6
       location-section
       ${isVisible ? "location-visible" : ""}
     `}
@@ -550,11 +551,13 @@ const LocationSection: React.FC = () => {
         className="
           relative
           -mt-px
-          min-h-[680px]
           w-full
           overflow-visible
-          pb-[340px]
-          sm:pb-[360px]
+          max-md:flex
+          max-md:min-h-[200px]
+          max-md:flex-col
+          max-md:pb-0
+          max-md:pt-2
           md:h-[720px]
           md:min-h-0
           md:pb-0
@@ -727,8 +730,10 @@ const LocationSection: React.FC = () => {
             left-[2%]
             top-[0%]
             z-[25]
+            hidden
             h-[65%]
             w-[56%]
+            md:block
           "
           style={{
             background: `
@@ -778,8 +783,30 @@ const LocationSection: React.FC = () => {
               z-40
               w-[43%]
               max-w-[500px]
+              max-md:relative
+              max-md:order-1
+              max-md:mt-0
+              max-md:w-full
+              max-md:max-w-none
+              max-md:px-4
+              max-md:pb-3
+              max-md:pt-8
+              max-md:left-auto
+              max-md:top-auto
             "
           >
+            <div
+              className="
+                max-md:relative
+                max-md:z-10
+                max-md:rounded-2xl
+                max-md:bg-[#F3EBDD]/[0.97]
+                max-md:px-3
+                max-md:py-4
+                max-md:shadow-[0_10px_36px_rgba(22,28,18,0.08)]
+                max-md:backdrop-blur-[6px]
+              "
+            >
       {/* -------------------------------------------------------
           EYEBROW
       -------------------------------------------------------- */}
@@ -888,17 +915,17 @@ const LocationSection: React.FC = () => {
     transitionDelay: "480ms",
   }}
 >
-    <span className="block whitespace-nowrap">
+    <span className="block md:whitespace-nowrap">
       {copy.heading_primary}
     </span>
 
     <span
       className="
         block
-        whitespace-nowrap
         font-['Cormorant_Garamond',serif]
         italic
         text-[#68704D]
+        md:whitespace-nowrap
       "
     >
       {copy.heading_accent}
@@ -914,11 +941,16 @@ const LocationSection: React.FC = () => {
   ref={descriptionRef}
   className={`
     mt-[21px]
-    max-w-[390px]
+    max-w-none
     font-manrope
+    max-w-[390px]
     text-[clamp(12px,0.95vw,15px)]
     leading-[1.55]
     text-[#50584F]
+    max-md:max-w-none
+    max-md:text-[13px]
+    max-md:leading-[1.65]
+    max-md:text-[#3A4540]
 
     transform
     transition-all
@@ -951,6 +983,8 @@ const LocationSection: React.FC = () => {
     grid
     grid-cols-4
     items-stretch
+    max-md:grid-cols-2
+    max-md:gap-y-4
 
     transform
     transition-all
@@ -1880,22 +1914,35 @@ style={{
                 group-hover:translate-x-[2px]
               "
             >
-              â†’
+              &rarr; 
+              {/* &uarr; */}
             </span>
           </span>
 
         </a>
       </div>
 
-  
-
-
+            </div>
     </div>
 
           {/* =======================================================
               LOCATION DETAILS â€” FLOATING MAP CARD (dynamic OSM + CMS)
           ======================================================= */}
 
+          <div
+            className="
+              md:contents
+              max-md:relative
+              max-md:z-[110]
+              max-md:order-2
+              max-md:-mt-1
+              max-md:mb-0
+              max-md:w-full
+              max-md:-mb-[7.5rem]
+              max-md:px-3
+              max-md:pb-2
+            "
+          >
           <PacianoLocationMapCard
             ref={mapCardRef}
             settings={
@@ -1918,6 +1965,7 @@ style={{
             variant="home"
             isVisible={isVisible}
           />
+          </div>
 
       </div>
     </section>
