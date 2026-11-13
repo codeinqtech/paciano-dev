@@ -137,7 +137,7 @@ const rooms: Room[] = [
 const amenities: { label: string; icon: LucideIcon }[] = [
   { label: "Complimentary Breakfast", icon: ConciergeBell },
   { label: "High-Speed WiFi", icon: Wifi },
-  { label: "24/7 Room Service", icon: Sparkles },
+  { label: "Thoughtful Hospitality", icon: Sparkles },
   { label: "Tea & Coffee Station", icon: Coffee },
   { label: "Natural Toiletries", icon: Leaf },
   { label: "In-Room Dining", icon: UtensilsCrossed },
@@ -148,7 +148,7 @@ const amenities: { label: string; icon: LucideIcon }[] = [
 const moments = [
   {
     time: "06:00 AM",
-    title: "Wake to mountain sunrise",
+    title: "Sunrise over lush tea gardens",
     image: slowDaysMoments,
   },
   { time: "08:00 AM", title: "Breakfast by the river", image: resortDeck },
@@ -501,7 +501,7 @@ function Hero({ onExperience }: { onExperience: () => void }) {
               lg:text-[15px]
 
               [@media(orientation:landscape)_and_(max-height:600px)]:mt-4
-              [@media(orientation:landscape)_and_(max-height:600px)]:text-[12px]
+              [@media(orientation:landscape)_and_(max-height:600px)]:text-[14px]
             "
             >
               Spacious rooms, timeless views and thoughtful details — designed
@@ -3687,7 +3687,7 @@ function DayAtPaciano() {
               lg:mt-5
               lg:text-[12px]
               xl:text-sm
-
+              font-manrope
               transition-all
               duration-[1100ms]
               ease-[cubic-bezier(0.16,1,0.3,1)]
