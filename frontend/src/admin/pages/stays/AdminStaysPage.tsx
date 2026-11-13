@@ -135,7 +135,7 @@ export function AdminStaysPage() {
   return (
     <TabbedPageShell
       pageTitle="Our Stays"
-      subtitle="Edit the stays section intro on the home page and each stay card."
+      subtitle="Edit the home page intro and the two stay tabs (Deluxe Rooms and Family Sanctuary)."
       wide={tab === "items"}
       tabs={[
         { id: "home", label: "Home section", icon: Home },
@@ -196,7 +196,7 @@ export function AdminStaysPage() {
                   <input
                     className={inputClass}
                     value={item.menu_label ?? ""}
-                    placeholder="e.g. Premium Suites"
+                    placeholder="e.g. Deluxe Rooms"
                     onChange={(e) =>
                       setItems((list) =>
                         list.map((i) =>
