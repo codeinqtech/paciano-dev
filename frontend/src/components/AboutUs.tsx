@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHomeContent } from "@/hooks/useHomeContent";
 import storyImage from "@/images/story.png";
-import aboutNature from "@/images/about-nature-first.jpg";
-import aboutHospitality from "@/images/about-genuine-hospitality.jpg";
-import aboutConscious from "@/images/about-conscious-living.jpg";
+import aboutNature from "@/images/home/about_left.webp";
+import aboutHospitality from "@/images/home/about_centre.webp";
+import aboutConscious from "@/images/home/about_right.webp";
 
-import riverside from "@/images/riverside-bliss.jpg";
-import teaGarden from "@/images/tea-garden-walks.jpg";
-// import culinary from "@/images/culinary-delights.jpg";
-import culinary from "@/images/story.png";
-import wellness from "@/images/wellness-spa.jpg";
-import sustainable from "@/images/sustainable-stay.png";
+import riverside from "@/images/home/riverside-bliss.webp";
+import teaGarden from "@/images/home/teaGarden.webp";
+import culinary from "@/images/home/culinary-delights.webp";
+import wellness from "@/images/home/swimming-pool.webp";
+import sustainable from "@/images/home/sustaianable-stay.webp";
 
 /*
 |--------------------------------------------------------------------------
@@ -47,8 +46,9 @@ const experiences = [
     image: culinary,
   },
   {
-    title: "Wellness & Spa",
-    description: "Rejuvenate your mind, body and soul.",
+    title: "Poolside Leisure",
+    description:
+      "A refreshing escape where tranquil waters meet pure indulgence.",
     image: wellness,
   },
   {
@@ -851,8 +851,11 @@ export default function AboutUs() {
   const [visible, setVisible] = useState(false);
   const [experienceVisible, setExperienceVisible] = useState(false);
 
-  const { ready, about: aboutCms, experiences: experiencesCms } =
-    useHomeContent();
+  const {
+    ready,
+    about: aboutCms,
+    experiences: experiencesCms,
+  } = useHomeContent();
 
   const aboutPhotos = useMemo(
     () => ({
@@ -870,8 +873,7 @@ export default function AboutUs() {
     }
     return experiencesCms.items.map((item, index) => ({
       title: item.title || fallback[index]?.title || "",
-      description:
-        item.description ?? fallback[index]?.description ?? "",
+      description: item.description ?? fallback[index]?.description ?? "",
       image: item.image_url || fallback[index]?.image || riverside,
     }));
   }, [ready, experiencesCms]);

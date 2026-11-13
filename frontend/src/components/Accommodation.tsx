@@ -748,28 +748,31 @@ export default function Accommodation() {
 
           <div
             className="
-      relative
-      w-full
-      min-h-0
-      flex
-      items-center
-      rounded-[28px]
-      border
-      border-[#C9C8BC]/75
-      bg-[#F7F3E9]/90
-      px-3
-      py-4
-      shadow-[0_12px_40px_rgba(65,73,55,0.065)]
-      backdrop-blur-[8px]
-      overflow-hidden
-      sm:rounded-[40px]
-      sm:px-4
-      lg:min-h-[96px]
-      lg:rounded-[60px]
-      lg:px-0
-      lg:py-0
-      lg:overflow-visible
-    "
+              relative
+              mx-auto
+              w-full
+              max-w-[min(100%,820px)]
+              min-h-0
+              flex
+              items-center
+              rounded-[28px]
+              border
+              border-[#C9C8BC]/75
+              bg-[#F7F3E9]/90
+              px-3
+              py-4
+              shadow-[0_12px_40px_rgba(65,73,55,0.065)]
+              backdrop-blur-[8px]
+              overflow-visible
+              sm:rounded-[40px]
+              sm:px-4
+              lg:min-h-[86px]
+              lg:max-w-[min(100%,760px)]
+              lg:rounded-[52px]
+              lg:px-2
+              lg:py-0
+              lg:overflow-visible
+            "
           >
             {/* very subtle inner border */}
 
@@ -792,22 +795,35 @@ export default function Accommodation() {
 
             <div
               className="
-    relative
-    z-20
-    flex
-    w-full
-    flex-col
-    items-stretch
-    gap-4
-    overflow-visible
-    lg:min-h-[94px]
-    lg:flex-row
-    lg:gap-0
-    lg:pl-[27px]
-  "
+                relative
+                z-20
+                flex
+                w-full
+                flex-col
+                items-stretch
+                gap-4
+                overflow-visible
+                lg:min-h-[84px]
+                lg:flex-row
+                lg:items-center
+                lg:justify-between
+                lg:gap-0
+                lg:px-4
+                [@media(orientation:landscape)_and_(max-height:500px)]:flex-row
+                [@media(orientation:landscape)_and_(max-height:500px)]:items-center
+                [@media(orientation:landscape)_and_(max-height:500px)]:justify-between
+                [@media(orientation:landscape)_and_(max-height:500px)]:gap-2
+              "
             >
-              {/* Four stay navigation items */}
-              <div className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 md:grid-cols-4 lg:flex-1 lg:grid-cols-[1fr_1fr_1fr_1.08fr] lg:gap-y-0">
+              {/* Two stay navigation items */}
+              <div
+                className="grid min-w-0 w-full grid-cols-2 gap-x-1 gap-y-3 sm:gap-x-2 [@media(orientation:landscape)_and_(max-height:500px)]:flex
+                [@media(orientation:landscape)_and_(max-height:500px)]:w-auto
+                [@media(orientation:landscape)_and_(max-height:500px)]:flex-1
+                [@media(orientation:landscape)_and_(max-height:500px)]:items-center
+                [@media(orientation:landscape)_and_(max-height:500px)]:justify-evenly
+                [@media(orientation:landscape)_and_(max-height:500px)]:gap-1lg:flex lg:w-auto lg:flex-none lg:items-center lg:justify-center lg:gap-5 lg:gap-y-0 xl:gap-6"
+              >
                 {displayStays.map((item, index) => {
                   const active = index === activeStay;
 
@@ -822,18 +838,18 @@ export default function Accommodation() {
                     <div
                       key={item.id}
                       className={`
-      relative
-      min-w-0
-      transition-all
-      duration-[1000ms]
-      ease-[cubic-bezier(0.16,1,0.3,1)]
-      ${
-        visible
-          ? "opacity-100 translate-y-0 blur-0"
-          : "opacity-0 translate-y-6 blur-[2px]"
-      }
-     
-    `}
+                        relative
+                        min-w-0
+                        transition-all
+                        duration-[1000ms]
+                        ease-[cubic-bezier(0.16,1,0.3,1)]
+                        ${
+                          visible
+                            ? "opacity-100 translate-y-0 blur-0"
+                            : "opacity-0 translate-y-6 blur-[2px]"
+                        }
+                      
+                      `}
                       style={{
                         transitionDelay: visible
                           ? `${180 + index * 100}ms`
@@ -1192,6 +1208,7 @@ export default function Accommodation() {
                   }
                   sm:min-h-[88px]
                   sm:w-[275px]
+                  sm:mx-auto
                 `}
                 style={{
                   transitionDelay: visible ? "620ms" : "0ms",
@@ -1203,14 +1220,34 @@ export default function Accommodation() {
                   src={leafCta}
                   alt=""
                   aria-hidden="true"
+                  // className="
+                  //   pointer-events-none
+                  //   absolute
+                  //   right-[-58px]
+                  //   top-1/2
+                  //   z-0
+                  //   hidden
+                  //   h-[112px]
+                  //   w-auto
+                  //   max-w-none
+                  //   -translate-y-1/2
+                  //   object-contain
+                  //   opacity-80
+                  //   transition-all
+                  //   duration-[900ms]
+                  //   ease-[cubic-bezier(0.16,1,0.3,1)]
+                  //   group-hover:translate-x-[7px]
+                  //   group-hover:rotate-[1.5deg]
+                  //   group-hover:opacity-100
+                  //   lg:block
+                  // "
                   className="
                     pointer-events-none
                     absolute
-                    right-[-58px]
+                    right-[14px]
                     top-1/2
                     z-0
-                    hidden
-                    h-[112px]
+                    h-[72px]
                     w-auto
                     max-w-none
                     -translate-y-1/2
@@ -1222,7 +1259,12 @@ export default function Accommodation() {
                     group-hover:translate-x-[7px]
                     group-hover:rotate-[1.5deg]
                     group-hover:opacity-100
-                    lg:block
+
+                    sm:right-[-12px]
+                    sm:h-[88px]
+
+                    lg:right-[-58px]
+                    lg:h-[98px]
                   "
                 />
 
@@ -1356,9 +1398,9 @@ export default function Accommodation() {
               relative
               overflow-hidden
               h-[470px]
-                sm:h-[560px]
-                lg:h-[680px]
-                xl:h-[700px]
+              sm:h-[560px]
+              lg:h-[680px]
+              xl:h-[700px]
               rounded-[20px]
               sm:rounded-[26px]
               bg-[#303A32]
