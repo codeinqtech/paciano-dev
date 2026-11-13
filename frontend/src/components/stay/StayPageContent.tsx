@@ -47,8 +47,8 @@ import clientRoom4 from "@/images/stay/client-room-4.jpeg";
 import clientRoom5 from "@/images/stay/client-room-5.jpeg";
 import clientRoom6 from "@/images/stay/client-room-6.jpeg";
 import MistSectionBridge from "@/components/MistSectionBridge";
-import StayPhotoBridge from "@/components/Stay/StayPhotoBridge";
-import StayBotanicalBackdrop from "@/components/Stay/StayBotanicalBackdrop";
+import StayPhotoBridge from "@/components/stay/StayPhotoBridge";
+import StayBotanicalBackdrop from "@/components/stay/StayBotanicalBackdrop";
 import Footer from "@/components/Footer";
 import { createPortal } from "react-dom";
 
