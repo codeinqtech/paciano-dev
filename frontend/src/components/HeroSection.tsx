@@ -11,6 +11,7 @@ import { useHomeContent } from "@/hooks/useHomeContent";
 import { resolveMediaUrl } from "@/utils/resolveMediaUrl";
 import leafImage from "@/images/hh.png";
 import logoImage from "@/images/paciano-logo.png";
+import contactLeafIcon from "@/images/contact/paciano-leaf-gold-transparent.png";
 
 const HERO_VIDEO_SRC = `${
   import.meta.env.BASE_URL
@@ -125,11 +126,7 @@ async function playHeroVideoForView(
   video: HTMLVideoElement,
   options: HeroVideoPlayOptions,
 ): Promise<boolean> {
-  const {
-    inView,
-    restart = false,
-    soundEnabled = false,
-  } = options;
+  const { inView, restart = false, soundEnabled = false } = options;
 
   if (!inView) {
     video.pause();
@@ -172,8 +169,6 @@ async function playHeroVideoForView(
     return false;
   }
 }
-
-
 
 export default function HeroSection() {
   const { ready, bannerSlides: apiBannerSlides } = useHomeContent();
@@ -297,7 +292,6 @@ export default function HeroSection() {
     }
   };
 
-
   const activeSlide = heroSlides[slideIndex];
   const showImageBannerChrome = activeSlide?.kind === "image";
 
@@ -417,8 +411,7 @@ export default function HeroSection() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const inView =
-          entry.isIntersecting && entry.intersectionRatio >= 0.12;
+        const inView = entry.isIntersecting && entry.intersectionRatio >= 0.12;
         syncHeroVideoAudio(inView);
       },
       { threshold: [0, 0.12, 0.35, 0.6] },
@@ -429,7 +422,9 @@ export default function HeroSection() {
   }, [heroSlidesKey, syncActiveHeroVideo]);
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reduced) {
       return;
     }
@@ -590,10 +585,18 @@ export default function HeroSection() {
       if (fallbackTimer) window.clearTimeout(fallbackTimer);
       cleanupVideo?.();
     };
-  }, [slideIndex, heroSlides, heroSlidesKey, advanceToNextSlide, markVideoReady]);
+  }, [
+    slideIndex,
+    heroSlides,
+    heroSlidesKey,
+    advanceToNextSlide,
+    markVideoReady,
+  ]);
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reduced || heroSlides.length < 2) {
       return;
     }
@@ -658,10 +661,6 @@ export default function HeroSection() {
     advanceToNextSlide,
     videoReadyTick,
   ]);
-
-  
-
-
 
   return (
     <section
@@ -899,7 +898,6 @@ export default function HeroSection() {
 
           if (slide.kind === "video") {
             return (
-              
               <video
                 key={slide.id}
                 ref={(el) => {
@@ -930,7 +928,6 @@ export default function HeroSection() {
                   }
                 }}
               />
-              
             );
           }
 
@@ -948,7 +945,7 @@ export default function HeroSection() {
             />
           );
         })}
-        
+
         {activeSlide?.kind === "video" ? (
           <button
             type="button"
@@ -959,7 +956,6 @@ export default function HeroSection() {
             {soundEnabled ? "♪ Sound On" : "♪ Sound Off"}
           </button>
         ) : null}
-
 
         <div className="pointer-events-none absolute inset-0 z-[1]">
           <div
@@ -1211,6 +1207,9 @@ via-[#020603]/10
             "absolute",
             "left-1/2",
             "top-[13.5%]",
+            "[@media(orientation:landscape)_and_(max-height:450px)]:top-[5%]",
+            "[@media(orientation:landscape)_and_(min-width:768px)_and_(max-width:1100px)]:!top-[10%]",
+            "[@media(orientation:landscape)_and_(min-width:1101px)_and_(max-height:800px)]:!top-[10%]",
             "z-40",
             "-translate-x-1/2",
             "flex",
@@ -1228,17 +1227,19 @@ via-[#020603]/10
             src={logoImage}
             alt="Paciano"
             className="
-      h-auto
-      w-[145px]
-      object-contain
+              h-auto
+              w-[145px]
+              object-contain
 
-      sm:w-[160px]
-      md:w-[175px]
-      lg:w-[185px]
+              sm:w-[160px]
+              md:w-[175px]
+              lg:w-[185px]
 
-      brightness-[0.98]
-      saturate-[1.02]
-    "
+              brightness-[0.98]
+              saturate-[1.02]
+              [@media(orientation:landscape)_and_(min-width:768px)_and_(max-width:1100px)]:!w-[125px]
+              [@media(orientation:landscape)_and_(min-width:1101px)_and_(max-height:800px)]:!w-[105px]
+            "
             style={{
               animation: logoOpen
                 ? "pacianoLogoReveal 1800ms cubic-bezier(0.22,1,0.36,1) both, pacianoLogoGlow 7s ease-in-out 2s infinite"
@@ -1286,8 +1287,8 @@ via-[#020603]/10
           ${intro ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}
         `}
         >
-        <div
-          className="
+          <div
+            className="
             flex
             w-full
             max-w-[1100px]
@@ -1296,35 +1297,40 @@ via-[#020603]/10
             text-center
 
             mt-[90px]
-sm:mt-[85px]
-md:mt-[80px]
-lg:mt-[75px]
+            sm:mt-[85px]
+            md:mt-[80px]
+            lg:mt-[75px]
+            [@media(orientation:portrait)]:!mt-[70px]
+            [@media(orientation:landscape)_and_(max-height:450px)]:!mt-[18px]
+            [@media(orientation:landscape)_and_(min-width:768px)_and_(max-width:1100px)]:!mt-[28px]
+            [@media(orientation:landscape)_and_(min-width:1101px)_and_(max-height:800px)]:!mt-[20px]
           "
-        >
-          {/* =====================================================
+          >
+            {/* =====================================================
               EYEBROW
           ====================================================== */}
 
-          <div
-            className="
-    mb-5
-    flex
-    w-full
-    max-w-[470px]
-    items-center
-    justify-center
-    gap-4
-  "
-            style={{
-              animation: intro
-                ? "pacianoEyebrow 1400ms cubic-bezier(0.22,1,0.36,1) 900ms both"
-                : "none",
-            }}
-          >
-            <span className="h-px flex-1 bg-[#a6bf82]/55" />
-
-            <span
+            <div
               className="
+                mb-5
+                flex
+                w-full
+                max-w-[470px]
+                items-center
+                justify-center
+                gap-4
+                [@media(orientation:landscape)_and_(max-height:450px)]:!mb-2
+              "
+              style={{
+                animation: intro
+                  ? "pacianoEyebrow 1400ms cubic-bezier(0.22,1,0.36,1) 900ms both"
+                  : "none",
+              }}
+            >
+              <span className="h-px flex-1 bg-[#a6bf82]/55" />
+
+              <span
+                className="
                 whitespace-nowrap
 
                 text-[8px]
@@ -1337,18 +1343,18 @@ lg:mt-[75px]
                 sm:text-[9px]
                 md:text-[10px]
               "
-            >
-              A SANCTUARY IN THE HILLS
-            </span>
+              >
+                A SANCTUARY IN THE HILLS
+              </span>
 
-            <span className="h-px flex-1 bg-[#a6bf82]/55" />
-          </div>
+              <span className="h-px flex-1 bg-[#a6bf82]/55" />
+            </div>
 
-          {/* =====================================================
+            {/* =====================================================
               MAIN HEADING
           ====================================================== */}
 
-          {/* <h1 
+            {/* <h1 
             className="
               font-serif
               font-normal
@@ -1378,7 +1384,7 @@ lg:mt-[75px]
               Where Nature
             </span> */}
 
-          {/* Second line 
+            {/* Second line 
 
             <span
               className="
@@ -1398,8 +1404,8 @@ lg:mt-[75px]
             </span>
           </h1>*/}
 
-          <h1
-            className="
+            <h1
+              className="
                 text-center
                 font-['Cormorant_Garamond']
                 font-medium
@@ -1414,42 +1420,45 @@ lg:mt-[75px]
 
                 max-w-[760px]
                 mx-auto
+                [@media(orientation:landscape)_and_(max-height:450px)]:!text-[38px]
+                [@media(orientation:landscape)_and_(min-width:768px)_and_(max-width:1100px)]:!text-[58px]
+                [@media(orientation:landscape)_and_(min-width:1101px)_and_(max-height:800px)]:!text-[58px]
             "
-          >
-            <span
-              className="block text-[#f5efe5]"
-              style={{
-                animation: intro
-                  ? "pacianoHeading 1500ms cubic-bezier(0.22,1,0.36,1) 1200ms both"
-                  : "none",
-              }}
             >
-              Where Nature
-            </span>
+              <span
+                className="block text-[#f5efe5]"
+                style={{
+                  animation: intro
+                    ? "pacianoHeading 1500ms cubic-bezier(0.22,1,0.36,1) 1200ms both"
+                    : "none",
+                }}
+              >
+                Where Nature
+              </span>
 
-            <span
-              className="
+              <span
+                className="
       block
       mt-1
       italic
       font-normal
       text-[#a5d56d]
     "
-              style={{
-                animation: intro
-                  ? "pacianoHeading 1700ms cubic-bezier(0.22,1,0.36,1) 1450ms both"
-                  : "none",
-              }}
-            >
-              Welcomes You.
-            </span>
-          </h1>
+                style={{
+                  animation: intro
+                    ? "pacianoHeading 1700ms cubic-bezier(0.22,1,0.36,1) 1450ms both"
+                    : "none",
+                }}
+              >
+                Welcomes You.
+              </span>
+            </h1>
 
-          {/* =====================================================
+            {/* =====================================================
               SMALL DIAMOND DIVIDER
           ====================================================== */}
 
-          {/* <div
+            {/* <div
             className={`
               my-6
 
@@ -1466,179 +1475,182 @@ lg:mt-[75px]
               ${intro ? "scale-100 opacity-100" : "scale-[0.8] opacity-0"}
             `}
           > */}
-          <div
-            className="
-    my-6
-    flex
-    w-full
-    max-w-[330px]
-    items-center
-    gap-4
-  "
-            style={{
-              animation: intro
-                ? "pacianoDivider 1300ms cubic-bezier(0.22,1,0.36,1) 2100ms both"
-                : "none",
-            }}
-          >
-            <span className="h-px flex-1 bg-[#9ab574]/45" />
-
-            {/* <span
+            <div
               className="
-                text-[11px]
-                text-[#a5d56d]
+                my-6
+                flex
+                w-full
+                max-w-[330px]
+                items-center
+                gap-4
+                [@media(orientation:landscape)_and_(max-height:450px)]:!my-2
               "
-            >  ◆
-            </span>*/}
-            <span
-              className="
-    text-[10px]
-    text-[#a5d56d]
-  "
               style={{
                 animation: intro
-                  ? "pacianoDiamond 4s ease-in-out 3.2s infinite"
+                  ? "pacianoDivider 1300ms cubic-bezier(0.22,1,0.36,1) 2100ms both"
                   : "none",
               }}
             >
-              ◆
-            </span>
+              <span className="h-px flex-1 bg-[#9ab574]/45" />
 
-            <span className="h-px flex-1 bg-[#9ab574]/45" />
-          </div>
+              {/*<span
+                className="
+                  text-[10px]
+                  text-[#a5d56d]
+                "
+                style={{
+                  animation: intro
+                    ? "pacianoDiamond 4s ease-in-out 3.2s infinite"
+                    : "none",
+                }}
+              >
+                ◆
+              </span>*/}
+              <img
+                src={contactLeafIcon}
+                alt=""
+                aria-hidden="true"
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                className="
+                  h-7 w-7 shrink-0 object-contain
+                  sm:h-10 sm:w-10 md:h-12 md:w-12
+                "
+                style={{
+                  filter: "drop-shadow(0 2px 5px rgba(0,0,0,.3))",
+                }}
+              />
 
-          {/* =====================================================
+              <span className="h-px flex-1 bg-[#9ab574]/45" />
+            </div>
+
+            {/* =====================================================
               DESCRIPTION
           ====================================================== */}
 
-          <p
-            className="
-    relative
-    z-10
+            <p
+              className="
+                  relative
+                  z-10
+                  max-w-[600px]
+                  text-[12px]
+                  leading-[1.75]
+                  font-manrope
+                  tracking-[0.01em]
+                  text-white/95
+                  sm:text-[13px]
+                  md:text-[15px]
 
-    max-w-[600px]
-
-    text-[12px]
-    leading-[1.75]
-    font-light
-    tracking-[0.01em]
-
-    text-white/95
-
-    sm:text-[13px]
-    md:text-[14px]
-
-    drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)]
-  "
-            style={{
-              animation: intro
-                ? "pacianoCopy 1300ms cubic-bezier(0.22,1,0.36,1) 2400ms both"
-                : "none",
-            }}
-          >
-            Rivers, forests, slow mornings and starlit nights —
-            <br className="hidden sm:block" />
-            at Paciano, every moment brings you closer to what truly matters.
-          </p>
-          {/* =====================================================
+                  drop-shadow-[0_2px_10px_rgba(0,0,0,0.65)]
+                "
+              style={{
+                animation: intro
+                  ? "pacianoCopy 1300ms cubic-bezier(0.22,1,0.36,1) 2400ms both"
+                  : "none",
+              }}
+            >
+              Rivers, forests, slow mornings and starlit nights —
+              <br className="hidden sm:block" />
+              at Paciano, every moment brings you closer to what truly matters.
+            </p>
+            {/* =====================================================
               CTA
           ====================================================== */}
 
-          <div
-            style={{
-              animation: intro
-                ? "pacianoCTA 1400ms cubic-bezier(0.22,1,0.36,1) 2800ms both"
-                : "none",
-            }}
-          >
-            <button
-              type="button"
-              //   className="
-              //     group
-
-              //     mt-7
-
-              //     flex
-              //     h-[55px]
-              //     min-w-[225px]
-              //     items-center
-              //     justify-between
-
-              //     rounded-full
-
-              //     border
-              //     border-white/35
-
-              //     bg-[#11180f]/35
-
-              //     px-7
-
-              //     text-[10px]
-              //     font-medium
-              //     uppercase
-              //     tracking-[0.28em]
-              //     text-white
-
-              //     backdrop-blur-md
-
-              //     shadow-[0_12px_45px_rgba(0,0,0,0.22)]
-
-              //     transition-all
-              //     duration-500
-
-              //     hover:border-[#b5d582]/70
-              //     hover:bg-[#1b2817]/65
-              //     hover:shadow-[0_18px_60px_rgba(0,0,0,0.38)]
-
-              //     sm:h-[58px]
-              //     sm:min-w-[250px]
-              //     sm:px-8
-              //   "
-              className="
-  group
-  relative
-  mt-7
-
-  flex
-  h-[54px]
-  min-w-[220px]
-  items-center
-  justify-between
-
-  overflow-hidden
-  rounded-full
-
-  border
-  border-white/55
-
-  bg-[#182017]/60
-
-  px-7
-
-  text-[10px]
-  font-medium
-  uppercase
-  tracking-[0.28em]
-  text-white
-
-  backdrop-blur-md
-
-  shadow-[0_10px_35px_rgba(0,0,0,0.28)]
-
-  transition-all
-  duration-500
-
-  hover:border-[#b5d582]/80
-  hover:bg-[#1b2817]/75
-  hover:shadow-[0_15px_45px_rgba(0,0,0,0.38)]
-
-  sm:h-[57px]
-  sm:min-w-[235px]
-  sm:px-8
-"
+            <div
+              style={{
+                animation: intro
+                  ? "pacianoCTA 1400ms cubic-bezier(0.22,1,0.36,1) 2800ms both"
+                  : "none",
+              }}
             >
-              <span
+              <button
+                type="button"
+                //   className="
+                //     group
+
+                //     mt-7
+
+                //     flex
+                //     h-[55px]
+                //     min-w-[225px]
+                //     items-center
+                //     justify-between
+
+                //     rounded-full
+
+                //     border
+                //     border-white/35
+
+                //     bg-[#11180f]/35
+
+                //     px-7
+
+                //     text-[10px]
+                //     font-medium
+                //     uppercase
+                //     tracking-[0.28em]
+                //     text-white
+
+                //     backdrop-blur-md
+
+                //     shadow-[0_12px_45px_rgba(0,0,0,0.22)]
+
+                //     transition-all
+                //     duration-500
+
+                //     hover:border-[#b5d582]/70
+                //     hover:bg-[#1b2817]/65
+                //     hover:shadow-[0_18px_60px_rgba(0,0,0,0.38)]
+
+                //     sm:h-[58px]
+                //     sm:min-w-[250px]
+                //     sm:px-8
+                //   "
                 className="
+                  group
+                  relative
+                  mt-7
+                  [@media(orientation:landscape)_and_(max-height:450px)]:!mt-3
+                  flex
+                  h-[54px]
+                  min-w-[220px]
+                  items-center
+                  justify-between
+
+                  overflow-hidden
+                  rounded-full
+
+                  border
+                  border-white/55
+
+                  bg-[#182017]/60
+
+                  px-7
+
+                  text-[10px]
+                  font-medium
+                  uppercase
+                  tracking-[0.28em]
+                  text-white
+
+                  backdrop-blur-md
+
+                  shadow-[0_10px_35px_rgba(0,0,0,0.28)]
+
+                  transition-all
+                  duration-500
+
+                  hover:border-[#b5d582]/80
+                  hover:bg-[#1b2817]/75
+                  hover:shadow-[0_15px_45px_rgba(0,0,0,0.38)]
+
+                  sm:h-[57px]
+                  sm:min-w-[235px]
+                  sm:px-8
+                "
+              >
+                <span
+                  className="
     pointer-events-none
     absolute
     inset-y-0
@@ -1647,16 +1659,16 @@ lg:mt-[75px]
     -skew-x-12
        bg-white/[0.055]
   "
-                style={{
-                  animation: intro
-                    ? "pacianoShimmer 6s ease-in-out 4s infinite"
-                    : "none",
-                }}
-              />
-              <span>DISCOVER PACIANO</span>
+                  style={{
+                    animation: intro
+                      ? "pacianoShimmer 6s ease-in-out 4s infinite"
+                      : "none",
+                  }}
+                />
+                <span>DISCOVER PACIANO</span>
 
-              <span
-                className="
+                <span
+                  className="
                   text-lg
                   font-light
 
@@ -1665,18 +1677,18 @@ lg:mt-[75px]
 
                   group-hover:translate-x-2
                 "
-              >
-                →
-              </span>
-            </button>
+                >
+                  →
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
         </div>
       ) : null}
 
       {showImageBannerChrome ? (
-      <div
-        className="
+        <div
+          className="
           absolute
           bottom-[105px]
           right-[4.5vw]
@@ -1688,14 +1700,14 @@ lg:mt-[75px]
 
           md:flex
         "
-      >
-        <button
-          type="button"
-          onClick={() => {
-            const videoIdx = heroSlides.findIndex((s) => s.kind === "video");
-            if (videoIdx >= 0) goToSlide(videoIdx);
-          }}
-          className="
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const videoIdx = heroSlides.findIndex((s) => s.kind === "video");
+              if (videoIdx >= 0) goToSlide(videoIdx);
+            }}
+            className="
             group
 
             flex
@@ -1722,9 +1734,9 @@ lg:mt-[75px]
             hover:border-[#b5d582]/60
             hover:bg-[#1b2917]/80
           "
-        >
-          <span
-            className="
+          >
+            <span
+              className="
               ml-1
               text-[16px]
               text-white
@@ -1734,13 +1746,13 @@ lg:mt-[75px]
 
               group-hover:scale-110
             "
-          >
-            ▶
-          </span>
-        </button>
+            >
+              ▶
+            </span>
+          </button>
 
-        <p
-          className="
+          <p
+            className="
             mt-4
 
             text-center
@@ -1750,17 +1762,17 @@ lg:mt-[75px]
             tracking-[0.30em]
             text-white/90
           "
-        >
-          WATCH
-          <br />
-          OUR STORY
-        </p>
-      </div>
+          >
+            WATCH
+            <br />
+            OUR STORY
+          </p>
+        </div>
       ) : null}
 
       {showImageBannerChrome ? (
-      <div
-        className="
+        <div
+          className="
           absolute
           bottom-7
           left-1/2
@@ -1773,21 +1785,21 @@ lg:mt-[75px]
 
           md:flex
         "
-      >
-        <span
-          className="
+        >
+          <span
+            className="
             mb-2
             text-xs
             text-[#a5d56d]
 
             animate-bounce
           "
-        >
-          ◆
-        </span>
+          >
+            ◆
+          </span>
 
-        <p
-          className="
+          <p
+            className="
             text-center
             text-[8px]
             uppercase
@@ -1795,17 +1807,17 @@ lg:mt-[75px]
             tracking-[0.30em]
             text-white/80
           "
-        >
-          SCROLL
-          <br />
-          TO EXPLORE
-        </p>
-      </div>
+          >
+            SCROLL
+            <br />
+            TO EXPLORE
+          </p>
+        </div>
       ) : null}
 
       {showImageBannerChrome ? (
-      <div
-        className="
+        <div
+          className="
           absolute
           bottom-6
           left-1/2
@@ -1818,21 +1830,21 @@ lg:mt-[75px]
 
           md:hidden
         "
-      >
-        <span className="mb-2 text-xs text-[#a5d56d]">◆</span>
+        >
+          <span className="mb-2 text-xs text-[#a5d56d]">◆</span>
 
-        <span
-          className="
+          <span
+            className="
             whitespace-nowrap
             text-[8px]
             uppercase
             tracking-[0.30em]
             text-white/80
           "
-        >
-          Scroll to explore
-        </span>
-      </div>
+          >
+            Scroll to explore
+          </span>
+        </div>
       ) : null}
     </section>
   );

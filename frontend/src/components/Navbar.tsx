@@ -157,14 +157,17 @@ export default function Navbar({
           ========================================= */}
           <a
             href={toAppPath("/")}
-            className="
+            className={`
               group
               relative
               z-[110]
               flex
               shrink-0
               items-center
-            "
+              transition-opacity
+              duration-300
+              ${menuOpen ? "pointer-events-none opacity-0" : "opacity-100"}
+            `}
           >
             <img
               src={pacianoLogo}
@@ -308,6 +311,63 @@ export default function Navbar({
               </button>
             </div>
             {/* MENU */}
+
+            {/* MOBILE / TABLET BOOKING CTA */}
+            <button
+              type="button"
+              onClick={openBookingPlanner}
+              className={`
+                lg:hidden
+                group
+                flex
+                h-[38px]
+                items-center
+                gap-2
+                rounded-full
+                border
+                border-[#b5c96a]/75
+                bg-[#102619]/35
+                pl-3
+                pr-[3px]
+                backdrop-blur-md
+                transition-all
+                duration-500
+                hover:bg-[#102619]/55
+                ${menuOpen ? "pointer-events-none opacity-0" : "opacity-100"}
+              `}
+            >
+              <span
+                className="
+                whitespace-nowrap
+                font-jost
+                text-[8px]
+                font-medium
+                uppercase
+                tracking-[0.12em]
+                text-white
+              "
+              >
+                Plan Your Stay
+              </span>
+
+              <span
+                className="
+                  flex
+                  h-[30px]
+                  w-[30px]
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#a9b85f]
+                  text-[15px]
+                  text-[#102619]
+                "
+              >
+                →
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -441,20 +501,20 @@ function BookingModal({
   return (
     <div
       className={`
-    fixed
-    inset-0
-    z-[250]
+        fixed
+        inset-0
+        z-[250]
 
-    flex
-    items-center
-    justify-center
+        flex
+        items-center
+        justify-center
 
-    px-4
-    sm:px-8
-    lg:px-10
+        px-4
+        sm:px-8
+        lg:px-10
 
-    ${open ? "pointer-events-auto" : "pointer-events-none"}
-  `}
+        ${open ? "pointer-events-auto" : "pointer-events-none"}
+      `}
       aria-hidden={!open}
     >
       {/* =====================================================
@@ -487,19 +547,19 @@ function BookingModal({
         aria-label="Close booking planner"
         onClick={onClose}
         className={`
-    absolute
-    inset-0
+          absolute
+          inset-0
 
-    cursor-default
+          cursor-default
 
-    bg-[#07150e]/55
-    backdrop-blur-[10px]
+          bg-[#07150e]/55
+          backdrop-blur-[10px]
 
-    will-change-[opacity]
+          will-change-[opacity]
 
-    transition-opacity
-    duration-[850ms]
-    ease-[cubic-bezier(.22,1,.36,1)]
+          transition-opacity
+          duration-[850ms]
+          ease-[cubic-bezier(.22,1,.36,1)]
 
     ${
       open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
@@ -535,12 +595,12 @@ function BookingModal({
           delay-[80ms]
           ease-[cubic-bezier(.16,1,.3,1)]
 
-    ${
-      open
-        ? "translate-y-0 scale-100 opacity-100"
-        : "translate-y-5 scale-[0.985] opacity-0"
-    }
-  `}
+          ${
+            open
+              ? "translate-y-0 scale-100 opacity-100"
+              : "translate-y-5 scale-[0.985] opacity-0"
+          }
+        `}
         role="dialog"
         aria-modal="true"
         aria-label="Plan Your Stay"
@@ -673,18 +733,29 @@ function BookingModal({
         =================================================== */}
 
         <div
+          // className="
+          //   relative
+          //   max-h-[calc(100vh-32px)]
+
+          //   grid
+
+          //   min-h-[590px]
+          //   overflow-y-auto
+          //   lg:overflow-y-visible
+
+          // lg:grid-cols-[32%_68%]
+          // "
           className="
             relative
-            max-h-[calc(100vh-32px)]
-
-            grid
-
+            max-h-[calc(100dvh-24px)]
             min-h-[590px]
+            grid
             overflow-y-auto
             lg:overflow-y-visible
+            lg:grid-cols-[32%_68%]
 
-          
-          lg:grid-cols-[32%_68%]
+            [@media(orientation:landscape)_and_(max-width:1023px)]:min-h-0
+            [@media(orientation:landscape)_and_(max-width:1023px)]:max-h-[calc(100dvh-20px)]
           "
         >
           {/* =================================================
@@ -692,29 +763,36 @@ function BookingModal({
           ================================================= */}
 
           <div
+            // className="
+            //   relative
+            //   h-full
+            //   min-h-[560px]
+            //   lg:min-h-0
+            //   overflow-hidden
+            //   bg-[#16271b]
+            // "
             className="
-    relative
-    h-full
-    min-h-[560px]
-    lg:min-h-0
-    overflow-hidden
-    bg-[#16271b]
-  "
+              relative
+              hidden
+              overflow-hidden
+              bg-[#16271b]
+              lg:block
+            "
           >
             <img
               src={bookingImage}
               alt="Riverside retreat"
               className="
-      absolute
-      inset-0
-      h-full
-      w-full
-      object-cover
-     object-[35%_center]
-      transition-transform
-      duration-[1600ms]
-      ease-out
-    "
+                absolute
+                inset-0
+                h-full
+                w-full
+                object-cover
+                object-[35%_center]
+                transition-transform
+                duration-[1600ms]
+                ease-out
+              "
             />
 
             {/* image warmth */}
@@ -887,9 +965,24 @@ function BookingModal({
           ================================================= */}
 
           <div
+            // className="
+            //   relative
+
+            //   overflow-hidden
+
+            //   px-8
+            //   pb-8
+            //   pt-14
+
+            //   sm:px-10
+
+            //   lg:px-[55px]
+            //   lg:pb-[42px]
+            //   lg:pt-[54px]
+            // "
             className="
               relative
-
+              min-w-0
               overflow-hidden
 
               px-8
@@ -901,6 +994,10 @@ function BookingModal({
               lg:px-[55px]
               lg:pb-[42px]
               lg:pt-[54px]
+
+              [@media(orientation:landscape)_and_(max-width:1023px)]:px-6
+              [@media(orientation:landscape)_and_(max-width:1023px)]:pt-10
+              [@media(orientation:landscape)_and_(max-width:1023px)]:pb-5
             "
           >
             {/* =================================================
@@ -1093,6 +1190,8 @@ function BookingModal({
                 duration-[900ms]
                 delay-[320ms]
                 ease-[cubic-bezier(.16,1,.3,1)]
+                [@media(orientation:landscape)_and_(max-width:1023px)]:text-[38px]
+                [@media(orientation:landscape)_and_(max-width:1023px)]:mt-2
 
                 ${
                   open ? "translate-y-0 opacity-100" : "translate-y-7 opacity-0"
@@ -1125,6 +1224,8 @@ function BookingModal({
                 transition-all
                 duration-700
                 delay-[430ms]
+                [@media(orientation:landscape)_and_(max-width:1023px)]:mt-2
+                [@media(orientation:landscape)_and_(max-width:1023px)]:text-[12px]
 
                 ${
                   open ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
@@ -1145,7 +1246,7 @@ function BookingModal({
                 z-30
 
                 mt-11              
-
+                [@media(orientation:landscape)_and_(max-width:1023px)]:mt-5
                 transition-all
                 duration-700
                 delay-[500ms]
@@ -1156,11 +1257,23 @@ function BookingModal({
               `}
             >
               <div
+                // className="
+                //   grid
+                //   grid-cols-1
+                //   md:grid-cols-[1fr_1fr_1fr_184px]
+                //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:grid-cols-3
+                //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:items-center
+                // "
                 className="
-                  grid
+                grid
+                min-w-0
+                grid-cols-1
 
-                 md:grid-cols-[1fr_1fr_1fr_184px]
-                "
+                min-[1101px]:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(190px,1.1fr)_180px]
+
+                [@media(min-width:640px)_and_(max-width:1100px)]:grid-cols-3
+                [@media(min-width:640px)_and_(max-width:1100px)]:items-stretch
+              "
               >
                 {/* =========================================
                     ARRIVAL
@@ -1206,6 +1319,32 @@ function BookingModal({
                 <button
                   type="button"
                   onClick={onCheckAvailability}
+                  // className="
+                  //   group/availability
+                  //   relative
+                  //   flex
+                  //   min-h-[160px]
+                  //   [@media(orientation:landscape)_and_(max-width:1023px)]:min-h-[110px]
+                  //   [@media(orientation:portrait)_and_(min-width:1024px)_and_(max-width:1100px)]:min-h-[110px]
+                  //   flex-col
+                  //   items-center
+                  //   justify-center
+                  //   overflow-visible
+                  //   bg-transparent
+                  //   text-[#173321]
+                  //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:col-span-3
+                  //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:min-h-[90px]
+                  //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:flex-row
+                  //   [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:gap-4
+                  //   [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!col-span-3
+                  //   [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!min-h-[90px]
+                  //   [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!flex-row
+                  //   [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!gap-4[@media(min-width:640px)_and_(max-width:1100px)]:col-span-3
+                  //   [@media(min-width:640px)_and_(max-width:1100px)]:min-h-[90px]
+                  //   [@media(min-width:640px)_and_(max-width:1100px)]:flex-row
+                  //   [@media(min-width:640px)_and_(max-width:1100px)]:gap-4
+
+                  //  "
                   className="
                     group/availability
                     relative
@@ -1214,9 +1353,18 @@ function BookingModal({
                     flex-col
                     items-center
                     justify-center
-                    overflow-visible
+                    overflow-hidden
                     bg-transparent
                     text-[#173321]
+                    min-w-0
+
+                    w-full
+                    [@media(min-width:1101px)_and_(max-width:1440px)]:justify-self-center
+
+                    [@media(min-width:640px)_and_(max-width:1100px)]:col-span-3
+                    [@media(min-width:640px)_and_(max-width:1100px)]:min-h-[90px]
+                    [@media(min-width:640px)_and_(max-width:1100px)]:flex-row
+                    [@media(min-width:640px)_and_(max-width:1100px)]:gap-4                    
                   "
                 >
                   <span
@@ -1225,6 +1373,17 @@ function BookingModal({
                       flex
                       h-[150px]
                       w-[150px]
+                      [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:h-[76px]
+                      [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:w-[76px]
+
+                      [@media(orientation:portrait)_and_(min-width:1024px)_and_(max-width:1100px)]:h-[100px]
+                      [@media(orientation:portrait)_and_(min-width:1024px)_and_(max-width:1100px)]:w-[100px]
+
+                      [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:h-[90px]
+                      [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:w-[90px]
+
+                      [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!h-[76px]
+                      [@media(orientation:landscape)_and_(min-width:640px)_and_(max-width:1023px)]:!w-[76px]    
                       shrink-0
                       items-center
                       justify-center
@@ -1233,7 +1392,9 @@ function BookingModal({
                       transition-transform
                       duration-700
                       ease-out
-                      group-hover/availability:scale-[1.02]
+                      group-hover/availability:scale-[1.02]]
+                      [@media(min-width:640px)_and_(max-width:1100px)]:!h-[76px]
+                      [@media(min-width:640px)_and_(max-width:1100px)]:!w-[76px]
                     "
                   >
                     <span
@@ -1247,6 +1408,8 @@ function BookingModal({
                         transition-transform
                         duration-700
                         group-hover/availability:scale-[1.04]
+                        [@media(min-width:640px)_and_(max-width:1100px)]:!h-[58px]
+                        [@media(min-width:640px)_and_(max-width:1100px)]:!w-[58px]
                       "
                     />
 
@@ -1290,6 +1453,7 @@ function BookingModal({
                       leading-[1.65]
                       tracking-[0.24em]
                       text-[#173321]
+                      [@media(orientation:portrait)_and_(min-width:640px)_and_(max-width:1023px)]:mt-0
                     "
                   >
                     Check
@@ -1668,7 +1832,8 @@ function LuxuryDateField({
           <span
             className="
               font-cormorant
-              text-[56px]
+              text-[48px] 
+              sm:text-[56px]
               font-normal
               leading-[0.86]
               tracking-[-0.025em]
@@ -2409,14 +2574,30 @@ function GuestSelector({
 
   return (
     <div
+      // className="
+      //   relative
+      //   min-h-[160px]
+      //   border-[#173321]/15
+      //   px-5
+      //   py-7
+      //   md:border-r
+      // "
       className="
-        relative
-        min-h-[160px]
-        border-[#173321]/15
-        px-5
-        py-7
-        md:border-r
-      "
+  relative
+  min-h-[160px]
+  border-[#173321]/15
+  px-5
+  py-7
+  md:border-r-0
+
+  min-[1101px]:after:absolute
+  min-[1101px]:after:top-0
+  min-[1101px]:after:bottom-0
+  min-[1101px]:after:right-[-5px]
+  min-[1101px]:after:w-px
+  min-[1101px]:after:bg-[#173321]/15
+  min-[1101px]:after:content-['']
+"
     >
       {/* =========================================
           LABEL
