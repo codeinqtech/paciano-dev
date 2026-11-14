@@ -11,6 +11,7 @@ import {
   Users,
   UserCircle,
   MessageSquareQuote,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,7 +33,8 @@ export type MenuId =
   | "footer"
   | "google_reviews"
   | "users"
-  | "profile";
+  | "profile"
+  | "whatsapp_settings";
 
 export type AdminMenu = {
   id: MenuId;
@@ -102,6 +104,12 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
     path: "/admin/google-reviews",
     icon: MessageSquareQuote,
   },
+  {
+    id: "whatsapp_settings",
+    label: "WhatsApp Management",
+    path: "/admin/whatsapp-settings",
+    icon: MessageCircle,
+  }
 ];
 
 export const SUPERADMIN_MENUS: AdminMenu[] = [
@@ -145,6 +153,7 @@ const PATH_TO_MENU: Record<string, MenuId> = {
   "/admin/google-reviews": "google_reviews",
   "/admin/users": "users",
   "/admin/profile": "profile",
+  "/admin/whatsapp-settings": "whatsapp_settings",
 };
 
 export function getMenuIdFromPath(pathname: string): MenuId | null {
@@ -164,7 +173,7 @@ export function menusForUser(
 ): AdminMenu[] {
   const items: AdminMenu[] = [DASHBOARD_MENU];
   for (const menu of ASSIGNABLE_MENUS) {
-    if (hasPermission(menu.id)) {
+    if (menu.id === "whatsapp_settings" ? isSuperAdmin || hasPermission(menu.id)  : hasPermission(menu.id) ) {
       items.push(menu);
     }
   }

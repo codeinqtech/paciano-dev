@@ -8,18 +8,26 @@ use RuntimeException;
 
 class WhatsAppService
 {
+    public function __construct(
+        private WhatsAppSettingsService $settingsService
+    ) {}
+
     public function sendEnquiry(Enquiry $enquiry): array
     {
-        $version = config('services.meta_whatsapp.api_version');
-        $phoneNumberId = config('services.meta_whatsapp.phone_number_id');
-        $token = config('services.meta_whatsapp.access_token');
+        // Get active WhatsApp configuration from database
+        $config = $this->settingsService->getConfig();
 
-        $recipient = config('services.meta_whatsapp.recipient');
-        $templateName = config('services.meta_whatsapp.template_name');
-        $language = config('services.meta_whatsapp.template_language');
+        $version = $config['api_version'];
+        $phoneNumberId = $config['phone_number_id'];
+        $token = $config['access_token'];
+        $recipient = $config['recipient'];
+        $templateName = $config['template_name'];
+        $language = $config['template_language'];
 
         if (!$version || !$phoneNumberId || !$token || !$recipient || !$templateName) {
-            throw new RuntimeException('Meta WhatsApp configuration is incomplete.');
+            throw new RuntimeException(
+                'Active Meta WhatsApp configuration is incomplete.'
+            );
         }
 
         // Convert all whitespace into a single space.
@@ -61,13 +69,12 @@ class WhatsAppService
             ],
         ];
 
+        $url = "https://graph.facebook.com/{$version}/{$phoneNumberId}/messages";
+
         $response = Http::withToken($token)
             ->acceptJson()
             ->timeout(30)
-            ->post(
-                "https://graph.facebook.com/{$version}/{$phoneNumberId}/messages",
-                $payload
-            );
+            ->post($url, $payload);
 
         if (!$response->successful()) {
             logger()->error('Meta WhatsApp API Error', [

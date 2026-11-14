@@ -18,7 +18,7 @@ use App\Http\Controllers\Admin\ContactDetailController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\EnquiryController;
-use App\Http\Controllers\Api\WhatsAppTestController;
+use App\Http\Controllers\Admin\WhatsAppSettingsController;
 
 
 Route::get('navigation-menus', [SiteNavigationMenuController::class, 'publicIndex']);
@@ -26,11 +26,10 @@ Route::get('site-footer', [SiteFooterController::class, 'publicIndex']);
 
 // Public API routes
 Route::get('contact-page', [ContactPageController::class, 'show']);
-Route::post('/enquiries', [EnquiryController::class, 'store']);
-Route::get('/contact-details', [ContactDetailController::class, 'indexPublic']);
+Route::post('enquiries', [EnquiryController::class, 'store']);
+Route::get('contact-details', [ContactDetailController::class, 'indexPublic']);
 
 // Temporary testing route
-Route::post('/whatsapp/test', [WhatsAppTestController::class, 'send']);
 Route::get('about/google-reviews', [GoogleReviewPublicController::class, 'aboutReviews']);
 Route::get('about/page', [AboutPagePublicController::class, 'show']);
 Route::get('google-profile-photo', [GoogleProfilePhotoController::class, 'show']);
@@ -127,5 +126,14 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         // Contact Details
         Route::apiResource('contact-details', ContactDetailController::class);
+
+        // WhatsApp Settings
+        Route::get('whatsapp-settings', [WhatsAppSettingsController::class, 'index']);
+        Route::get('whatsapp-settings/enquiries', [WhatsAppSettingsController::class, 'enquiries']);
+        Route::get('whatsapp-settings/{whatsAppSetting}', [WhatsAppSettingsController::class, 'show']);
+        Route::post('whatsapp-settings', [WhatsAppSettingsController::class, 'store']);
+        Route::put('whatsapp-settings/{whatsAppSetting}', [WhatsAppSettingsController::class, 'update']);
+        Route::post('whatsapp-settings/{whatsAppSetting}/activate', [WhatsAppSettingsController::class, 'activate']);
+
     });
 });

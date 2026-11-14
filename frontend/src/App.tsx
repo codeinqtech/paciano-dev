@@ -3,6 +3,7 @@ import HomePage from "@/pages/HomePage";
 import ContactPage from "@/pages/ContactPage";
 import StayPage from "@/pages/StayPage";
 import IconLibrary from "@/components/common/icons/IconLibrary";
+import AdminWhatsAppSettings from "@/admin/pages/contact/AdminWhatsAppSettings";
 
 
 import AdminLayout from "@/admin/layouts/AdminLayout";
@@ -64,6 +65,16 @@ export default function App() {
         <Route path="stays" element={<AdminStaysPage />} />
         <Route path="dining" element={<AdminDiningPage />} />
         <Route path="contact" element={<AdminContactUsSection />} />
+        
+        <Route path="contact" element={<AdminContactUsSection />} />
+        <Route
+          path="whatsapp-settings"
+          element={<AdminWhatsAppSettings />}
+        />
+
+        <Route path="stay" element={<AdminContentSection menuId="stay" />} />
+
+
         <Route path="stay" element={<AdminContentSection menuId="stay" />} />
         <Route path="navbar" element={<AdminNavbarMenus />} />
         <Route path="footer" element={<AdminFooter />} />
