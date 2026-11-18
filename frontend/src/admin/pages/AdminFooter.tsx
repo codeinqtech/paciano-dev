@@ -281,7 +281,7 @@ export default function AdminFooter() {
       <AdminCmsPageHeader
         title="Footer content"
         subtitle="Map card appears on the home location section and on the contact page (free OpenStreetMap pin from coordinates or address)."
-        badge="Page Settings"
+        // badge="Page Settings"
       />
       <AdminCmsTabbedCard
         tabs={TABS}

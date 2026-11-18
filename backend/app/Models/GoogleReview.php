@@ -10,6 +10,7 @@ class GoogleReview extends Model
     protected $fillable = [
         'google_place_id',
         'source_fingerprint',
+        'google_review_id',
         'author_name',
         'author_url',
         'profile_photo_url',
@@ -19,6 +20,7 @@ class GoogleReview extends Model
         'published_at',
         'owner_reply',
         'owner_reply_at',
+        'review_reply_url',
         'photo_urls',
         'is_approved',
         'imported_from_legacy',
@@ -70,9 +72,11 @@ class GoogleReview extends Model
     public function toAdminArray(): array
     {
         return array_merge($this->toPublicArray(), [
+            'google_review_id' => $this->google_review_id,
             'is_approved' => $this->is_approved,
             'imported_from_legacy' => $this->imported_from_legacy,
             'owner_reply_at' => $this->owner_reply_at?->toIso8601String(),
+            'review_reply_url' => $this->review_reply_url,
             'photo_urls' => $this->photo_urls,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

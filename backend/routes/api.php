@@ -100,7 +100,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::get('google-reviews', [GoogleReviewAdminController::class, 'index']);
         Route::post('google-reviews/sync', [GoogleReviewAdminController::class, 'sync']);
-        Route::patch('google-reviews/{id}', [GoogleReviewAdminController::class, 'updateApproval']);
+        Route::post('google-reviews/oauth/start', [GoogleReviewAdminController::class, 'oauthStart']);
+        Route::patch('google-reviews/{id}', [GoogleReviewAdminController::class, 'update']);
 
         Route::get('home/sections/about', [HomeSectionsAdminController::class, 'aboutShow']);
         Route::post('home/sections/about', [HomeSectionsAdminController::class, 'aboutUpdate']);
