@@ -135,7 +135,7 @@ export default function AdminNavbarMenus() {
       <AdminCmsPageHeader
         title="Navbar menus"
         subtitle="Add, edit, or remove links shown in the site header. Deleted items are hidden (is_active = 0)."
-        badge="Site structure"
+        // badge="Site structure"
         actions={
           <button
             type="button"

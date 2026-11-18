@@ -164,7 +164,7 @@ export default function AdminUsers() {
       <AdminCmsPageHeader
         title="Users"
         subtitle="Create admins and choose which menus each can access."
-        badge="Administration"
+        // badge="Administration"
         actions={
           <button
             type="button"

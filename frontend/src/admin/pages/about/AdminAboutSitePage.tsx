@@ -50,7 +50,7 @@ export function AdminAboutSitePage() {
             <strong>Experiences</strong> is under its own submenu.
           </>
         }
-        badge="Page Settings"
+        // badge="Page Settings"
       />
       <AdminCmsTabbedCard
         tabs={tabs}

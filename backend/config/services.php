@@ -52,4 +52,24 @@ return [
         'template_name' => env('META_WHATSAPP_TEMPLATE_NAME'),
         'template_language' => env('META_WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
     ],
+
+    'google_business' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'account_id' => env('GOOGLE_BUSINESS_ACCOUNT_ID'),
+        'location_id' => env('GOOGLE_BUSINESS_LOCATION_ID'),
+        'scope' => env(
+            'GOOGLE_BUSINESS_REVIEW_SCOPE',
+            'https://www.googleapis.com/auth/business.manage',
+        ),
+        'reviews_api_url' => env(
+            'GOOGLE_REVIEWS_API_URL',
+            'https://mybusiness.googleapis.com/v4',
+        ),
+        'place_id' => env('GOOGLE_PLACE_ID', 'ChIJ835SmFAR5DkRmylIBPB9QX4'),
+        // Optional: one-time refresh token from OAuth (Postman / Connect flow) for servers
+        'refresh_token' => env('GOOGLE_REFRESH_TOKEN'),
+        'max_sync_pages' => (int) env('GOOGLE_BUSINESS_MAX_SYNC_PAGES', 120),
+    ],
 ];

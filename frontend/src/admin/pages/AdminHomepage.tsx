@@ -444,7 +444,7 @@ export default function AdminHomepage() {
       <AdminCmsPageHeader
         title="Homepage"
         subtitle="Manage banner slides, the location section, and guest review videos. Images: max 2 MB upload, saved as WebP. Videos: max 50 MB upload, then compressed with ffmpeg when available on the server."
-        badge="Page Settings"
+        // badge="Page Settings"
       />
       <AdminCmsTabbedCard
         tabs={TABS}

@@ -27,7 +27,7 @@ export default function AdminProfile() {
       <AdminCmsPageHeader
         title="My Profile"
         subtitle="Your account details and permissions."
-        badge="Account"
+        // badge="Account"
       />
 
       <AdminCmsPageCard>

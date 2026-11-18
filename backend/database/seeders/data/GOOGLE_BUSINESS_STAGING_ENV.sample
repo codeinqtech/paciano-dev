@@ -1,0 +1,17 @@
+# Copy these into backend/.env on staging (values from staging.json — never commit secrets to git)
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=https://paciano-dev.codeinq.com/backend/public/google/callback
+
+GOOGLE_BUSINESS_ACCOUNT_ID=109094720545726611610
+GOOGLE_BUSINESS_LOCATION_ID=7628622496311154039
+GOOGLE_BUSINESS_REVIEW_SCOPE=https://www.googleapis.com/auth/business.manage
+GOOGLE_REVIEWS_API_URL=https://mybusiness.googleapis.com/v4
+GOOGLE_PLACE_ID=ChIJ835SmFAR5DkRmylIBPB9QX4
+
+# After admin "Connect Google Business" or Postman OAuth:
+GOOGLE_REFRESH_TOKEN=
+
+# Optional: default 120 pages × 50 = 6000 reviews safety cap
+GOOGLE_BUSINESS_MAX_SYNC_PAGES=120

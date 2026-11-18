@@ -16,13 +16,13 @@ export type AdminCmsTabItem = {
 export function AdminCmsPageHeader({
   title,
   subtitle,
-  badge = "CMS",
+  // badge = "",
   actions,
   className = "",
 }: {
   title: string;
   subtitle?: ReactNode;
-  badge?: ReactNode;
+  // badge?: ReactNode;
   actions?: ReactNode;
   className?: string;
 }) {
@@ -38,13 +38,13 @@ export function AdminCmsPageHeader({
       </div>
       <div className="flex flex-wrap items-center justify-end gap-3">
         {actions}
-        {badge != null && badge !== false ? (
+        {/* {badge != null && badge !== false ? (
           typeof badge === "string" ? (
             <span className={adminCmsBadgeClass}>{badge}</span>
           ) : (
             badge
           )
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   );

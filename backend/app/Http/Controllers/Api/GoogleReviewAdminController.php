@@ -5,29 +5,27 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\GooglePlace;
 use App\Models\GoogleReview;
-use App\Services\GooglePlacesSyncService;
+use App\Services\GoogleBusinessOAuthService;
+use App\Services\GoogleBusinessReviewsSyncService;
+use App\Services\GoogleReviewsSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
 class GoogleReviewAdminController extends Controller
 {
-    public function index(Request $request)
-    {
+    public function index(
+        Request $request,
+        GoogleReviewsSyncService $sync,
+        GoogleBusinessOAuthService $oauth,
+    ) {
         $this->ensurePermission($request);
+
+        $oauth->bootstrapFromEnvironment();
 
         if (! Schema::hasTable('google_reviews')) {
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'place' => null,
-                    'reviews' => [],
-                    'stats' => [
-                        'stored_count' => 0,
-                        'approved_count' => 0,
-                        'google_rating_count' => null,
-                    ],
-                    'api_configured' => app(GooglePlacesSyncService::class)->isConfigured(),
-                ],
+                'data' => $this->emptyIndexPayload($sync, $oauth),
             ]);
         }
 
@@ -53,17 +51,27 @@ class GoogleReviewAdminController extends Controller
                     'approved_count' => $reviewModels->where('is_approved', true)->count(),
                     'google_rating_count' => $place->user_rating_count,
                 ],
-                'api_configured' => app(GooglePlacesSyncService::class)->isConfigured(),
+                'api_configured' => $sync->isConfigured(),
+                'sync_mode' => $sync->syncMode(),
+                'google_business_oauth' => [
+                    'client_configured' => $oauth->isClientConfigured(),
+                    'connected' => $oauth->isConnected(),
+                ],
             ],
         ]);
     }
 
-    public function updateApproval(Request $request, int $id)
-    {
+    public function update(
+        Request $request,
+        int $id,
+        GoogleBusinessReviewsSyncService $business,
+    ) {
         $this->ensurePermission($request);
 
         $data = $request->validate([
-            'is_approved' => ['required', 'boolean'],
+            'is_approved' => ['sometimes', 'boolean'],
+            'owner_reply' => ['sometimes', 'nullable', 'string', 'max:4096'],
+            'publish_reply_to_google' => ['sometimes', 'boolean'],
         ]);
 
         $place = GooglePlace::forReviewQueries();
@@ -71,7 +79,31 @@ class GoogleReviewAdminController extends Controller
             ->where('google_place_id', $place->id)
             ->findOrFail($id);
 
-        $review->is_approved = (bool) $data['is_approved'];
+        if (array_key_exists('is_approved', $data)) {
+            $review->is_approved = (bool) $data['is_approved'];
+        }
+
+        $publishReply = (bool) ($data['publish_reply_to_google'] ?? false);
+
+        if (array_key_exists('owner_reply', $data)) {
+            $replyText = $data['owner_reply'];
+            if ($publishReply && is_string($replyText) && trim($replyText) !== '') {
+                $result = $business->publishOwnerReply($review, $replyText);
+                if (! $result['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['message'],
+                    ], 422);
+                }
+            } elseif (is_string($replyText)) {
+                $trimmed = trim($replyText);
+                $review->owner_reply = $trimmed === '' ? null : $trimmed;
+                if ($trimmed !== '') {
+                    $review->owner_reply_at = now();
+                }
+            }
+        }
+
         $review->save();
 
         return response()->json([
@@ -80,20 +112,71 @@ class GoogleReviewAdminController extends Controller
         ]);
     }
 
-    public function sync(Request $request, GooglePlacesSyncService $sync)
-    {
+    public function sync(
+        Request $request,
+        GoogleReviewsSyncService $sync,
+        GoogleBusinessOAuthService $oauth,
+    ) {
         $this->ensurePermission($request);
 
-        $result = $sync->syncConfiguredPlace();
+        $oauth->bootstrapFromEnvironment();
+
+        $result = $sync->sync();
 
         return response()->json([
             'success' => $result['success'],
             'message' => $result['message'],
             'data' => [
                 'reviews_upserted' => $result['reviews_upserted'] ?? 0,
+                'sync_mode' => $result['sync_mode'] ?? $sync->syncMode(),
                 'place' => GooglePlace::forConfiguredPlace()->fresh()?->toPublicSummary(),
             ],
         ], $result['success'] ? 200 : 422);
+    }
+
+    public function oauthStart(Request $request, GoogleBusinessOAuthService $oauth)
+    {
+        $this->ensurePermission($request);
+
+        if (! $oauth->isClientConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI on the server.',
+            ], 422);
+        }
+
+        $auth = $oauth->createAuthorizeUrl($request->user()?->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'authorize_url' => $auth['url'],
+            ],
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyIndexPayload(
+        GoogleReviewsSyncService $sync,
+        GoogleBusinessOAuthService $oauth,
+    ): array {
+        return [
+            'place' => null,
+            'reviews' => [],
+            'stats' => [
+                'stored_count' => 0,
+                'approved_count' => 0,
+                'google_rating_count' => null,
+            ],
+            'api_configured' => $sync->isConfigured(),
+            'sync_mode' => $sync->syncMode(),
+            'google_business_oauth' => [
+                'client_configured' => $oauth->isClientConfigured(),
+                'connected' => $oauth->isConnected(),
+            ],
+        ];
     }
 
     private function ensurePermission(Request $request): void
