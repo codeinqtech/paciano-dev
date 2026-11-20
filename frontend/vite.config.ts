@@ -12,6 +12,11 @@ function resolvePublicBase(): string {
   return `/${normalized}/`;
 }
 
+/** Laragon vhost — API lives under backend/public (not project root). */
+const devProxyTarget =
+  process.env.VITE_PROXY_TARGET?.trim() ||
+  "http://PACIANO-DEV.test:8080/backend/public";
+
 export default defineConfig({
   base: resolvePublicBase(),
   plugins: [react(), tailwindcss()],
@@ -25,6 +30,12 @@ export default defineConfig({
     host: "0.0.0.0",
     port: parseInt(process.env.PORT || "5173", 10),
     strictPort: true,
+    proxy: {
+      "/api": {
+        target: devProxyTarget,
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: "0.0.0.0",

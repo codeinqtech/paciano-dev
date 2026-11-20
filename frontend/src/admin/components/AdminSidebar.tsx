@@ -3,7 +3,11 @@ import { NavLink, useLocation } from "react-router-dom";
 import logo from "@/images/paciano-logo.png";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { ABOUT_CHILD_MENUS, menusForUser } from "../data/permissions";
+import {
+  ABOUT_CHILD_MENUS,
+  EVENTS_CHILD_MENUS,
+  menusForUser,
+} from "../data/permissions";
 
 export default function AdminSidebar() {
   const { user, logout, isSuperAdmin, hasPermission } = useAuth();
@@ -12,12 +16,18 @@ export default function AdminSidebar() {
   const onAboutSection =
     location.pathname.startsWith("/admin/about") ||
     location.pathname === "/admin/experiences";
+  const onEventsSection = location.pathname.startsWith("/admin/events");
 
   const [aboutOpen, setAboutOpen] = useState(onAboutSection);
+  const [eventsOpen, setEventsOpen] = useState(onEventsSection);
 
   useEffect(() => {
     if (onAboutSection) setAboutOpen(true);
   }, [onAboutSection]);
+
+  useEffect(() => {
+    if (onEventsSection) setEventsOpen(true);
+  }, [onEventsSection]);
 
   return (
     <aside className="admin-sidebar fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-[#1e3328]/40 lg:flex">
@@ -54,6 +64,48 @@ export default function AdminSidebar() {
                 {aboutOpen ? (
                   <div className="ml-3 border-l border-[#C8BC82]/20 pl-2 space-y-0.5 pb-1">
                     {ABOUT_CHILD_MENUS.map((sub) => (
+                      <NavLink
+                        key={sub.path}
+                        to={sub.path}
+                        className={({ isActive }) =>
+                          `block rounded-lg px-3 py-2 text-xs transition-colors ${
+                            isActive
+                              ? "text-[#FFFDF5] bg-[#C8BC82]/15 font-medium"
+                              : "text-[#E8E2D4]/65 hover:text-[#FFFDF5] hover:bg-[#C8BC82]/08"
+                          }`
+                        }
+                      >
+                        {sub.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          }
+          if (item.id === "events" && hasPermission("events")) {
+            return (
+              <div key={item.id} className="space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => setEventsOpen((open) => !open)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-colors ${
+                    onEventsSection
+                      ? "text-[#FFFDF5]/90 bg-[#C8BC82]/08"
+                      : "text-[#E8E2D4]/75 hover:bg-[#C8BC82]/10 hover:text-[#FFFDF5]"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0 opacity-90" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 opacity-70 transition-transform ${
+                      eventsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {eventsOpen ? (
+                  <div className="ml-3 border-l border-[#C8BC82]/20 pl-2 space-y-0.5 pb-1">
+                    {EVENTS_CHILD_MENUS.map((sub) => (
                       <NavLink
                         key={sub.path}
                         to={sub.path}

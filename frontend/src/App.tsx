@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "@/pages/HomePage";
 import ContactPage from "@/pages/ContactPage";
-import StayPage from "@/pages/StayPage";
 import IconLibrary from "@/components/common/icons/IconLibrary";
 import AdminWhatsAppSettings from "@/admin/pages/contact/AdminWhatsAppSettings";
 
@@ -22,8 +21,14 @@ import { AdminAboutSitePage } from "@/admin/pages/about/AdminAboutSitePage";
 import { AdminExperiencesPage } from "@/admin/pages/about/AdminExperiencesPage";
 import { AdminStaysPage } from "@/admin/pages/stays/AdminStaysPage";
 import { AdminDiningPage } from "@/admin/pages/dining/AdminDiningPage";
+import { AdminEventsLandingPage } from "@/admin/pages/events/AdminEventsLandingPage";
+import { AdminEventsCorporatePage } from "@/admin/pages/events/AdminEventsCorporatePage";
+import { AdminEventsWeddingsPage } from "@/admin/pages/events/AdminEventsWeddingsPage";
 
 import AboutUsPage from "@/pages/AboutUsPage";
+import StayPage from "@/pages/StayPage";
+import EventsPage from "@/pages/EventsPage";
+import EventCategoryPage from "@/pages/EventCategoryPage";
 
 export default function App() {
   return (
@@ -35,6 +40,9 @@ export default function App() {
       {/* Developer Tools */}
       <Route path="/dev/icon-library" element={<IconLibrary />} />
       <Route path="/about" element={<AboutUsPage />} />
+      <Route path="events" element={<EventsPage />} />
+      <Route path="events/corporate-events" element={<EventCategoryPage path="/events/corporate-events" />} />
+      <Route path="events/weddings" element={<EventCategoryPage path="/events/weddings" />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
@@ -64,9 +72,17 @@ export default function App() {
         />
         <Route path="stays" element={<AdminStaysPage />} />
         <Route path="dining" element={<AdminDiningPage />} />
+        <Route
+          path="events"
+          element={<Navigate to="/admin/events/page" replace />}
+        />
+        <Route path="events/page" element={<AdminEventsLandingPage />} />
+        <Route path="events/corporate" element={<AdminEventsCorporatePage />} />
+        <Route path="events/weddings" element={<AdminEventsWeddingsPage />} />
         <Route path="contact" element={<AdminContactUsSection />} />
         
-        <Route path="contact" element={<AdminContactUsSection />} />
+        
+        
         <Route
           path="whatsapp-settings"
           element={<AdminWhatsAppSettings />}

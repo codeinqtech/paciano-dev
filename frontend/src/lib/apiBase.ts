@@ -1,4 +1,8 @@
-const LOCAL_API_BASE = "http://127.0.0.1:8000/api";
+const DEV_PROXY_API = "/api";
+
+const DEV_LARAGON_PUBLIC =
+  import.meta.env.VITE_DEV_MEDIA_URL?.trim() ||
+  "http://PACIANO-DEV.test:8080/backend/public";
 
 /** Laravel on Hostinger is deployed under `public_html/paciano/backend/public`. */
 const HOSTED_API_PATH = "/backend/public/api";
@@ -19,7 +23,8 @@ export function getApiBaseUrl(): string {
   }
 
   if (import.meta.env.DEV) {
-    return LOCAL_API_BASE;
+    // Same-origin via Vite proxy → Laragon backend/public/api
+    return DEV_PROXY_API;
   }
 
   if (typeof window !== "undefined" && window.location?.origin) {
@@ -47,7 +52,7 @@ export function getBackendPublicUrl(): string {
   }
 
   if (import.meta.env.DEV) {
-    return "http://127.0.0.1:8000";
+    return DEV_LARAGON_PUBLIC;
   }
 
   if (typeof window !== "undefined" && window.location?.origin) {

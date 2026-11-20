@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { motion, useReducedMotion } from "framer-motion";
+import type { EventsAdvantageSlideCms } from "@/hooks/useEventsContent";
 
 interface AdvantageFeature {
   label: string;
@@ -38,39 +39,54 @@ const defaultFeatures: AdvantageFeature[] = [
   { label: "Personalised Event Support", icon: Sparkles },
 ];
 
-export default function EventsCarousel() {
-  const slides: AdvantageSlide[] = [
-    {
-      id: "garden",
-      image: carouselImg1,
-      title: "Nature's Embrace",
-      description: "Celebrations surrounded by nature.",
-    },
-    {
-      id: "corporate",
-      image: carouselImg3,
-      title: "Inspired Gatherings",
-      description: "Spaces designed for meaningful connections.",
-    },
-    {
-      id: "dining",
-      image: carouselImg4,
-      title: "Dining Experiences",
-      description: "Thoughtfully curated culinary moments.",
-    },
-    {
-      id: "wedding",
-      image: carouselImg2,
-      title: "Beautiful Celebrations",
-      description: "A memorable setting for your special day.",
-    },
-    {
-      id: "mountains",
-      image: carouselImg2,
-      title: "Mountain Serenity",
-      description: "Unforgettable views and peaceful moments.",
-    },
-  ];
+const fallbackSlides: AdvantageSlide[] = [
+  {
+    id: "garden",
+    image: carouselImg1,
+    title: "Nature's Embrace",
+    description: "Celebrations surrounded by nature.",
+  },
+  {
+    id: "corporate",
+    image: carouselImg3,
+    title: "Inspired Gatherings",
+    description: "Spaces designed for meaningful connections.",
+  },
+  {
+    id: "dining",
+    image: carouselImg4,
+    title: "Dining Experiences",
+    description: "Thoughtfully curated culinary moments.",
+  },
+  {
+    id: "wedding",
+    image: carouselImg2,
+    title: "Beautiful Celebrations",
+    description: "A memorable setting for your special day.",
+  },
+  {
+    id: "mountains",
+    image: carouselImg2,
+    title: "Mountain Serenity",
+    description: "Unforgettable views and peaceful moments.",
+  },
+];
+
+type EventsCarouselProps = {
+  slides?: EventsAdvantageSlideCms[];
+};
+
+export default function EventsCarousel({ slides: cmsSlides }: EventsCarouselProps) {
+  const slides: AdvantageSlide[] = useMemo(() => {
+    if (!cmsSlides?.length) return fallbackSlides;
+    return cmsSlides.map((s, index) => ({
+      id: String(s.id),
+      image: s.image_url || fallbackSlides[index % fallbackSlides.length].image,
+      title: s.title?.trim() || "Paciano",
+      description: s.description?.trim() || undefined,
+    }));
+  }, [cmsSlides]);
+
   const features = defaultFeatures;
   const reduceMotion = useReducedMotion();
 

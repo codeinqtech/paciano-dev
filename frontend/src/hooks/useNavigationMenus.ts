@@ -8,17 +8,37 @@ export type NavLinkItem = {
   label: string;
   href: string;
   openInNewTab: boolean;
+  children?: NavLinkItem[];
 };
 
 const FALLBACK: NavLinkItem[] = [
   { id: 0, label: "Stay", href: toAppPath("/stay"), openInNewTab: false },
   {
     id: 0,
-    label: "Experiences",
-    href: homeHref("#experiences"),
+    label: "Dining",
+    href: homeHref("#dining"),
     openInNewTab: false,
   },
-  { id: 0, label: "Dining", href: homeHref("#dining"), openInNewTab: false },
+  {
+    id: 1,
+    label: "Events",
+    href: toAppPath("/events"),
+    openInNewTab: false,
+    children: [
+      {
+        id: 0,
+        label: "Corporate Events",
+        href: toAppPath("/events/corporate-events"),
+        openInNewTab: false,
+      },
+      {
+        id: 0,
+        label: "Weddings",
+        href: toAppPath("/events/weddings"),
+        openInNewTab: false,
+      },
+    ],
+  },
   { id: 0, label: "About Us", href: homeHref("/about"), openInNewTab: false },
   { id: 0, label: "Contact", href: toAppPath("/contact"), openInNewTab: false },
 ];
@@ -28,7 +48,21 @@ type ApiRow = {
   label: string;
   url: string;
   open_in_new_tab?: boolean;
+  children?: ApiRow[];
 };
+
+function mapRow(row: ApiRow): NavLinkItem {
+  const item: NavLinkItem = {
+    id: row.id,
+    label: row.label,
+    href: resolveNavUrl(row.url),
+    openInNewTab: Boolean(row.open_in_new_tab),
+  };
+  if (row.children?.length) {
+    item.children = row.children.map(mapRow);
+  }
+  return item;
+}
 
 export function useNavigationMenus(): NavLinkItem[] {
   const [links, setLinks] = useState<NavLinkItem[]>(FALLBACK);
@@ -41,14 +75,7 @@ export function useNavigationMenus(): NavLinkItem[] {
       .then((body: { data?: ApiRow[] }) => {
         const rows = body.data ?? [];
         if (rows.length === 0) return;
-        setLinks(
-          rows.map((row) => ({
-            id: row.id,
-            label: row.label,
-            href: resolveNavUrl(row.url),
-            openInNewTab: Boolean(row.open_in_new_tab),
-          })),
-        );
+        setLinks(rows.map(mapRow));
       })
       .catch(() => {
         /* keep fallback */

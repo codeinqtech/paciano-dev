@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ContactPageContent;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Throwable;
 
 class ContactPageService
@@ -64,19 +63,14 @@ class ContactPageService
 
         } catch (Throwable $exception) {
             foreach ($newFiles as $path) {
-                File::delete(public_path($path));
+                $this->media->deletePublicFile($path);
             }
 
             throw $exception;
         }
 
         foreach ($oldFiles as $path) {
-            if (
-                str_starts_with($path, 'uploads/contact/images/') ||
-                str_starts_with($path, 'media/contact/')
-            ) {
-                File::delete(public_path($path));
-            }
+            $this->media->deletePublicFile($path);
         }
 
         return $content->fresh();

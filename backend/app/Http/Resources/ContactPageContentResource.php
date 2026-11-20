@@ -2,15 +2,16 @@
 
 namespace App\Http\Resources;
 
+use App\Services\HomeMediaService;
+use App\Support\MediaUploadLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Support\MediaUploadLimits;
 
 class ContactPageContentResource extends JsonResource
 {
     private function mediaUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
@@ -18,7 +19,7 @@ class ContactPageContentResource extends JsonResource
             return $path;
         }
 
-        return rtrim(config('app.url'), '/') . '/' . ltrim($path, '/');
+        return app(HomeMediaService::class)->publicUrl($path);
     }
 
     public function toArray(Request $request): array
