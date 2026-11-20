@@ -7,6 +7,7 @@ import {
 } from "framer-motion";
 import eventBanner from "@/images/events/eventBanner.png";
 import leafWhisper from "@/images/button-leaf.png";
+import type { EventsLandingCms } from "@/hooks/useEventsContent";
 
 function Wave({ flip = false }: { flip?: boolean }) {
   return (
@@ -24,9 +25,22 @@ function Wave({ flip = false }: { flip?: boolean }) {
   );
 }
 
-export default function EventsHero() {
+type EventsHeroProps = {
+  landing?: EventsLandingCms | null;
+};
+
+export default function EventsHero({ landing = null }: EventsHeroProps) {
   const reduceMotion = useReducedMotion();
   const instant = Boolean(reduceMotion);
+
+  const kicker = landing?.hero_kicker?.trim() || "Events at Paciano";
+  const titleMain = landing?.hero_title_main?.trim() || "Celebrate In";
+  const titleAccent =
+    landing?.hero_title_accent?.trim() || "Nature's Embrace.";
+  const description =
+    landing?.hero_description?.trim() ||
+    "From elegant corporate gatherings to intimate celebrations and grand weddings, Paciano offers an enchanting setting for every occasion. Surrounded by breathtaking mountain views and lush landscapes, experience thoughtfully curated spaces, seamless hospitality, and memorable moments woven into nature.";
+  const bannerSrc = landing?.hero_banner_url || eventBanner;
 
   const reveal = (delay: number) => ({
     initial: reduceMotion ? false : { opacity: 0, y: 28 },
@@ -58,7 +72,7 @@ export default function EventsHero() {
     >
       {/* BACKGROUND IMAGE */}
       <img
-        src={eventBanner}
+        src={bannerSrc}
         alt="Luxury Paciano suite with a private balcony overlooking the valley"
         loading="eager"
         fetchPriority="high"
@@ -103,6 +117,7 @@ export default function EventsHero() {
 
           /* LAPTOP */
           [@media(min-width:1200px)_and_(max-width:1599px)]:pl-[60px]
+          [@media(min-width:1600px)]:!pl-[85px]
 
           /* MOBILE LANDSCAPE */
           [@media(orientation:landscape)_and_(max-height:600px)]:min-h-[540px]
@@ -265,7 +280,7 @@ export default function EventsHero() {
                 sm:text-[11px]
               "
               >
-                Events at Paciano
+                {kicker}
               </span>
             </motion.div>
 
@@ -291,12 +306,12 @@ export default function EventsHero() {
               
             "
             >
-              <span className="block">Celebrate In</span>
+              <span className="block">{titleMain}</span>
               <em
                 className="block font-normal italic
                 text-[#4c6748]"
               >
-                Nature's Embrace.
+                {titleAccent}
               </em>
             </motion.h2>
 
@@ -319,11 +334,7 @@ export default function EventsHero() {
               [@media(orientation:landscape)_and_(max-height:600px)]:text-[12px]
             "
             >
-              From elegant corporate gatherings to intimate celebrations and
-              grand weddings, Paciano offers an enchanting setting for every
-              occasion. Surrounded by breathtaking mountain views and lush
-              landscapes, experience thoughtfully curated spaces, seamless
-              hospitality, and memorable moments woven into nature.
+              {description}
             </motion.p>
 
             <motion.div

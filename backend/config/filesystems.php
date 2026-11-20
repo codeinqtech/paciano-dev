@@ -11,6 +11,13 @@ if (! function_exists('defaultHeroVideoDiskRoot')) {
     }
 }
 
+if (! function_exists('defaultContactVideoDiskRoot')) {
+    function defaultContactVideoDiskRoot(): string
+    {
+        return dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'contact-video';
+    }
+}
+
 return [
 
     /*
@@ -77,6 +84,15 @@ return [
             'driver' => 'local',
             'root' => env('HERO_VIDEO_PATH') ?: defaultHeroVideoDiskRoot(),
             'url' => env('HERO_VIDEO_URL'),
+            'visibility' => 'public',
+            'throw' => true,
+        ],
+
+        // Contact "Until We Meet" video (defaults: ../media/contact-video from backend/)
+        'contact_videos' => [
+            'driver' => 'local',
+            'root' => env('CONTACT_VIDEO_PATH') ?: defaultContactVideoDiskRoot(),
+            'url' => env('CONTACT_VIDEO_URL'),
             'visibility' => 'public',
             'throw' => true,
         ],

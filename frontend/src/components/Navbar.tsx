@@ -16,7 +16,7 @@ import {
 
 interface NavbarProps {
   scrolled?: boolean;
-  activeNav?: "home" | "contact" | "stay" | "about";
+  activeNav?: "home" | "contact" | "stay" | "about" | "events" | string;
 }
 
 export default function Navbar({
@@ -212,12 +212,10 @@ export default function Navbar({
               />
 
               {navLinks.map((item) => (
-                <NavItem
+                <NavMenuEntry
                   key={item.id || item.label}
-                  label={item.label}
-                  href={item.href}
-                  active={isDynamicNavActive(item.label, activeNav)}
-                  openInNewTab={item.openInNewTab}
+                  item={item}
+                  activeNav={activeNav}
                 />
               ))}
             </div>
@@ -3220,13 +3218,232 @@ function DateField({
 
 function isDynamicNavActive(
   label: string,
-  activeNav: "home" | "contact" | "stay" | "about",
+  activeNav: string,
 ): boolean {
   const key = label.trim().toLowerCase();
   if (key === "contact") return activeNav === "contact";
   if (key === "stay") return activeNav === "stay";
   if (key === "about us" || key === "about") return activeNav === "about";
+  if (key === "events") return activeNav === "events";
   return false;
+}
+
+function NavMenuEntry({
+  item,
+  activeNav,
+}: {
+  item: NavLinkItem;
+  activeNav: string;
+}) {
+  const children = item.children ?? [];
+  if (children.length === 0) {
+    return (
+      <NavItem
+        label={item.label}
+        href={item.href}
+        active={isDynamicNavActive(item.label, activeNav)}
+        openInNewTab={item.openInNewTab}
+      />
+    );
+  }
+
+  const active =
+    isDynamicNavActive(item.label, activeNav) || activeNav === "events";
+
+  return (
+    <NavItemDropdown
+      label={item.label}
+      href={item.href}
+      active={active}
+      openInNewTab={item.openInNewTab}
+      childrenLinks={children}
+      activeNav={activeNav}
+    />
+  );
+}
+
+function MobileNavMenuEntry({
+  item,
+  activeNav,
+  onClose,
+}: {
+  item: NavLinkItem;
+  activeNav: string;
+  onClose: () => void;
+}) {
+  const children = item.children ?? [];
+  const [open, setOpen] = useState(false);
+
+  if (children.length === 0) {
+    return (
+      <MobileNavItem
+        label={item.label}
+        href={item.href}
+        active={isDynamicNavActive(item.label, activeNav)}
+        openInNewTab={item.openInNewTab}
+        onClick={onClose}
+      />
+    );
+  }
+
+  const active =
+    isDynamicNavActive(item.label, activeNav) || activeNav === "events";
+
+  return (
+    <div className="border-b border-[#E7DECE]/60">
+      <div className="flex items-center justify-between gap-2">
+        <MobileNavItem
+          label={item.label}
+          href={item.href}
+          active={active}
+          openInNewTab={item.openInNewTab}
+          onClick={onClose}
+          className="flex-1 border-b-0"
+        />
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="px-3 py-4 text-[#5A6B32]"
+        >
+          {open ? "−" : "+"}
+        </button>
+      </div>
+      {open ? (
+        <div className="pb-2 pl-4">
+          {children.map((child) => (
+            <MobileNavItem
+              key={child.id || child.label}
+              label={child.label}
+              href={child.href}
+              active={false}
+              openInNewTab={child.openInNewTab}
+              onClick={onClose}
+              className="text-[13px]"
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function NavItemDropdown({
+  label,
+  href,
+  active,
+  openInNewTab,
+  childrenLinks,
+}: {
+  label: string;
+  href: string;
+  active: boolean;
+  openInNewTab: boolean;
+  childrenLinks: NavLinkItem[];
+  activeNav: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  return (
+    <div
+      ref={wrapRef}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <a
+        href={href}
+        target={openInNewTab ? "_blank" : undefined}
+        rel={openInNewTab ? "noopener noreferrer" : undefined}
+        className={`
+    group
+    relative
+    inline-flex
+    items-center
+    gap-1.5
+    whitespace-nowrap
+    py-2
+    font-jost
+    text-[12px]
+    font-normal
+    uppercase
+    leading-none
+    tracking-[0.14em]
+    text-white/85
+    drop-shadow-[0_1px_5px_rgba(0,0,0,0.45)]
+    transition-all duration-500 ease-out
+    ${active ? "text-[#a9b85f]" : "text-white/85 hover:text-white"}
+  `}
+      >
+        {label}
+        <span
+          aria-hidden
+          className={`text-[10px] transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+        >
+          ▾
+        </span>
+        <span
+          className={`
+          absolute -bottom-3 left-1/2 h-px -translate-x-1/2 bg-[#a4bd55]
+          transition-all duration-500 ease-out
+          ${
+            active
+              ? "w-[18px] opacity-100"
+              : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
+          }
+        `}
+        />
+      </a>
+
+      <div
+        className={`
+          absolute left-1/2 top-full z-[80] min-w-[200px] -translate-x-1/2 pt-3
+          transition-all duration-300
+          ${open ? "visible opacity-100" : "invisible opacity-0"}
+        `}
+      >
+        <div
+          className="
+            overflow-hidden
+            rounded-md
+            border border-[#E8E0D4]/90
+            bg-[#F4EFE4]
+            py-2
+            shadow-[0_18px_40px_rgba(31,37,23,0.18)]
+          "
+        >
+          {childrenLinks.map((child) => (
+            <a
+              key={child.id || child.label}
+              href={child.href}
+              target={child.openInNewTab ? "_blank" : undefined}
+              rel={child.openInNewTab ? "noopener noreferrer" : undefined}
+              className="
+                block whitespace-nowrap px-5 py-2.5
+                font-jost text-[11px] font-medium uppercase
+                tracking-[0.18em] text-[#2A3B30]
+                transition-colors duration-300
+                hover:bg-[#EAE3D6] hover:text-[#1F3026]
+              "
+            >
+              {child.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function NavItem({
@@ -3380,13 +3597,11 @@ function MobileMenu({
           />
 
           {navLinks.map((item) => (
-            <MobileNavItem
+            <MobileNavMenuEntry
               key={item.id || item.label}
-              label={item.label}
-              href={item.href}
-              active={isDynamicNavActive(item.label, activeNav)}
-              openInNewTab={item.openInNewTab}
-              onClick={onClose}
+              item={item}
+              activeNav={activeNav}
+              onClose={onClose}
             />
           ))}
         </nav>
@@ -3490,12 +3705,14 @@ function MobileNavItem({
   onClick,
   active = false,
   openInNewTab = false,
+  className = "",
 }: {
   label: string;
   href: string;
   onClick: () => void;
   active?: boolean;
   openInNewTab?: boolean;
+  className?: string;
 }) {
   return (
     <a
@@ -3510,6 +3727,7 @@ function MobileNavItem({
         justify-between
         border-b
         border-[#173321]/10
+        ${className}
         py-[17px]
         font-serif
         text-[24px]

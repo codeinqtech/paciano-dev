@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
+import { toAppPath } from "@/lib/appBase";
+import type { EventsTypePreviewCms } from "@/hooks/useEventsContent";
 
 type Feature = {
   icon: React.ElementType;
@@ -685,8 +687,31 @@ function EventContent({
   );
 }
 
-export default function EventsType() {
+type EventsTypeProps = {
+  previews?: EventsTypePreviewCms[];
+  corporateImageUrl?: string | null;
+  weddingImageUrl?: string | null;
+};
+
+function findPreview(
+  previews: EventsTypePreviewCms[] | undefined,
+  slug: string,
+) {
+  return previews?.find((p) => p.slug === slug);
+}
+
+export default function EventsType({
+  previews,
+  corporateImageUrl,
+  weddingImageUrl,
+}: EventsTypeProps) {
   const reduceMotion = useReducedMotion();
+
+  const corporatePreview = findPreview(previews, "corporate");
+  const weddingPreview = findPreview(previews, "wedding");
+
+  const corporateImg = corporateImageUrl || corporate;
+  const weddingImg = weddingImageUrl || wedding;
 
   return (
     <section
@@ -727,27 +752,30 @@ export default function EventsType() {
         >
           {/* Image */}
           <EventImage
-            src={corporate}
+            src={corporateImg}
             alt="Elegant Paciano corporate meeting and conference space"
             position="left"
           />
 
           {/* Content */}
           <EventContent
-            eyebrow="Corporate Events"
+            eyebrow={corporatePreview?.eyebrow?.trim() || "Corporate Events"}
             title={
               <>
-                Inspiring Gatherings
+                {corporatePreview?.title_main?.trim() || "Inspiring Gatherings"}
                 <br />
                 <em className="font-normal italic text-[#526C4E]">
-                  for Lasting Impact
+                  {corporatePreview?.title_accent?.trim() || "for Lasting Impact"}
                 </em>
               </>
             }
-            description="Host corporate retreats, strategy meetings and team celebrations in a serene, nature-rich setting designed for focus, connection and growth."
+            description={
+              corporatePreview?.description?.trim() ||
+              "Host corporate retreats, strategy meetings and team celebrations in a serene, nature-rich setting designed for focus, connection and growth."
+            }
             features={corporateFeatures}
             buttonText="EXPLORE CORPORATE EVENTS"
-            href="/events/corporate"
+            href={toAppPath("/events/corporate-events")}
           />
         </div>
 
@@ -855,7 +883,7 @@ export default function EventsType() {
                 "
           >
             <EventImage
-              src={wedding}
+              src={weddingImg}
               alt="Romantic outdoor wedding ceremony at Paciano overlooking the mountains"
               position="right"
             />
@@ -869,20 +897,25 @@ export default function EventsType() {
                 "
           >
             <EventContent
-              eyebrow="Weddings"
+              eyebrow={weddingPreview?.eyebrow?.trim() || "Weddings"}
               title={
                 <>
-                  A Naturally Enchanting
+                  {weddingPreview?.title_main?.trim() ||
+                    "A Naturally Enchanting"}
                   <br />
                   <em className="font-normal italic text-[#526C4E]">
-                    Wedding Destination
+                    {weddingPreview?.title_accent?.trim() ||
+                      "Wedding Destination"}
                   </em>
                 </>
               }
-              description="Celebrate your love amidst breathtaking mountain views, lush greenery and the warm, personalized hospitality of Paciano."
+              description={
+                weddingPreview?.description?.trim() ||
+                "Celebrate your love amidst breathtaking mountain views, lush greenery and the warm, personalized hospitality of Paciano."
+              }
               features={weddingFeatures}
               buttonText="EXPLORE WEDDINGS"
-              href="/events/weddings"
+              href={toAppPath("/events/weddings")}
             />
           </div>
 

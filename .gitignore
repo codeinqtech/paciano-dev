@@ -120,6 +120,10 @@ pnpm-debug.log*
 /media/hero-videos/*
 !/media/hero-videos/.gitkeep
 
+# Contact “Until We Meet” video
+/media/contact-video/*
+!/media/contact-video/.gitkeep
+
 # Local Laravel public hero videos
 /backend/public/media/hero-videos/*
 !/backend/public/media/hero-videos/.gitkeep

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Menu, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
@@ -13,6 +13,7 @@ import {
 
 type MenuRow = {
   id: number;
+  parent_id: number | null;
   label: string;
   url: string;
   sort_order: number;
@@ -22,6 +23,7 @@ type MenuRow = {
 
 type FormState = {
   id?: number;
+  parent_id: number | "";
   label: string;
   url: string;
   sort_order: number;
@@ -29,6 +31,7 @@ type FormState = {
 };
 
 const emptyForm = (): FormState => ({
+  parent_id: "",
   label: "",
   url: "",
   sort_order: 0,
@@ -42,8 +45,31 @@ export default function AdminNavbarMenus() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
 
+  const topLevelItems = useMemo(
+    () => items.filter((i) => i.parent_id == null),
+    [items],
+  );
+
+  const displayRows = useMemo(() => {
+    const rows: (MenuRow & { depth: number })[] = [];
+    const top = [...items]
+      .filter((i) => i.parent_id == null)
+      .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+
+    for (const parent of top) {
+      rows.push({ ...parent, depth: 0 });
+      const kids = items
+        .filter((i) => i.parent_id === parent.id)
+        .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+      for (const child of kids) {
+        rows.push({ ...child, depth: 1 });
+      }
+    }
+    return rows;
+  }, [items]);
+
   const { paginatedItems: pagedItems, paginationProps: menuPagination } =
-    useClientPagination(items, { pageSize: 10 });
+    useClientPagination(displayRows, { pageSize: 15 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,14 +90,18 @@ export default function AdminNavbarMenus() {
     load();
   }, [load]);
 
-  const openCreate = () => {
-    setForm(emptyForm());
+  const openCreate = (parentId?: number) => {
+    setForm({
+      ...emptyForm(),
+      parent_id: parentId ?? "",
+    });
     setModalOpen(true);
   };
 
   const openEdit = (row: MenuRow) => {
     setForm({
       id: row.id,
+      parent_id: row.parent_id ?? "",
       label: row.label,
       url: row.url,
       sort_order: row.sort_order,
@@ -92,6 +122,7 @@ export default function AdminNavbarMenus() {
         url: form.url.trim(),
         sort_order: form.sort_order,
         open_in_new_tab: form.open_in_new_tab,
+        parent_id: form.parent_id === "" ? null : form.parent_id,
       };
       if (form.id) {
         await apiRequest(`/admin/navigation-menus/${form.id}`, {
@@ -134,12 +165,11 @@ export default function AdminNavbarMenus() {
     <AdminCmsPageRoot>
       <AdminCmsPageHeader
         title="Navbar menus"
-        subtitle="Add, edit, or remove links shown in the site header. Deleted items are hidden (is_active = 0)."
-        // badge="Site structure"
+        subtitle="Top-level links appear in the header. Choose a parent to create a dropdown submenu (e.g. Corporate Events under Events)."
         actions={
           <button
             type="button"
-            onClick={openCreate}
+            onClick={() => openCreate()}
             className="inline-flex items-center gap-2 rounded-xl admin-btn-gold px-5 py-2.5 text-sm font-semibold"
           >
             <Plus className="h-4 w-4" />
@@ -165,6 +195,7 @@ export default function AdminNavbarMenus() {
                   <th className="px-6 py-3">Order</th>
                   <th className="px-6 py-3">Label</th>
                   <th className="px-6 py-3">URL</th>
+                  <th className="px-6 py-3">Parent</th>
                   <th className="px-6 py-3">New tab</th>
                   <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
@@ -174,16 +205,34 @@ export default function AdminNavbarMenus() {
                   <tr key={row.id}>
                     <td className="px-6 py-4 text-[#6E655C]">{row.sort_order}</td>
                     <td className="px-6 py-4 font-medium text-[#332C26]">
-                      {row.label}
+                      <span style={{ paddingLeft: row.depth * 20 }}>
+                        {row.depth > 0 ? "↳ " : null}
+                        {row.label}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-[#6E655C] font-mono text-xs">
                       {row.url}
+                    </td>
+                    <td className="px-6 py-4 text-[#6E655C]">
+                      {row.parent_id
+                        ? items.find((i) => i.id === row.parent_id)?.label ??
+                          row.parent_id
+                        : "—"}
                     </td>
                     <td className="px-6 py-4 text-[#6E655C]">
                       {row.open_in_new_tab ? "Yes" : "No"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
+                        {row.depth === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => openCreate(row.id)}
+                            className="rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#5A6B32] hover:bg-[#FAF7F2]"
+                          >
+                            + Submenu
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => openEdit(row)}
@@ -216,11 +265,10 @@ export default function AdminNavbarMenus() {
       <p className="border-t border-[#EDE4D8] px-5 py-4 text-xs admin-card-muted md:px-8">
         <span className="inline-flex items-center gap-1.5">
           <Menu className="h-3.5 w-3.5 shrink-0 text-[#8A8177]" />
-          URL examples: <code className="text-[#5A6B32]">/stay</code>,{" "}
-          <code className="text-[#5A6B32]">/contact</code>, home sections{" "}
-          <code className="text-[#5A6B32]">#dining</code>, or full{" "}
-          <code className="text-[#5A6B32]">https://…</code>. Lower sort order
-          appears first.
+          Example: parent <strong>Events</strong> → <code className="text-[#5A6B32]">/events</code>;
+          submenus <code className="text-[#5A6B32]">/events/corporate-events</code>,{" "}
+          <code className="text-[#5A6B32]">/events/weddings</code>. Only one submenu
+          level is supported.
         </span>
       </p>
         </AdminCmsCardBody>
@@ -233,6 +281,28 @@ export default function AdminNavbarMenus() {
               {form.id ? "Edit menu" : "New menu"}
             </h2>
             <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs text-[#6E655C]">
+                  Parent menu (optional)
+                </label>
+                <select
+                  className="admin-input w-full rounded-xl px-4 py-2.5"
+                  value={form.parent_id === "" ? "" : String(form.parent_id)}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      parent_id: e.target.value === "" ? "" : Number(e.target.value),
+                    }))
+                  }
+                >
+                  <option value="">Top level (header)</option>
+                  {topLevelItems.map((p) => (
+                    <option key={p.id} value={p.id} disabled={p.id === form.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="mb-1 block text-xs text-[#6E655C]">
                   Label
@@ -253,7 +323,7 @@ export default function AdminNavbarMenus() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, url: e.target.value }))
                   }
-                  placeholder="/stay or #about"
+                  placeholder="/events or /events/weddings"
                 />
               </div>
               <div>

@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\HomeSectionsAdminController;
 use App\Http\Controllers\Api\GoogleReviewAdminController;
 use App\Http\Controllers\Api\GoogleProfilePhotoController;
 use App\Http\Controllers\Api\AboutPagePublicController;
+use App\Http\Controllers\Api\EventsPublicController;
+use App\Http\Controllers\Api\EventsAdminController;
 use App\Http\Controllers\Api\GoogleReviewPublicController;
 use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
@@ -33,6 +35,7 @@ Route::get('contact-details', [ContactDetailController::class, 'indexPublic']);
 Route::get('about/google-reviews', [GoogleReviewPublicController::class, 'aboutReviews']);
 Route::get('about/page', [AboutPagePublicController::class, 'show']);
 Route::get('google-profile-photo', [GoogleProfilePhotoController::class, 'show']);
+Route::get('events/content', [EventsPublicController::class, 'content']);
 
 Route::prefix('home')->group(function (): void {
     Route::get('banner-slides', [HomePublicController::class, 'bannerSlides']);
@@ -121,6 +124,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('home/sections/dining', [HomeSectionsAdminController::class, 'diningShow']);
         Route::post('home/sections/dining/intro', [HomeSectionsAdminController::class, 'diningSectionUpdate']);
         Route::post('home/sections/dining/slides/{id}', [HomeSectionsAdminController::class, 'diningSlideUpdate']);
+
+        Route::get('events', [EventsAdminController::class, 'show']);
+        Route::post('events/landing', [EventsAdminController::class, 'updateLanding']);
+        Route::post('events/landing/previews/{slug}', [EventsAdminController::class, 'updateTypePreview']);
+        Route::post('events/landing/advantage-slides', [EventsAdminController::class, 'storeAdvantageSlide']);
+        Route::post('events/landing/advantage-slides/{id}', [EventsAdminController::class, 'updateAdvantageSlide']);
+        Route::delete('events/landing/advantage-slides/{id}', [EventsAdminController::class, 'destroyAdvantageSlide']);
+        Route::post('events/categories/{slug}/page', [EventsAdminController::class, 'updateCategoryPage']);
+        Route::post('events/categories/{slug}/experience-items/{id}', [EventsAdminController::class, 'updateExperienceItem']);
+        Route::post('events/categories/{slug}/venue-items/{id}', [EventsAdminController::class, 'updateVenueItem']);
 
         Route::get('contact-page', [ContactPageController::class, 'show']);
         Route::put('contact-page', [ContactPageController::class, 'update']);

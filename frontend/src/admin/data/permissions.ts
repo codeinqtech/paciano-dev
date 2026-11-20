@@ -12,6 +12,7 @@ import {
   UserCircle,
   MessageSquareQuote,
   MessageCircle,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,7 +35,8 @@ export type MenuId =
   | "google_reviews"
   | "users"
   | "profile"
-  | "whatsapp_settings";
+  | "whatsapp_settings"
+  | "events";
 
 export type AdminMenu = {
   id: MenuId;
@@ -47,6 +49,13 @@ export type AdminMenu = {
 export const ABOUT_CHILD_MENUS = [
   { label: "About page", path: "/admin/about/page" },
   { label: "Experiences", path: "/admin/about/experiences" },
+] as const;
+
+/** Submenus under Events in the sidebar. */
+export const EVENTS_CHILD_MENUS = [
+  { label: "Events page", path: "/admin/events/page" },
+  { label: "Corporate Events", path: "/admin/events/corporate" },
+  { label: "Weddings", path: "/admin/events/weddings" },
 ] as const;
 
 export const ASSIGNABLE_MENUS: AdminMenu[] = [
@@ -73,6 +82,12 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
     label: "Dining at Paciano",
     path: "/admin/dining",
     icon: UtensilsCrossed,
+  },
+  {
+    id: "events",
+    label: "Events",
+    path: "/admin/events/page",
+    icon: CalendarDays,
   },
   {
     id: "contact",
@@ -146,6 +161,10 @@ const PATH_TO_MENU: Record<string, MenuId> = {
   "/admin/experiences": "about",
   "/admin/stays": "stays",
   "/admin/dining": "dining",
+  "/admin/events": "events",
+  "/admin/events/page": "events",
+  "/admin/events/corporate": "events",
+  "/admin/events/weddings": "events",
   "/admin/contact": "contact",
   "/admin/stay": "stay",
   "/admin/navbar": "navbar",
@@ -163,6 +182,9 @@ export function getMenuIdFromPath(pathname: string): MenuId | null {
   }
   if (normalized.startsWith("/admin/about")) {
     return "about";
+  }
+  if (normalized.startsWith("/admin/events")) {
+    return "events";
   }
   return null;
 }

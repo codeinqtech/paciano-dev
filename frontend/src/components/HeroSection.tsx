@@ -194,9 +194,8 @@ export default function HeroSection() {
           };
     });
 
-    const hasCmsImage = apiBannerSlides.some((s) => s.media_type === "image");
-    if (!hasCmsImage) {
-      return [DEFAULT_HERO_IMAGE, ...cmsSlides];
+    if (cmsSlides.length === 0) {
+      return FALLBACK_HERO_SLIDES;
     }
 
     return cmsSlides;
@@ -293,7 +292,17 @@ export default function HeroSection() {
   };
 
   const activeSlide = heroSlides[slideIndex];
-  const showImageBannerChrome = activeSlide?.kind === "image";
+  const activeVideoReady =
+    activeSlide?.kind === "video" &&
+    isHeroVideoReady(
+      activeSlide.id,
+      slideIndex,
+      videoReadyByIdRef.current,
+      videoRefs,
+    );
+  const showImageBannerChrome =
+    activeSlide?.kind === "image" ||
+    (activeSlide?.kind === "video" && !activeVideoReady);
 
   useEffect(() => {
     videoReadyByIdRef.current = {};
@@ -893,41 +902,57 @@ export default function HeroSection() {
             object-cover object-center
             [-webkit-transform:translateZ(0)]
             transition-opacity duration-[2200ms] ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${active ? "opacity-100 z-[0]" : "opacity-0 z-[-1]"}
           `;
+          const inactiveClass = "opacity-0 z-[-1] pointer-events-none";
+          const slideVideoReady =
+            slide.kind === "video" &&
+            isHeroVideoReady(slide.id, i, videoReadyByIdRef.current, videoRefs);
 
           if (slide.kind === "video") {
+            const showPoster = active && !slideVideoReady;
+            const showVideo = active && slideVideoReady;
+
             return (
-              <video
-                key={slide.id}
-                ref={(el) => {
-                  videoRefs.current[i] = el;
-                }}
-                src={slide.src}
-                className={`${mediaClass} ${
-                  active ? "paciano-hero-media-drift" : ""
-                }`}
-                loop={heroSlides.length === 1}
-                muted={!soundEnabled || !active}
-                playsInline
-                preload="auto"
-                aria-label={slide.alt}
-                onLoadedData={(e) => {
-                  const v = e.currentTarget;
-                  if (v.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+              <React.Fragment key={slide.id}>
+                <img
+                  src={DEFAULT_HERO_IMAGE.src}
+                  alt=""
+                  aria-hidden
+                  decoding="async"
+                  className={`${mediaClass} ${showPoster ? "opacity-100 z-[0]" : inactiveClass} ${
+                    showPoster ? "paciano-hero-media-drift" : ""
+                  }`}
+                />
+                <video
+                  ref={(el) => {
+                    videoRefs.current[i] = el;
+                  }}
+                  src={slide.src}
+                  className={`${mediaClass} ${
+                    showVideo ? "opacity-100 z-[0]" : inactiveClass
+                  } ${showVideo ? "paciano-hero-media-drift" : ""}`}
+                  loop={heroSlides.length === 1}
+                  muted={!soundEnabled || !active}
+                  playsInline
+                  preload="auto"
+                  aria-label={slide.alt}
+                  onLoadedData={(e) => {
+                    const v = e.currentTarget;
+                    if (v.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                      markVideoReady(slide.id);
+                    }
+                    if (active) {
+                      syncActiveHeroVideo(false);
+                    }
+                  }}
+                  onCanPlayThrough={(e) => {
                     markVideoReady(slide.id);
-                  }
-                  if (active) {
-                    syncActiveHeroVideo(false);
-                  }
-                }}
-                onCanPlayThrough={(e) => {
-                  markVideoReady(slide.id);
-                  if (active) {
-                    syncActiveHeroVideo(false);
-                  }
-                }}
-              />
+                    if (active) {
+                      syncActiveHeroVideo(false);
+                    }
+                  }}
+                />
+              </React.Fragment>
             );
           }
 
@@ -940,13 +965,15 @@ export default function HeroSection() {
               alt={slide.alt}
               decoding="async"
               fetchPriority={slide.id === "hero" ? "high" : "auto"}
-              className={`${mediaClass} ${active ? "paciano-hero-media-drift" : ""}`}
+              className={`${mediaClass} ${
+                active ? "opacity-100 z-[0]" : inactiveClass
+              } ${active ? "paciano-hero-media-drift" : ""}`}
               style={{ objectPosition: pos }}
             />
           );
         })}
 
-        {activeSlide?.kind === "video" ? (
+        {activeSlide?.kind === "video" && activeVideoReady ? (
           <button
             type="button"
             onClick={toggleHeroSound}

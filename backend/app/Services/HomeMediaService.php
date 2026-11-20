@@ -208,6 +208,31 @@ class HomeMediaService
         return $dir;
     }
 
+    private function ensureContactVideoDirectory(): string
+    {
+        $dir = config('filesystems.disks.contact_videos.root');
+
+        if (! is_string($dir) || trim($dir) === '') {
+            $dir = dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'contact-video';
+        }
+
+        if (! is_dir($dir)) {
+            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                throw new RuntimeException(
+                    'Unable to create contact video directory.'
+                );
+            }
+        }
+
+        if (! is_writable($dir)) {
+            throw new RuntimeException(
+                'Contact video directory is not writable.'
+            );
+        }
+
+        return $dir;
+    }
+
     private function storeUploadedVideoAsIs(UploadedFile $file, string $dest): void
     {
         $dir = dirname($dest);
@@ -281,11 +306,10 @@ class HomeMediaService
      */
     public function storeContactPageVideo(UploadedFile $file): array
     {
-        $dir = public_path('media/contact');
-        $this->ensureDir($dir);
+        $dir = $this->ensureContactVideoDirectory();
 
         $name = $this->uniqueName('contact_vid', 'mp4');
-        $dest = $dir.DIRECTORY_SEPARATOR.$name;
+        $dest = rtrim($dir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
 
         $compression = $this->transcodeVideoToMp4(
             $file,
@@ -295,7 +319,7 @@ class HomeMediaService
 
         return [
             'file_name' => $name,
-            'file_path' => 'media/contact/'.$name,
+            'file_path' => 'media/contact-video/'.$name,
             'compression' => $compression,
         ];
     }
@@ -316,6 +340,22 @@ class HomeMediaService
         ];
     }
 
+    public function storeEventImage(UploadedFile $file, string $folder): array
+    {
+        $safe = preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?: 'misc';
+        $dir = $this->uploadDirectory('events', $safe);
+
+        $name = $this->uniqueName('events_'.$safe, 'webp');
+        $path = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $this->convertImageToWebp($file->getPathname(), $path, 2400);
+
+        return [
+            'file_name' => $name,
+            'file_path' => 'uploads/events/'.$safe.'/'.$name,
+        ];
+    }
+
     public function deletePublicFile(?string $relativePath): void
     {
         if (! $relativePath) {
@@ -328,6 +368,20 @@ class HomeMediaService
             $root = config('filesystems.disks.hero_videos.root');
             if (! is_string($root) || trim($root) === '') {
                 $root = dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'hero-videos';
+            }
+            $name = basename($path);
+            $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
+            if (is_file($full)) {
+                @unlink($full);
+            }
+
+            return;
+        }
+
+        if (str_starts_with($path, 'media/contact-video/')) {
+            $root = config('filesystems.disks.contact_videos.root');
+            if (! is_string($root) || trim($root) === '') {
+                $root = dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'contact-video';
             }
             $name = basename($path);
             $full = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name;
@@ -363,6 +417,20 @@ class HomeMediaService
             }
 
             return rtrim($base, '/').'/'.basename($path);
+        }
+
+        if (str_starts_with($path, 'media/contact-video/')) {
+            $configured = config('filesystems.disks.contact_videos.url');
+            $base = is_string($configured) ? trim($configured) : '';
+            if ($base === '') {
+                $base = $this->resolveMediaBaseUrl().'/media/contact-video';
+            }
+
+            return rtrim($base, '/').'/'.basename($path);
+        }
+
+        if (str_starts_with($path, 'media/contact/')) {
+            return $this->resolveMediaBaseUrl().'/'.$path;
         }
 
         // Keep the existing logic below this point unchanged.
