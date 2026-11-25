@@ -1,4 +1,37 @@
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react";
+import type { ListSearchControlProps } from "../hooks/useClientPagination";
+import { inputClass } from "./AdminSectionLayout";
+
+export function AdminListSearchBar({
+  value,
+  onChange,
+  placeholder = "Search list…",
+  className = "",
+}: ListSearchControlProps & {
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`border-b border-[#EDE4D8] bg-[#FAF7F2]/50 px-4 py-3 ${className}`.trim()}
+    >
+      <label className="relative block max-w-md">
+        <span className="sr-only">Search</span>
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8278]"
+          aria-hidden
+        />
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={`${inputClass} pl-9`}
+        />
+      </label>
+    </div>
+  );
+}
 
 export type ListPaginationProps = {
   page: number;

@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\GoogleProfilePhotoController;
 use App\Http\Controllers\Api\AboutPagePublicController;
 use App\Http\Controllers\Api\EventsPublicController;
 use App\Http\Controllers\Api\EventsAdminController;
+use App\Http\Controllers\Api\GalleryPublicController;
+use App\Http\Controllers\Api\GalleryAdminController;
 use App\Http\Controllers\Api\GoogleReviewPublicController;
 use App\Http\Controllers\Api\HomeSectionsPublicController;
 use App\Http\Controllers\Api\SiteFooterController;
@@ -132,10 +134,23 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('events/landing/advantage-slides/{id}', [EventsAdminController::class, 'updateAdvantageSlide']);
         Route::delete('events/landing/advantage-slides/{id}', [EventsAdminController::class, 'destroyAdvantageSlide']);
         Route::post('events/categories/{slug}/page', [EventsAdminController::class, 'updateCategoryPage']);
+        Route::post('events/categories/{slug}/experience-items', [EventsAdminController::class, 'storeExperienceItem']);
         Route::post('events/categories/{slug}/experience-items/{id}', [EventsAdminController::class, 'updateExperienceItem']);
+        Route::delete('events/categories/{slug}/experience-items/{id}', [EventsAdminController::class, 'destroyExperienceItem']);
+        Route::post('events/categories/{slug}/venue-items', [EventsAdminController::class, 'storeVenueItem']);
         Route::post('events/categories/{slug}/venue-items/{id}', [EventsAdminController::class, 'updateVenueItem']);
+        Route::delete('events/categories/{slug}/venue-items/{id}', [EventsAdminController::class, 'destroyVenueItem']);
 
         Route::get('contact-page', [ContactPageController::class, 'show']);
+        Route::get('gallery', [GalleryAdminController::class, 'show']);
+        Route::post('gallery/page', [GalleryAdminController::class, 'updatePage']);
+        Route::post('gallery/categories', [GalleryAdminController::class, 'storeCategory']);
+        Route::post('gallery/categories/{id}', [GalleryAdminController::class, 'updateCategory']);
+        Route::delete('gallery/categories/{id}', [GalleryAdminController::class, 'destroyCategory']);
+        Route::post('gallery/items', [GalleryAdminController::class, 'storeItems']);
+        Route::post('gallery/items/{id}', [GalleryAdminController::class, 'updateItem']);
+        Route::delete('gallery/items/{id}', [GalleryAdminController::class, 'destroyItem']);
+
         Route::put('contact-page', [ContactPageController::class, 'update']);
 
         // Contact Details

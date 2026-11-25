@@ -24,11 +24,15 @@ import { AdminDiningPage } from "@/admin/pages/dining/AdminDiningPage";
 import { AdminEventsLandingPage } from "@/admin/pages/events/AdminEventsLandingPage";
 import { AdminEventsCorporatePage } from "@/admin/pages/events/AdminEventsCorporatePage";
 import { AdminEventsWeddingsPage } from "@/admin/pages/events/AdminEventsWeddingsPage";
+import { AdminGalleryPage } from "@/admin/pages/gallery/AdminGalleryPage";
 
 import AboutUsPage from "@/pages/AboutUsPage";
 import StayPage from "@/pages/StayPage";
 import EventsPage from "@/pages/EventsPage";
 import EventCategoryPage from "@/pages/EventCategoryPage";
+import GalleryPage from "@/pages/GalleryPage";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
+import TermsConditionsPage from "@/pages/TermsConditionsPage";
 
 export default function App() {
   return (
@@ -43,6 +47,10 @@ export default function App() {
       <Route path="events" element={<EventsPage />} />
       <Route path="events/corporate-events" element={<EventCategoryPage path="/events/corporate-events" />} />
       <Route path="events/weddings" element={<EventCategoryPage path="/events/weddings" />} />
+      <Route path="gallery" element={<GalleryPage />} />
+      <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="terms-conditions" element={<TermsConditionsPage />} />
+      
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
@@ -79,8 +87,10 @@ export default function App() {
         <Route path="events/page" element={<AdminEventsLandingPage />} />
         <Route path="events/corporate" element={<AdminEventsCorporatePage />} />
         <Route path="events/weddings" element={<AdminEventsWeddingsPage />} />
+        <Route path="gallery" element={<AdminGalleryPage />} />
         <Route path="contact" element={<AdminContactUsSection />} />
         
+          
         
         
         <Route

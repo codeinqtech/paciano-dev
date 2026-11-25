@@ -4,18 +4,9 @@ namespace App\Models;
 
 use App\Services\HomeMediaService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
-
 class AboutExperienceItem extends Model
 {
-    public function getTable()
-    {
-        if (Schema::hasTable('about_experience_items')) {
-            return 'about_experience_items';
-        }
-
-        return 'home_experience_items';
-    }
+    protected $table = 'about_experience_items';
 
     protected $fillable = [
         'title',

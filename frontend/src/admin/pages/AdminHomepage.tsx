@@ -17,7 +17,10 @@ import {
 } from "../components/MediaFileUploadZone";
 import { apiRequest, apiUpload } from "../../api/client";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
-import { ListPagination } from "../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   IMAGE_UPLOAD_MAX_BYTES,
@@ -142,10 +145,16 @@ export default function AdminHomepage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [reviewSaving, setReviewSaving] = useState(false);
 
-  const { paginatedItems: pagedBanners, paginationProps: bannerPagination } =
-    useClientPagination(banners, { pageSize: 5 });
-  const { paginatedItems: pagedReviews, paginationProps: reviewPagination } =
-    useClientPagination(reviews, { pageSize: 10 });
+  const {
+    paginatedItems: pagedBanners,
+    paginationProps: bannerPagination,
+    listSearch: bannerListSearch,
+  } = useClientPagination(banners, { pageSize: 5 });
+  const {
+    paginatedItems: pagedReviews,
+    paginationProps: reviewPagination,
+    listSearch: reviewListSearch,
+  } = useClientPagination(reviews, { pageSize: 10 });
 
   const loadBanners = useCallback(async () => {
     const res = await apiRequest<{ data: BannerRow[] }>(
@@ -493,6 +502,11 @@ export default function AdminHomepage() {
                 video.
               </p>
             ) : (
+              <>
+                <AdminListSearchBar
+                  {...bannerListSearch}
+                  placeholder="Search banner slides…"
+                />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wide text-[#6E655C]">
@@ -542,6 +556,7 @@ export default function AdminHomepage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
             {banners.length > 0 ? (
               <ListPagination {...bannerPagination} itemLabel="slides" />
@@ -789,6 +804,11 @@ export default function AdminHomepage() {
                 story.
               </p>
             ) : (
+              <>
+                <AdminListSearchBar
+                  {...reviewListSearch}
+                  placeholder="Search review videos…"
+                />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wide text-[#6E655C]">
@@ -841,6 +861,7 @@ export default function AdminHomepage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
             {reviews.length > 0 ? (
               <ListPagination {...reviewPagination} itemLabel="videos" />

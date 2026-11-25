@@ -4,7 +4,10 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
 import { GoogleGuestAvatar } from "@/components/GoogleGuestAvatar";
-import { ListPagination } from "../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   AdminCmsCardBody,
@@ -77,8 +80,11 @@ export default function AdminGoogleReviews() {
     google_rating_count: number | null;
   } | null>(null);
 
-  const { paginatedItems: pagedReviews, paginationProps: reviewsPagination } =
-    useClientPagination(reviews, { pageSize: 10 });
+  const {
+    paginatedItems: pagedReviews,
+    paginationProps: reviewsPagination,
+    listSearch: reviewsListSearch,
+  } = useClientPagination(reviews, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -392,16 +398,22 @@ export default function AdminGoogleReviews() {
           ) : null}
 
           <div className="admin-card overflow-hidden rounded-2xl">
+            {reviews.length > 0 ? (
+              <AdminListSearchBar
+                {...reviewsListSearch}
+                placeholder="Search reviews (guest, text, reply…)"
+              />
+            ) : null}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-sm">
+              <table className="w-full min-w-[1100px] text-sm">
                 <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wide text-[#6E655C]">
                   <tr>
                     <th className="px-4 py-3">Guest</th>
                     <th className="px-4 py-3">Rating</th>
-                    <th className="px-4 py-3">Review</th>
+                    <th className="min-w-[320px] max-w-xl px-4 py-3">Review</th>
                     <th className="px-4 py-3">Owner reply</th>
                     <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">About</th>
+                    <th className="px-4 py-3">Display on the About Page</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,11 +440,11 @@ export default function AdminGoogleReviews() {
                           </div>
                         </td>
                         <td className="px-4 py-3">{row.rating}/5</td>
-                        <td className="max-w-xs px-4 py-3 text-[#4a443c]">
+                        <td className="min-w-[320px] max-w-xl px-4 py-3 text-[#4a443c]">
                           {row.review_text?.trim() ? (
-                            <span className="line-clamp-4">
+                            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                               {row.review_text}
-                            </span>
+                            </p>
                           ) : (
                             <span className="italic text-[#8a8278]">
                               No written review
@@ -441,7 +453,7 @@ export default function AdminGoogleReviews() {
                         </td>
                         <td className="max-w-sm px-4 py-3">
                           {row.owner_reply?.trim() ? (
-                            <p className="mb-2 line-clamp-3 text-xs text-[#5a554c]">
+                            <p className="mb-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-[#5a554c]">
                               <span className="font-medium text-[#332C26]">
                                 Published:{" "}
                               </span>

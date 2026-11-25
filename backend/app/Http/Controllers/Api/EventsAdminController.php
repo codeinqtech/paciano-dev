@@ -16,6 +16,20 @@ use Illuminate\Support\Facades\Schema;
 
 class EventsAdminController extends Controller
 {
+    /** @var list<string> */
+    public const EXPERIENCE_ICON_KEYS = [
+        'users',
+        'users-round',
+        'presentation',
+        'chart',
+        'calendar',
+        'heart',
+        'handshake',
+        'flower',
+        'sparkles',
+        'landmark',
+    ];
+
     public function show(Request $request)
     {
         $this->ensurePermission($request);
@@ -183,6 +197,61 @@ class EventsAdminController extends Controller
         return response()->json(['success' => true, 'data' => $page->fresh()->toPublicArray()]);
     }
 
+    public function storeExperienceItem(Request $request, string $slug)
+    {
+        $this->ensurePermission($request);
+
+        if (! in_array($slug, ['corporate', 'wedding'], true)) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'icon_key' => ['required', 'string', 'in:'.implode(',', self::EXPERIENCE_ICON_KEYS)],
+            'show_on_landing' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'image' => ['nullable', 'file', 'image', 'max:5120'],
+        ]);
+
+        $sortOrder = $data['sort_order']
+            ?? ((int) EventsCategoryExperienceItem::query()
+                ->where('category_slug', $slug)
+                ->max('sort_order')) + 10;
+
+        $showOnLanding = (bool) ($data['show_on_landing'] ?? false);
+
+        if ($showOnLanding) {
+            EventsCategoryExperienceItem::query()
+                ->where('category_slug', $slug)
+                ->update(['show_on_landing' => false]);
+        }
+
+        $item = EventsCategoryExperienceItem::query()->create([
+            'category_slug' => $slug,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'icon_key' => $data['icon_key'],
+            'show_on_landing' => $showOnLanding,
+            'sort_order' => $sortOrder,
+            'is_active' => true,
+        ]);
+
+        if ($request->hasFile('image')) {
+            $stored = app(HomeMediaService::class)->storeEventImage(
+                $request->file('image'),
+                $slug.'-experience',
+            );
+            $item->image_path = $stored['file_path'];
+            $item->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $item->fresh()->toPublicArray(),
+        ], 201);
+    }
+
     public function updateExperienceItem(Request $request, string $slug, int $id)
     {
         $this->ensurePermission($request);
@@ -195,7 +264,7 @@ class EventsAdminController extends Controller
         $data = $request->validate([
             'title' => ['sometimes', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'icon_key' => ['nullable', 'string', 'max:40'],
+            'icon_key' => ['nullable', 'string', 'in:'.implode(',', self::EXPERIENCE_ICON_KEYS)],
             'show_on_landing' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);
@@ -217,6 +286,67 @@ class EventsAdminController extends Controller
         $item->save();
 
         return response()->json(['success' => true, 'data' => $item->fresh()->toPublicArray()]);
+    }
+
+    public function destroyExperienceItem(Request $request, string $slug, int $id)
+    {
+        $this->ensurePermission($request);
+
+        $item = EventsCategoryExperienceItem::query()
+            ->where('category_slug', $slug)
+            ->where('is_active', true)
+            ->findOrFail($id);
+
+        $item->update(['is_active' => false]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function storeVenueItem(Request $request, string $slug)
+    {
+        $this->ensurePermission($request);
+
+        if (! in_array($slug, ['corporate', 'wedding'], true)) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'capacity' => ['nullable', 'string', 'max:120'],
+            'setup' => ['nullable', 'string', 'max:120'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'image' => ['nullable', 'file', 'image', 'max:5120'],
+        ]);
+
+        $sortOrder = $data['sort_order']
+            ?? ((int) EventsCategoryVenueItem::query()
+                ->where('category_slug', $slug)
+                ->max('sort_order')) + 10;
+
+        $item = EventsCategoryVenueItem::query()->create([
+            'category_slug' => $slug,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'capacity' => $data['capacity'] ?? null,
+            'setup' => $data['setup'] ?? null,
+            'sort_order' => $sortOrder,
+            'is_active' => true,
+        ]);
+
+        if ($request->hasFile('image')) {
+            $stored = app(HomeMediaService::class)->storeEventImage(
+                $request->file('image'),
+                $slug.'-venue',
+            );
+            $item->image_path = $stored['file_path'];
+            $item->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $item->fresh()->toPublicArray(),
+        ], 201);
     }
 
     public function updateVenueItem(Request $request, string $slug, int $id)
@@ -246,6 +376,20 @@ class EventsAdminController extends Controller
         $item->save();
 
         return response()->json(['success' => true, 'data' => $item->fresh()->toPublicArray()]);
+    }
+
+    public function destroyVenueItem(Request $request, string $slug, int $id)
+    {
+        $this->ensurePermission($request);
+
+        $item = EventsCategoryVenueItem::query()
+            ->where('category_slug', $slug)
+            ->where('is_active', true)
+            ->findOrFail($id);
+
+        $item->update(['is_active' => false]);
+
+        return response()->json(['success' => true]);
     }
 
     private function ensurePermission(Request $request): void
