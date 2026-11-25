@@ -10,6 +10,9 @@ use RuntimeException;
 
 class HomeMediaService
 {
+    /** Directory mode when creating upload folders (image/video). */
+    private const UPLOAD_DIR_MODE = 0777;
+
     private ?string $resolvedFfmpegBinary = null;
 
     private bool $ffmpegLookupDone = false;
@@ -191,19 +194,7 @@ class HomeMediaService
             $dir = dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'hero-videos';
         }
 
-        if (! is_dir($dir)) {
-            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
-                throw new RuntimeException(
-                    'Unable to create hero video directory.'
-                );
-            }
-        }
-
-        if (! is_writable($dir)) {
-            throw new RuntimeException(
-                'Hero video directory is not writable.'
-            );
-        }
+        $this->ensureDir($dir);
 
         return $dir;
     }
@@ -216,19 +207,7 @@ class HomeMediaService
             $dir = dirname(base_path()).DIRECTORY_SEPARATOR.'media'.DIRECTORY_SEPARATOR.'contact-video';
         }
 
-        if (! is_dir($dir)) {
-            if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
-                throw new RuntimeException(
-                    'Unable to create contact video directory.'
-                );
-            }
-        }
-
-        if (! is_writable($dir)) {
-            throw new RuntimeException(
-                'Contact video directory is not writable.'
-            );
-        }
+        $this->ensureDir($dir);
 
         return $dir;
     }
@@ -337,6 +316,22 @@ class HomeMediaService
         return [
             'file_name' => $name,
             'file_path' => 'uploads/home/'.$safe.'/'.$name,
+        ];
+    }
+
+    public function storeGalleryImage(UploadedFile $file, string $folder): array
+    {
+        $safe = preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?: 'misc';
+        $dir = $this->uploadDirectory('gallery', $safe);
+
+        $name = $this->uniqueName('gallery_'.$safe, 'webp');
+        $path = $dir.DIRECTORY_SEPARATOR.$name;
+
+        $this->convertImageToWebp($file->getPathname(), $path, 2560);
+
+        return [
+            'file_name' => $name,
+            'file_path' => 'uploads/gallery/'.$safe.'/'.$name,
         ];
     }
 
@@ -488,18 +483,23 @@ class HomeMediaService
 
     private function ensureDir(string $dir): void
     {
-        if (is_dir($dir)) {
-            return;
+        $created = false;
+
+        if (! is_dir($dir)) {
+            try {
+                File::ensureDirectoryExists($dir, self::UPLOAD_DIR_MODE, true);
+                $created = true;
+            } catch (\Throwable $e) {
+                throw new RuntimeException(
+                    'Could not create upload folder: '.$dir,
+                    0,
+                    $e,
+                );
+            }
         }
 
-        try {
-            File::ensureDirectoryExists($dir, 0755, true);
-        } catch (\Throwable $e) {
-            throw new RuntimeException(
-                'Could not create upload folder: '.$dir,
-                0,
-                $e,
-            );
+        if ($created) {
+            @chmod($dir, self::UPLOAD_DIR_MODE);
         }
 
         if (! is_dir($dir) || ! is_writable($dir)) {

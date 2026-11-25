@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Menu, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
-import { ListPagination } from "../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   AdminCmsCardBody,
@@ -68,8 +71,11 @@ export default function AdminNavbarMenus() {
     return rows;
   }, [items]);
 
-  const { paginatedItems: pagedItems, paginationProps: menuPagination } =
-    useClientPagination(displayRows, { pageSize: 15 });
+  const {
+    paginatedItems: pagedItems,
+    paginationProps: menuPagination,
+    listSearch: menuListSearch,
+  } = useClientPagination(displayRows, { pageSize: 15 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -188,6 +194,11 @@ export default function AdminNavbarMenus() {
             No active menu items. Add one to populate the navbar.
           </p>
         ) : (
+          <>
+            <AdminListSearchBar
+              {...menuListSearch}
+              placeholder="Search menu items…"
+            />
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wider text-[#8A8177]">
@@ -256,6 +267,7 @@ export default function AdminNavbarMenus() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {!loading && items.length > 0 ? (
           <ListPagination {...menuPagination} itemLabel="menu items" />

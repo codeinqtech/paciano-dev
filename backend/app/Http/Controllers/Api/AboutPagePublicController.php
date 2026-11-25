@@ -15,7 +15,7 @@ class AboutPagePublicController extends Controller
 {
     public function show()
     {
-        if (! Schema::hasTable('about_intro') && ! Schema::hasTable('home_about_sections')) {
+        if (! Schema::hasTable('about_intro')) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
@@ -23,7 +23,7 @@ class AboutPagePublicController extends Controller
             $intro = AboutIntro::singleton()->toPublicArray();
 
             $experiences = ['section' => null, 'items' => []];
-            if (Schema::hasTable('about_experience_sections') || Schema::hasTable('home_experience_sections')) {
+            if (Schema::hasTable('about_experience_sections')) {
                 $experiences = [
                     'section' => AboutExperienceSection::singleton()->toPublicArray(),
                     'items' => AboutExperienceItem::query()

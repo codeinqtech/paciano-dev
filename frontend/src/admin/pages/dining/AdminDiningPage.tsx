@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Images, Loader2, Save, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { AdminImageUpload } from "../../components/MediaFileUploadZone";
-import { ListPagination } from "../../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../../components/ListPagination";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import { apiRequest, apiUpload } from "../../../api/client";
 import {
@@ -37,8 +40,11 @@ export function AdminDiningPage() {
     {},
   );
 
-  const { paginatedItems: pagedSlides, paginationProps: slidePagination } =
-    useClientPagination(slides, { pageSize: 4, pageSizeOptions: [2, 4, 8] });
+  const {
+    paginatedItems: pagedSlides,
+    paginationProps: slidePagination,
+    listSearch: slideListSearch,
+  } = useClientPagination(slides, { pageSize: 4, pageSizeOptions: [2, 4, 8] });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -188,6 +194,13 @@ export function AdminDiningPage() {
         </div>
       ) : (
         <>
+          {slides.length > 0 ? (
+            <AdminListSearchBar
+              {...slideListSearch}
+              placeholder="Search dining slides…"
+              className="mb-4 rounded-2xl border border-[#EDE4D8]"
+            />
+          ) : null}
           <div className={cardGridClass}>
             {pagedSlides.map((slide, index) => (
             <div key={slide.id} className="admin-card rounded-2xl p-6">

@@ -4,7 +4,10 @@ import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
 import type { AuthUser } from "../../context/AuthContext";
 import { ASSIGNABLE_MENUS, ROLES, type MenuId } from "../data/permissions";
-import { ListPagination } from "../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   AdminCmsCardBody,
@@ -43,8 +46,11 @@ export default function AdminUsers() {
   const [form, setForm] = useState<UserForm>(emptyForm());
   const [saving, setSaving] = useState(false);
 
-  const { paginatedItems: pagedUsers, paginationProps: usersPagination } =
-    useClientPagination(users, { pageSize: 10 });
+  const {
+    paginatedItems: pagedUsers,
+    paginationProps: usersPagination,
+    listSearch: usersListSearch,
+  } = useClientPagination(users, { pageSize: 10 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -183,6 +189,13 @@ export default function AdminUsers() {
         {loading ? (
           <p className="p-6 text-sm admin-card-muted">Loading…</p>
         ) : (
+          <>
+            {users.length > 0 ? (
+              <AdminListSearchBar
+                {...usersListSearch}
+                placeholder="Search users…"
+              />
+            ) : null}
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wider text-[#8A8177]">
@@ -242,6 +255,7 @@ export default function AdminUsers() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {!loading && users.length > 0 ? (
           <ListPagination {...usersPagination} itemLabel="users" />

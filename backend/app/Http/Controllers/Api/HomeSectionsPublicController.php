@@ -26,7 +26,7 @@ class HomeSectionsPublicController extends Controller
 
     public function about()
     {
-        if (! $this->hasTable('about_intro') && ! $this->hasTable('home_about_sections')) {
+        if (! $this->hasTable('about_intro')) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
@@ -42,7 +42,7 @@ class HomeSectionsPublicController extends Controller
 
     public function experiences()
     {
-        if (! $this->hasTable('about_experience_sections') && ! $this->hasTable('home_experience_sections')) {
+        if (! $this->hasTable('about_experience_sections')) {
             return response()->json(['success' => true, 'data' => ['section' => null, 'items' => []]]);
         }
 

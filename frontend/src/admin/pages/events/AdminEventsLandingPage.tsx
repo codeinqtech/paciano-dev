@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Heart,
@@ -11,13 +11,26 @@ import { toast } from "sonner";
 import { AdminImageUpload } from "../../components/MediaFileUploadZone";
 import { apiUpload, apiRequest } from "../../../api/client";
 import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../../components/ListPagination";
+import { useClientPagination } from "../../hooks/useClientPagination";
+import {
   Field,
   TabbedPageShell,
-  cardGridTwoColClass,
   formTwoColPairedRowClass,
   inputClass,
   saveCardButtonClass,
 } from "../../components/AdminSectionLayout";
+import type { EventsContentCms } from "@/hooks/useEventsContent";
+import {
+  AdminRowActions,
+  EventsAdminFormModal,
+} from "./eventsAdminCrudUi";
+
+type AdvantageSlideRow = NonNullable<
+  EventsContentCms["advantage_slides"]
+>[number];
 import {
   PreviewFields,
   type TypePreviewForm,
@@ -53,11 +66,35 @@ export function AdminEventsLandingPage() {
   });
   const [previewSaving, setPreviewSaving] = useState<string | null>(null);
 
-  const [slides, setSlides] = useState(
-    [] as NonNullable<typeof cms>["advantage_slides"],
+  const [slideAdd, setSlideAdd] = useState({ title: "", description: "" });
+  const [slideAddFile, setSlideAddFile] = useState<File | null>(null);
+  const [slideAddSaving, setSlideAddSaving] = useState(false);
+
+  const [editSlide, setEditSlide] = useState<AdvantageSlideRow | null>(null);
+  const [editSlideForm, setEditSlideForm] = useState({
+    title: "",
+    description: "",
+    sort_order: "",
+  });
+  const [editSlideFile, setEditSlideFile] = useState<File | null>(null);
+  const [editSlideSaving, setEditSlideSaving] = useState(false);
+  const [slideDeleteBusyId, setSlideDeleteBusyId] = useState<number | null>(
+    null,
   );
-  const [slideFiles, setSlideFiles] = useState<Record<number, File | null>>({});
-  const [slideSaving, setSlideSaving] = useState<number | null>(null);
+
+  const slides = cms?.advantage_slides ?? [];
+  const sortedSlides = useMemo(
+    () =>
+      [...slides].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+      ),
+    [slides],
+  );
+  const {
+    paginatedItems: pagedSlides,
+    paginationProps: slidePagination,
+    listSearch: slideListSearch,
+  } = useClientPagination(sortedSlides, { pageSize: 10 });
 
   useEffect(() => {
     if (!cms) return;
@@ -81,7 +118,6 @@ export function AdminEventsLandingPage() {
       title_accent: wedP?.title_accent ?? "",
       description: wedP?.description ?? "",
     });
-    setSlides(cms.advantage_slides ?? []);
   }, [cms]);
 
   const saveLanding = async () => {
@@ -123,26 +159,85 @@ export function AdminEventsLandingPage() {
     }
   };
 
-  const saveSlide = async (id: number) => {
-    setSlideSaving(id);
-    const slide = slides.find((s) => s.id === id);
-    if (!slide) return;
+  const addSlide = async () => {
+    if (!slideAdd.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSlideAddSaving(true);
     try {
       const fd = new FormData();
-      fd.append("title", slide.title ?? "");
-      fd.append("description", slide.description ?? "");
-      fd.append("sort_order", String(slide.sort_order ?? 0));
-      const file = slideFiles[id];
-      if (file) fd.append("image", file);
-      await apiUpload(`/admin/events/landing/advantage-slides/${id}`, fd);
-      setSlideFiles((f) => ({ ...f, [id]: null }));
-      toast.success("Slide saved");
+      fd.append("title", slideAdd.title.trim());
+      fd.append("description", slideAdd.description.trim());
+      if (slideAddFile) fd.append("image", slideAddFile);
+      await apiUpload("/admin/events/landing/advantage-slides", fd);
+      toast.success("Slide added");
+      setSlideAdd({ title: "", description: "" });
+      setSlideAddFile(null);
       await load();
     } catch (e) {
       const err = e as { message?: string };
       toast.error(err.message || "Save failed");
     } finally {
-      setSlideSaving(null);
+      setSlideAddSaving(false);
+    }
+  };
+
+  const openEditSlide = (row: AdvantageSlideRow) => {
+    setEditSlide(row);
+    setEditSlideForm({
+      title: row.title ?? "",
+      description: row.description ?? "",
+      sort_order: String(row.sort_order ?? ""),
+    });
+    setEditSlideFile(null);
+  };
+
+  const saveEditSlide = async () => {
+    if (!editSlide) return;
+    if (!editSlideForm.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setEditSlideSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("title", editSlideForm.title.trim());
+      fd.append("description", editSlideForm.description.trim());
+      if (editSlideForm.sort_order.trim() !== "") {
+        fd.append("sort_order", editSlideForm.sort_order.trim());
+      }
+      if (editSlideFile) fd.append("image", editSlideFile);
+      await apiUpload(
+        `/admin/events/landing/advantage-slides/${editSlide.id}`,
+        fd,
+      );
+      toast.success("Slide updated");
+      setEditSlide(null);
+      setEditSlideFile(null);
+      await load();
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Save failed");
+    } finally {
+      setEditSlideSaving(false);
+    }
+  };
+
+  const removeSlide = async (row: AdvantageSlideRow) => {
+    if (!window.confirm(`Remove slide “${row.title ?? "Untitled"}”?`)) return;
+    setSlideDeleteBusyId(row.id);
+    try {
+      await apiRequest(`/admin/events/landing/advantage-slides/${row.id}`, {
+        method: "DELETE",
+      });
+      toast.success("Slide removed");
+      await load();
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Delete failed");
+    } finally {
+      setSlideDeleteBusyId(null);
     }
   };
 
@@ -289,70 +384,166 @@ export function AdminEventsLandingPage() {
       ) : null}
 
       {tab === "advantage" ? (
-        <div>
-          <p className="mb-4 text-sm text-[#657067]">
+        <div className="space-y-8">
+          <p className="text-sm text-[#657067]">
             Carousel slide images and captions only — icon row above the carousel
             is not editable here.
           </p>
-          <div className={cardGridTwoColClass}>
-            {slides.map((slide) => (
-              <div key={slide.id} className="admin-card rounded-2xl p-6">
-                <Field label="Title">
-                  <input
-                    className={inputClass}
-                    value={slide.title ?? ""}
-                    onChange={(e) =>
-                      setSlides((list) =>
-                        list.map((s) =>
-                          s.id === slide.id
-                            ? { ...s, title: e.target.value }
-                            : s,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
-                <Field label="Description">
-                  <textarea
-                    className={`${inputClass} min-h-[72px]`}
-                    value={slide.description ?? ""}
-                    onChange={(e) =>
-                      setSlides((list) =>
-                        list.map((s) =>
-                          s.id === slide.id
-                            ? { ...s, description: e.target.value }
-                            : s,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
-                <AdminImageUpload
-                  title="Slide image"
-                  file={slideFiles[slide.id] ?? null}
-                  existingUrl={slide.image_url}
-                  optional
-                  onFileChange={(f) =>
-                    setSlideFiles((x) => ({ ...x, [slide.id]: f }))
-                  }
+          <div className="admin-card max-w-2xl rounded-2xl p-6">
+            <h3 className="mb-4 text-sm font-semibold admin-page-title">
+              Add carousel slide
+            </h3>
+            <Field label="Title">
+              <input
+                className={inputClass}
+                value={slideAdd.title}
+                onChange={(e) =>
+                  setSlideAdd((f) => ({ ...f, title: e.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Description">
+              <textarea
+                className={`${inputClass} min-h-[72px]`}
+                value={slideAdd.description}
+                onChange={(e) =>
+                  setSlideAdd((f) => ({ ...f, description: e.target.value }))
+                }
+              />
+            </Field>
+            <AdminImageUpload
+              title="Slide image"
+              file={slideAddFile}
+              optional
+              onFileChange={setSlideAddFile}
+            />
+            <button
+              type="button"
+              disabled={slideAddSaving}
+              onClick={addSlide}
+              className={saveCardButtonClass}
+            >
+              {slideAddSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Add slide
+            </button>
+          </div>
+
+          <div className="admin-card overflow-hidden rounded-2xl">
+            {sortedSlides.length === 0 ? (
+              <p className="p-6 text-sm admin-card-muted">
+                No slides yet. Add one above.
+              </p>
+            ) : (
+              <>
+                <AdminListSearchBar
+                  {...slideListSearch}
+                  placeholder="Search advantage slides…"
                 />
-                <button
-                  type="button"
-                  disabled={slideSaving === slide.id}
-                  onClick={() => saveSlide(slide.id)}
-                  className={saveCardButtonClass}
-                >
-                  {slideSaving === slide.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save slide
-                </button>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wide text-[#6E655C]">
+                    <tr>
+                      <th className="px-4 py-3">Thumb</th>
+                      <th className="px-4 py-3">Title</th>
+                      <th className="px-4 py-3">Order</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedSlides.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-[#EDE4D8]/60 last:border-0"
+                      >
+                        <td className="px-4 py-3">
+                          {row.image_url ? (
+                            <img
+                              src={row.image_url}
+                              alt=""
+                              className="h-14 w-20 rounded-lg object-cover"
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[#332C26]">
+                          {row.title?.trim() || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-[#565b59]">
+                          {row.sort_order ?? 0}
+                        </td>
+                        <td className="space-x-2 px-4 py-3 text-right">
+                          <AdminRowActions
+                            onEdit={() => openEditSlide(row)}
+                            onDelete={() => removeSlide(row)}
+                            deleteBusy={slideDeleteBusyId === row.id}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+              </>
+            )}
+            {sortedSlides.length > 0 ? (
+              <ListPagination {...slidePagination} itemLabel="slides" />
+            ) : null}
           </div>
         </div>
+      ) : null}
+
+      {editSlide ? (
+        <EventsAdminFormModal
+          title="Edit carousel slide"
+          saving={editSlideSaving}
+          onClose={() => {
+            setEditSlide(null);
+            setEditSlideFile(null);
+          }}
+          onSave={saveEditSlide}
+        >
+          <Field label="Title">
+            <input
+              className={inputClass}
+              value={editSlideForm.title}
+              onChange={(e) =>
+                setEditSlideForm((f) => ({ ...f, title: e.target.value }))
+              }
+            />
+          </Field>
+          <Field label="Description">
+            <textarea
+              className={`${inputClass} min-h-[72px]`}
+              value={editSlideForm.description}
+              onChange={(e) =>
+                setEditSlideForm((f) => ({ ...f, description: e.target.value }))
+              }
+            />
+          </Field>
+          <Field label="Sort order (optional)">
+            <input
+              className={inputClass}
+              type="number"
+              min={0}
+              value={editSlideForm.sort_order}
+              onChange={(e) =>
+                setEditSlideForm((f) => ({ ...f, sort_order: e.target.value }))
+              }
+            />
+          </Field>
+          <AdminImageUpload
+            title="Replace image (optional)"
+            file={editSlideFile}
+            existingUrl={editSlide.image_url}
+            optional
+            onFileChange={setEditSlideFile}
+          />
+        </EventsAdminFormModal>
       ) : null}
     </TabbedPageShell>
   );
