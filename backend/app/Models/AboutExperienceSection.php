@@ -3,18 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
-
 class AboutExperienceSection extends Model
 {
-    public function getTable()
-    {
-        if (Schema::hasTable('about_experience_sections')) {
-            return 'about_experience_sections';
-        }
-
-        return 'home_experience_sections';
-    }
+    protected $table = 'about_experience_sections';
 
     protected $fillable = [
         'heading_main',

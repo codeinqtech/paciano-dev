@@ -7,7 +7,10 @@ import {
 import { LayoutGrid, ListTree, MapPin, Pencil, Plus, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "../../api/client";
-import { ListPagination } from "../components/ListPagination";
+import {
+  AdminListSearchBar,
+  ListPagination,
+} from "../components/ListPagination";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   AdminCmsPageHeader,
@@ -102,11 +105,15 @@ export default function AdminFooter() {
   });
   const [infoSaving, setInfoSaving] = useState(false);
 
-  const { paginatedItems: pagedSocial, paginationProps: socialPagination } =
-    useClientPagination(social, { pageSize: 10 });
+  const {
+    paginatedItems: pagedSocial,
+    paginationProps: socialPagination,
+    listSearch: socialListSearch,
+  } = useClientPagination(social, { pageSize: 10 });
   const {
     paginatedItems: pagedLocationInfo,
     paginationProps: locationPagination,
+    listSearch: locationListSearch,
   } = useClientPagination(locationInfo, { pageSize: 10 });
 
   const load = useCallback(async () => {
@@ -417,6 +424,12 @@ export default function AdminFooter() {
             </button>
           </div>
           <div className="admin-card overflow-hidden rounded-2xl">
+            {social.length > 0 ? (
+              <AdminListSearchBar
+                {...socialListSearch}
+                placeholder="Search social links…"
+              />
+            ) : null}
             <SocialTable
               rows={pagedSocial}
               onEdit={(row) => {
@@ -459,6 +472,12 @@ export default function AdminFooter() {
             </button>
           </div>
           <div className="admin-card overflow-hidden rounded-2xl">
+            {locationInfo.length > 0 ? (
+              <AdminListSearchBar
+                {...locationListSearch}
+                placeholder="Search map rows…"
+              />
+            ) : null}
             <table className="min-w-full text-sm">
               <thead className="border-b border-[#EDE4D8] bg-[#FAF7F2]/80 text-left text-xs uppercase tracking-wider text-[#8A8177]">
                 <tr>

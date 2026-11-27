@@ -13,6 +13,7 @@ import {
   MessageSquareQuote,
   MessageCircle,
   CalendarDays,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,7 +37,8 @@ export type MenuId =
   | "users"
   | "profile"
   | "whatsapp_settings"
-  | "events";
+  | "events"
+  | "gallery";
 
 export type AdminMenu = {
   id: MenuId;
@@ -88,6 +90,12 @@ export const ASSIGNABLE_MENUS: AdminMenu[] = [
     label: "Events",
     path: "/admin/events/page",
     icon: CalendarDays,
+  },
+  {
+    id: "gallery",
+    label: "Gallery",
+    path: "/admin/gallery",
+    icon: Images,
   },
   {
     id: "contact",
@@ -165,6 +173,7 @@ const PATH_TO_MENU: Record<string, MenuId> = {
   "/admin/events/page": "events",
   "/admin/events/corporate": "events",
   "/admin/events/weddings": "events",
+  "/admin/gallery": "gallery",
   "/admin/contact": "contact",
   "/admin/stay": "stay",
   "/admin/navbar": "navbar",

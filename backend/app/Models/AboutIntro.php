@@ -5,18 +5,9 @@ namespace App\Models;
 use App\Services\HomeMediaService;
 use App\Support\AboutIntroWordLimits;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Schema;
-
 class AboutIntro extends Model
 {
-    public function getTable()
-    {
-        if (Schema::hasTable('about_intro')) {
-            return 'about_intro';
-        }
-
-        return 'home_about_sections';
-    }
+    protected $table = 'about_intro';
 
     protected $fillable = [
         'heading_line_1',
