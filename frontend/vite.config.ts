@@ -15,7 +15,7 @@ function resolvePublicBase(): string {
 /** Laragon vhost — API lives under backend/public (not project root). */
 const devProxyTarget =
   process.env.VITE_PROXY_TARGET?.trim() ||
-  "http://PACIANO-DEV.test:8080/backend/public";
+  "http://app:8000";
 
 export default defineConfig({
   base: resolvePublicBase(),

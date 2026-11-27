@@ -1,3 +1,6 @@
+/** @jsxRuntime classic */
+/** @jsx React.createElement */
+import * as React from "react";
 import leafLeft from "@/images/location-left-leaves.png";
 import leafAccent from "@/images/dining-leaf2.png";
 
